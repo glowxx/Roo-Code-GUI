@@ -187,6 +187,12 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			contentForSlice?: string,
 		): Promise<boolean> => {
 			const normalizedRelPath = normalizeTaskFilePath(relPath)
+			if (task.lastEditedPath && task.lastEditedPath !== normalizedRelPath) {
+				task.consecutiveMistakeCountForEditFile.delete(normalizedRelPath)
+				task.failedDiffHashesForPath?.delete(normalizedRelPath)
+			}
+			task.lastEditedPath = normalizedRelPath
+
 			const currentCount = (task.consecutiveMistakeCountForEditFile.get(normalizedRelPath) || 0) + 1
 			task.consecutiveMistakeCountForEditFile.set(normalizedRelPath, currentCount)
 
@@ -203,6 +209,7 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			const isRecoverable = failureKind ? isRecoverableEditFailure(failureKind) : false
 
 			if (isRecoverable && currentCount < MAX_EDIT_RECOVERY_ATTEMPTS && contentForSlice) {
+				task.didToolFailInCurrentTurn = true
 				const currentFileHash = computeFileHash(contentForSlice)
 				const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
 				logEditRecoveryTelemetry({
@@ -355,9 +362,19 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			}
 
 			const normalizedRelPath = normalizeTaskFilePath(relPath)
+			if (task.lastEditedPath && task.lastEditedPath !== normalizedRelPath) {
+				task.consecutiveMistakeCountForEditFile.delete(normalizedRelPath)
+				task.failedDiffHashesForPath?.delete(normalizedRelPath)
+			}
+			task.lastEditedPath = normalizedRelPath
+
 			const oldLF = normalizeToLF(old_string)
 			const newLF = normalizeToLF(new_string)
 			const expectedReplacements = Math.max(1, expected_replacements)
+
+			const currentFileHash = currentContent ? computeFileHash(currentContent) : ""
+			const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
+			const isStaleBase = !!(trackedVersion && currentFileHash && trackedVersion.hash !== currentFileHash)
 
 			const editFingerprint = `${oldLF}::-->::${newLF}:${expectedReplacements}`
 			const failedHashes = task.failedDiffHashesForPath?.get(normalizedRelPath) || new Set<string>()
@@ -375,10 +392,6 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 				pushToolResult(formattedError)
 				return
 			}
-
-			const currentFileHash = currentContent ? computeFileHash(currentContent) : ""
-			const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
-			const isStaleBase = !!(trackedVersion && currentFileHash && trackedVersion.hash !== currentFileHash)
 
 			// Validate replacement operation
 			if (!isNewFile && currentContentLF !== null) {
@@ -515,7 +528,6 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 				task.failedDiffHashesForPath?.delete(relPath)
 				task.failedDiffHashesForPath?.delete(normalizedRelPath)
 			}
-			task.recordFileReadVersion?.(normalizedRelPath, newContent)
 
 			// Initialize diff view
 			task.diffViewProvider.editType = isNewFile ? "create" : "modify"
@@ -607,7 +619,12 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 					task.failedDiffHashesForPath?.delete(relPath)
 					task.failedDiffHashesForPath?.delete(normalizedRelPath)
 				}
-				task.recordFileReadVersion?.(normalizedRelPath, newContent)
+				try {
+					const savedDiskContent = await fs.readFile(absolutePath, "utf-8")
+					task.recordFileReadVersion?.(normalizedRelPath, savedDiskContent)
+				} catch {
+					task.recordFileReadVersion?.(normalizedRelPath, newContent)
+				}
 			}
 
 			task.didEditFile = true

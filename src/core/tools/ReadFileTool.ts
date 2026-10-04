@@ -219,6 +219,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 					const result = this.processTextFile(fileContent, entry)
 
 					await task.fileContextTracker.trackFileContext(relPath, "read_tool" as RecordSource)
+					task.clearEditFailureState?.(relPath)
 					task.recordFileReadVersion?.(relPath, fileContent)
 
 					updateFileResult(relPath, {

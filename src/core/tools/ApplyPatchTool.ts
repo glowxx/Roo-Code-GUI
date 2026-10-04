@@ -222,6 +222,13 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 
 		// Track file edit operation
 		await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+		task.clearEditFailureState?.(relPath)
+		try {
+			const savedDiskContent = await fs.readFile(absolutePath, "utf8")
+			task.recordFileReadVersion?.(relPath, savedDiskContent)
+		} catch {
+			task.recordFileReadVersion?.(relPath, newContent)
+		}
 		task.didEditFile = true
 
 		const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, true)
@@ -283,6 +290,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		}
 
 		task.didEditFile = true
+		task.clearEditFailureState?.(relPath)
 		pushToolResult(`Successfully deleted ${relPath}`)
 		task.processQueuedMessages()
 	}
@@ -431,6 +439,14 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			await task.fileContextTracker.trackFileContext(change.movePath, "roo_edited" as RecordSource)
+			task.clearEditFailureState?.(change.movePath)
+			task.clearEditFailureState?.(relPath)
+			try {
+				const savedDiskContent = await fs.readFile(moveAbsolutePath, "utf8")
+				task.recordFileReadVersion?.(change.movePath, savedDiskContent)
+			} catch {
+				task.recordFileReadVersion?.(change.movePath, newContent)
+			}
 		} else {
 			// Save changes to the same file
 			if (isPreventFocusDisruptionEnabled) {
@@ -440,6 +456,13 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+			task.clearEditFailureState?.(relPath)
+			try {
+				const savedDiskContent = await fs.readFile(absolutePath, "utf8")
+				task.recordFileReadVersion?.(relPath, savedDiskContent)
+			} catch {
+				task.recordFileReadVersion?.(relPath, newContent)
+			}
 		}
 
 		task.didEditFile = true

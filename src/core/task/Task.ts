@@ -386,6 +386,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
 	consecutiveMistakeCountForEditFile: Map<string, number> = new Map()
 	failedDiffHashesForPath: Map<string, Set<string>> = new Map()
+	lastEditedPath?: string
 	trackedFileVersions: Map<string, { hash: string; lineCount: number; timestamp: number }> = new Map()
 	consecutiveNoToolUseCount: number = 0
 	consecutiveNoAssistantMessagesCount: number = 0
@@ -420,6 +421,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.consecutiveMistakeCountForApplyDiff.clear()
 			this.consecutiveMistakeCountForEditFile.clear()
 			this.failedDiffHashesForPath?.clear()
+			this.lastEditedPath = undefined
 		}
 	}
 
@@ -2741,6 +2743,7 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 			this.consecutiveReplanCount = 0
 			this.lastCompletionFingerprint = null
 			this.unresolvedDenialState = null
+			this.clearEditFailureState()
 		}
 
 		// Create a checkpoint whenever the user sends a message.

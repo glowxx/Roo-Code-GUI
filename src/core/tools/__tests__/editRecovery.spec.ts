@@ -191,6 +191,7 @@ export function App() {
 					this.consecutiveMistakeCountForApplyDiff.clear()
 					this.consecutiveMistakeCountForEditFile.clear()
 					this.failedDiffHashesForPath?.clear()
+					this.lastEditedPath = undefined
 				}
 			},
 		}
@@ -459,11 +460,17 @@ Fix2
 		expect(mockTask.consecutiveMistakeCount).toBe(0)
 	})
 
-	// 13. Mistake count incremented on unrecoverable syntax error
-	it("Case 13: Mistake count incremented on unrecoverable syntax error", async () => {
+	// 13. Syntax error recovers autonomously on attempt #1 and escalates on attempt #2
+	it("Case 13: Syntax error recovers autonomously on attempt #1 and escalates on attempt #2", async () => {
 		const malformedDiff = `<<<<<<< SEARCH\nmalformed without separator`
-		const result = await executeApplyDiff({ diff: malformedDiff })
-		expect(result).toContain("Unexpected end of sequence")
+		const result1 = await executeApplyDiff({ diff: malformedDiff })
+		expect(result1).toContain("<edit_recovery_context>")
+		expect(result1).toContain("[DIFF SYNTAX ERROR]")
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
+
+		const malformedDiff2 = `<<<<<<< SEARCH\nstill malformed without separator`
+		const result2 = await executeApplyDiff({ diff: malformedDiff2 })
+		expect(result2).toContain("Unexpected end of sequence")
 		expect(mockTask.consecutiveMistakeCount).toBe(1)
 	})
 
@@ -587,5 +594,138 @@ const PORT = 4000;
 		const result2 = await executeApplyDiff({ path: "app.ts", diff: recoveredDiff })
 		expect(result2).toContain("Diff applied successfully")
 		expect(mockTask.consecutiveMistakeCount).toBe(0)
+	})
+
+	// Phase 23 Replay 1: Real Incident 01a102aa Forensics - attempt #1 syntax error recovers without diff_error or mistake_limit
+	it("Phase 23 Replay 1: Real Incident 01a102aa syntax error on attempt #1 provides recovery feedback and sets didToolFailInCurrentTurn", async () => {
+		// Target file is postgres_real.test.ts
+		const targetPath = "license-api-system/tests/integration/postgres_real.test.ts"
+		const initialContent = `import { describe, it } from 'vitest'\n\ndescribe('db', () => {\n  it('connects', () => {})\n})\n`
+		mockedFsReadFile.mockResolvedValue(initialContent)
+
+		// Model submits a diff with malformed diff structure on attempt 1
+		const malformedIncidentDiff = `<<<<<<< SEARCH
+:start_line:3
+-------
+describe('db', () => {
+malformed without replace section`
+
+		const result = await executeApplyDiff({ path: targetPath, diff: malformedIncidentDiff })
+
+		// Must provide recovery context with syntax guidance
+		expect(result).toContain("<edit_recovery_context>")
+		expect(result).toContain("[DIFF SYNTAX ERROR]")
+
+		// Must NOT escalate to mistake count or diff_error on attempt 1
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
+		expect(mockTask.say).not.toHaveBeenCalledWith("diff_error", expect.anything())
+		expect(mockTask.ask).not.toHaveBeenCalledWith("mistake_limit_reached", expect.anything())
+
+		// Must set didToolFailInCurrentTurn to prevent premature task completion
+		expect(mockTask.didToolFailInCurrentTurn).toBe(true)
+	})
+
+	// Phase 23 Replay 2: File episode isolation prevents zombie counters from previous files or turns
+	it("Phase 23 Replay 2: File episode isolation clears zombie counters when switching files", async () => {
+		const fileA = "src/moduleA.ts"
+		const fileB = "src/moduleB.ts"
+
+		// Simulate old failures on File A from an earlier episode
+		mockTask.lastEditedPath = normalizeTaskFilePath(fileA)
+		mockTask.consecutiveMistakeCountForApplyDiff.set(normalizeTaskFilePath(fileA), 2)
+		mockTask.failedDiffHashesForPath.set(normalizeTaskFilePath(fileA), new Set(["failed-patch-a"]))
+
+		// Model works on File B
+		mockedFsReadFile.mockResolvedValue("export const B = 2;\n")
+		const diffB = `<<<<<<< SEARCH
+:start_line:1
+-------
+export const B = 2;
+=======
+export const B = 20;
+>>>>>>> REPLACE`
+		await executeApplyDiff({ path: fileB, diff: diffB })
+		expect(mockTask.lastEditedPath).toBe(normalizeTaskFilePath(fileB))
+
+		// Model comes back to File A with a new recoverable edit attempt
+		mockedFsReadFile.mockResolvedValue("export const A = 1;\n")
+		const diffA = `<<<<<<< SEARCH
+:start_line:1
+-------
+export const A = 999;
+=======
+export const A = 100;
+>>>>>>> REPLACE`
+
+		const resultA = await executeApplyDiff({ path: fileA, diff: diffA })
+
+		// File A's counter was reset on file switch, so this is attempt 1 on File A, NOT attempt 3!
+		expect(resultA).toContain("<edit_recovery_context>")
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
+		expect(mockTask.say).not.toHaveBeenCalledWith("diff_error", expect.anything())
+		expect(mockTask.ask).not.toHaveBeenCalledWith("mistake_limit_reached", expect.anything())
+	})
+
+	// Phase 23 Replay 3: Post-save formatter mutation tracked authoritatively
+	it("Phase 23 Replay 3: Formatter-induced mutation after save updates tracked version to disk state", async () => {
+		const filePath = "src/formatted.ts"
+		const initialCode = "const x = 1\n"
+		let diskContent = initialCode
+		mockedFsReadFile.mockImplementation(async () => diskContent)
+
+		// Model reads file
+		mockTask.recordFileReadVersion(filePath, initialCode)
+
+		// Edit applied: "const x = 1\n" -> "const x = 2\n"
+		// But prettier/formatter runs during save and formats disk to "const x = 2;\n" (added semicolon)
+		const formattedDiskCode = "const x = 2;\n"
+		mockTask.diffViewProvider.saveChanges.mockImplementation(async () => {
+			diskContent = formattedDiskCode
+		})
+
+		const editDiff = `<<<<<<< SEARCH
+:start_line:1
+-------
+const x = 1
+=======
+const x = 2
+>>>>>>> REPLACE`
+
+		const result = await executeApplyDiff({ path: filePath, diff: editDiff })
+		expect(result).toContain("Diff applied successfully")
+
+		// Post-save tracked version must match formatted disk content
+		const tracked = mockTask.getFileTrackedVersion(filePath)
+		expect(tracked?.hash).toBe(computeFileHash(formattedDiskCode))
+
+		// Subsequent edit against the formatted disk content should NOT trigger stale conflict
+		const subsequentDiff = `<<<<<<< SEARCH
+:start_line:1
+-------
+const x = 2;
+=======
+const x = 3;
+>>>>>>> REPLACE`
+
+		const result2 = await executeApplyDiff({ path: filePath, diff: subsequentDiff })
+		expect(result2).toContain("Diff applied successfully")
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
+	})
+
+	// Phase 23 Replay 4: User response to mistake limit cleanly resets failure state and lastEditedPath
+	it("Phase 23 Replay 4: clearEditFailureState cleanly resets all counters, failed hashes, and lastEditedPath", () => {
+		mockTask.consecutiveMistakeCount = 3
+		mockTask.lastEditedPath = "some/file.ts"
+		mockTask.consecutiveMistakeCountForApplyDiff.set("some/file.ts", 3)
+		mockTask.consecutiveMistakeCountForEditFile.set("some/file.ts", 3)
+		mockTask.failedDiffHashesForPath.set("some/file.ts", new Set(["hash1"]))
+
+		mockTask.clearEditFailureState()
+
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
+		expect(mockTask.lastEditedPath).toBeUndefined()
+		expect(mockTask.consecutiveMistakeCountForApplyDiff.size).toBe(0)
+		expect(mockTask.consecutiveMistakeCountForEditFile.size).toBe(0)
+		expect(mockTask.failedDiffHashesForPath.size).toBe(0)
 	})
 })

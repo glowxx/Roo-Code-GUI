@@ -10,6 +10,7 @@ export enum EditFailureKind {
 	RECOVERABLE_OFFSET_DRIFT = "RECOVERABLE_OFFSET_DRIFT",
 	RECOVERABLE_MARKER_LEAKAGE = "RECOVERABLE_MARKER_LEAKAGE",
 	RECOVERABLE_LINE_ENDING_DRIFT = "RECOVERABLE_LINE_ENDING_DRIFT",
+	RECOVERABLE_SYNTAX_ERROR = "RECOVERABLE_SYNTAX_ERROR",
 	NON_RECOVERABLE_IDENTICAL_RETRY = "NON_RECOVERABLE_IDENTICAL_RETRY",
 	NON_RECOVERABLE_FILE_NOT_FOUND = "NON_RECOVERABLE_FILE_NOT_FOUND",
 	NON_RECOVERABLE_ACCESS_DENIED = "NON_RECOVERABLE_ACCESS_DENIED",
@@ -37,7 +38,8 @@ export function isRecoverableEditFailure(kind: EditFailureKind): boolean {
 		kind === EditFailureKind.RECOVERABLE_SEARCH_MISMATCH ||
 		kind === EditFailureKind.RECOVERABLE_OFFSET_DRIFT ||
 		kind === EditFailureKind.RECOVERABLE_MARKER_LEAKAGE ||
-		kind === EditFailureKind.RECOVERABLE_LINE_ENDING_DRIFT
+		kind === EditFailureKind.RECOVERABLE_LINE_ENDING_DRIFT ||
+		kind === EditFailureKind.RECOVERABLE_SYNTAX_ERROR
 	)
 }
 
@@ -56,6 +58,7 @@ export function classifyEditFailure(options: {
 	isAccessAllowed: boolean
 	isStaleBase: boolean
 	ambiguousMatches?: boolean
+	editAttempt?: number
 }): EditFailureKind {
 	if (!options.fileExists) return EditFailureKind.NON_RECOVERABLE_FILE_NOT_FOUND
 	if (!options.isAccessAllowed) return EditFailureKind.NON_RECOVERABLE_ACCESS_DENIED
@@ -64,15 +67,29 @@ export function classifyEditFailure(options: {
 
 	const err = options.errorMessage.toLowerCase()
 	if (options.isStaleBase) return EditFailureKind.RECOVERABLE_STALE_CONTENT
+
+	const attempt = options.editAttempt ?? 1
 	if (
 		err.includes("unexpected end of sequence") ||
 		err.includes("missing required sections") ||
 		err.includes("malformed") ||
 		err.includes("invalid diff format")
 	) {
-		return EditFailureKind.NON_RECOVERABLE_SYNTAX_ERROR
+		// Allow 1 bounded autonomous correction turn with parser syntax feedback on attempt 1
+		return attempt <= 1 ? EditFailureKind.RECOVERABLE_SYNTAX_ERROR : EditFailureKind.NON_RECOVERABLE_SYNTAX_ERROR
 	}
-	if (err.includes(":start_line:") || err.includes("-------") || err.includes("marker")) {
+
+	if (err.includes("identical - no changes would be made") || err.includes("no changes to apply")) {
+		return EditFailureKind.RECOVERABLE_SEARCH_MISMATCH
+	}
+
+	// Strip advice/tips before checking for leaked markers so advice text doesn't cause false positives
+	const errorBody = err.split(/tips to resolve|debug info|recovery suggestions/i)[0] || err
+	if (
+		errorBody.includes(":start_line:") ||
+		errorBody.includes("-------") ||
+		errorBody.includes("marker '>>>>>>> replace' found in your diff content")
+	) {
 		return EditFailureKind.RECOVERABLE_MARKER_LEAKAGE
 	}
 	if (err.includes("at line:") || err.includes("offset")) {
@@ -162,6 +179,8 @@ export function buildRecoveryFeedback(options: {
 		conflictNotice = `\n[DIFF MARKER LEAKAGE]: Diff markers (such as :start_line: or -------) were found inside the search block content. Do NOT include diff syntax markers inside SEARCH blocks.`
 	} else if (failureKind === EditFailureKind.RECOVERABLE_OFFSET_DRIFT) {
 		conflictNotice = `\n[LINE OFFSET DRIFT]: The line number or offset shifted compared to the current file state on disk.`
+	} else if (failureKind === EditFailureKind.RECOVERABLE_SYNTAX_ERROR) {
+		conflictNotice = `\n[DIFF SYNTAX ERROR]: Diff markers or block delimiters were malformed or missing (e.g. unclosed '>>>>>>> REPLACE'). Please ensure valid SEARCH/REPLACE format.`
 	}
 
 	return `${rawError}

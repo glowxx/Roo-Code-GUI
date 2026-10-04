@@ -78,6 +78,17 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			}
 
 			const normalizedRelPath = normalizeTaskFilePath(relPath)
+			if (task.lastEditedPath && task.lastEditedPath !== normalizedRelPath) {
+				task.consecutiveMistakeCountForApplyDiff?.delete(normalizedRelPath)
+				task.failedDiffHashesForPath?.delete(normalizedRelPath)
+			}
+			task.lastEditedPath = normalizedRelPath
+
+			const originalContent: string = await fs.readFile(absolutePath, "utf-8")
+			const currentFileHash = computeFileHash(originalContent)
+			const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
+			const isStaleBase = !!(trackedVersion && trackedVersion.hash !== currentFileHash)
+
 			const patchFingerprint = diffContent.trim()
 			const failedHashes = task.failedDiffHashesForPath?.get(normalizedRelPath) || new Set<string>()
 
@@ -98,7 +109,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 					file: normalizedRelPath,
 					editAttempt: currentCount,
 					errorKind: EditFailureKind.NON_RECOVERABLE_IDENTICAL_RETRY,
-					currentFileHash: "",
+					currentFileHash,
 					recoveryAction: currentCount >= mistakeLimit ? "escalate_to_mistake_limit" : "escalate_to_diff_error",
 					mistakeCount: task.consecutiveMistakeCount,
 				})
@@ -107,11 +118,6 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 				pushToolResult(formattedError)
 				return
 			}
-
-			const originalContent: string = await fs.readFile(absolutePath, "utf-8")
-			const currentFileHash = computeFileHash(originalContent)
-			const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
-			const isStaleBase = !!(trackedVersion && trackedVersion.hash !== currentFileHash)
 
 			// Apply the diff to the original content
 			const parsedStartLine = parseInt(params.diff.match(/:start_line:\s*(\d+)/i)?.[1] ?? "")
@@ -157,10 +163,12 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 					fileExists: true,
 					isAccessAllowed: true,
 					isStaleBase,
+					editAttempt: currentCount,
 				})
 				const isRecoverable = isRecoverableEditFailure(failureKind)
 
 				if (isRecoverable && currentCount < MAX_EDIT_RECOVERY_ATTEMPTS) {
+					task.didToolFailInCurrentTurn = true
 					logEditRecoveryTelemetry({
 						taskId: task.taskId,
 						tool: "apply_diff",
@@ -225,7 +233,6 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 				task.failedDiffHashesForPath?.delete(relPath)
 				task.failedDiffHashesForPath?.delete(normalizedRelPath)
 			}
-			task.recordFileReadVersion?.(normalizedRelPath, diffResult.content)
 
 			// Generate backend-unified diff for display in chat/webview
 			const unifiedPatchRaw = formatResponse.createPrettyPatch(relPath, originalContent, diffResult.content)
@@ -330,6 +337,15 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 				// Call saveChanges to update the DiffViewProvider properties
 				await task.diffViewProvider.saveChanges(diagnosticsEnabled, writeDelayMs)
 			}
+
+			// Record authoritative post-save disk version to account for format-on-save and line ending conversions
+			try {
+				const savedDiskContent = await fs.readFile(absolutePath, "utf-8")
+				task.recordFileReadVersion?.(normalizedRelPath, savedDiskContent)
+			} catch {
+				task.recordFileReadVersion?.(normalizedRelPath, diffResult.content)
+			}
+			task.clearEditFailureState?.(normalizedRelPath)
 
 			// Track file edit operation
 			if (relPath) {
