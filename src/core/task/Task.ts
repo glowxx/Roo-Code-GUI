@@ -67,6 +67,7 @@ import {
 	countEnabledMcpTools,
 	modelSupportsReasoning,
 	cleanModelDisplayName,
+	type ExtensionState,
 } from "@roo-code/types"
 import { CommandSafetyJudge, SAFETY_EVALUATION_FALLBACK_RESULT } from "../security/CommandSafetyJudge"
 import { ApprovalOrchestrator, isDeferredRetryableCategory } from "../security/ApprovalOrchestrator"
@@ -107,6 +108,7 @@ import { calculateApiCostAnthropic, calculateApiCostOpenAI } from "../../shared/
 import { getWorkspacePath } from "../../utils/path"
 import { sanitizeToolUseId } from "../../utils/tool-id"
 import { getTaskDirectoryPath } from "../../utils/storage"
+import { normalizeTaskFilePath, computeFileHash } from "../tools/edit-recovery/EditRecoveryService"
 
 // prompts
 import { formatResponse } from "../prompts/responses"
@@ -384,9 +386,42 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
 	consecutiveMistakeCountForEditFile: Map<string, number> = new Map()
 	failedDiffHashesForPath: Map<string, Set<string>> = new Map()
+	trackedFileVersions: Map<string, { hash: string; lineCount: number; timestamp: number }> = new Map()
 	consecutiveNoToolUseCount: number = 0
 	consecutiveNoAssistantMessagesCount: number = 0
 	toolUsage: ToolUsage = {}
+
+	recordFileReadVersion(relPath: string, content: string): void {
+		const normalized = normalizeTaskFilePath(relPath)
+		const lines = content.split(/\r?\n/)
+		this.trackedFileVersions.set(normalized, {
+			hash: computeFileHash(content),
+			lineCount: lines.length,
+			timestamp: Date.now(),
+		})
+	}
+
+	getFileTrackedVersion(relPath: string): { hash: string; lineCount: number; timestamp: number } | undefined {
+		const normalized = normalizeTaskFilePath(relPath)
+		return this.trackedFileVersions.get(normalized)
+	}
+
+	clearEditFailureState(relPath?: string): void {
+		if (relPath) {
+			const normalized = normalizeTaskFilePath(relPath)
+			this.consecutiveMistakeCountForApplyDiff.delete(normalized)
+			this.consecutiveMistakeCountForApplyDiff.delete(relPath)
+			this.consecutiveMistakeCountForEditFile.delete(normalized)
+			this.consecutiveMistakeCountForEditFile.delete(relPath)
+			this.failedDiffHashesForPath?.delete(normalized)
+			this.failedDiffHashesForPath?.delete(relPath)
+		} else {
+			this.consecutiveMistakeCount = 0
+			this.consecutiveMistakeCountForApplyDiff.clear()
+			this.consecutiveMistakeCountForEditFile.clear()
+			this.failedDiffHashesForPath?.clear()
+		}
+	}
 
 	// Checkpoints
 	enableCheckpoints: boolean
@@ -2863,6 +2898,7 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 						taskAligned: false,
 						infrastructureFailure: true,
 						verifierFailureCategory: VerifierFailureCategory.OTHER_TRANSIENT,
+						auditLog: `[ApprovalAudit] taskId=${this.taskId} actionId=${request.id} deferredRetryAttempt=${scheduled.schedule.attempt} error="${error instanceof Error ? error.message : String(error)}"`,
 					}
 				}
 
@@ -4763,7 +4799,7 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 					await this.say("user_feedback", text, images)
 				}
 
-				this.consecutiveMistakeCount = 0
+				this.clearEditFailureState()
 			}
 
 			// Getting verbose details is an expensive operation, it uses ripgrep to

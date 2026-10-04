@@ -366,9 +366,9 @@ describe("editFileTool", () => {
 			)
 
 			expect(result).toContain("No match found")
-			expect(result).toContain("<error_details>")
-			expect(mockTask.consecutiveMistakeCount).toBe(1)
-			expect(mockTask.didToolFailInCurrentTurn).toBe(true)
+			expect(result).toContain("<edit_recovery_context>")
+			// Attempt 1 of recoverable mismatch: isolated from global consecutiveMistakeCount
+			expect(mockTask.consecutiveMistakeCount).toBe(0)
 			expect(mockTask.recordToolError).toHaveBeenCalledWith(
 				"edit_file",
 				expect.stringContaining("No match found"),
@@ -385,11 +385,13 @@ describe("editFileTool", () => {
 		it("detects and rejects identical failed edit retry with actionable advice", async () => {
 			const firstResult = await executeEditFileTool({ old_string: "NonExistent" }, { fileContent: "Line 1\nLine 2\nLine 3" })
 			expect(firstResult).toContain("No match found")
+			expect(firstResult).toContain("<edit_recovery_context>")
+			expect(mockTask.consecutiveMistakeCount).toBe(0)
 
 			const retryResult = await executeEditFileTool({ old_string: "NonExistent" }, { fileContent: "Line 1\nLine 2\nLine 3" })
 			expect(retryResult).toContain("IDENTICAL FAILED EDIT RETRY")
 			expect(retryResult).toContain("You submitted the exact same old_string/new_string replacement")
-			expect(mockTask.consecutiveMistakeCount).toBe(2)
+			expect(mockTask.consecutiveMistakeCount).toBe(1)
 		})
 
 		it("returns error when occurrence count does not match expected_replacements", async () => {

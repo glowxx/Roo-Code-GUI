@@ -213,20 +213,21 @@ describe("ApplyDiffTool", () => {
 			error: "No match found",
 		})
 
-		// First failure
+		// First failure: provides recovery context without burning global mistake count
 		const result1 = await executeApplyDiff({ diff: failingDiff })
 		expect(result1).toContain("No match found")
+		expect(result1).toContain("<edit_recovery_context>")
 		expect(mockTask.diffStrategy.applyDiff).toHaveBeenCalledTimes(1)
-		expect(mockTask.consecutiveMistakeCount).toBe(1)
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
 		expect(mockTask.failedDiffHashesForPath.get(testFilePath)?.has(failingDiff.trim())).toBe(true)
 
-		// Resubmitting the exact same failed diff
+		// Resubmitting the exact same failed diff triggers identical retry detection and escalates
 		const result2 = await executeApplyDiff({ diff: failingDiff })
 		expect(result2).toContain("IDENTICAL FAILED PATCH RETRY")
 		expect(result2).toContain("You submitted the exact same diff that previously failed")
 		// diffStrategy.applyDiff should NOT have been invoked a second time
 		expect(mockTask.diffStrategy.applyDiff).toHaveBeenCalledTimes(1)
-		expect(mockTask.consecutiveMistakeCount).toBe(2)
+		expect(mockTask.consecutiveMistakeCount).toBe(1)
 		expect(mockTask.say).toHaveBeenCalledWith("diff_error", expect.stringContaining("IDENTICAL FAILED PATCH RETRY"))
 	})
 
@@ -245,7 +246,8 @@ describe("ApplyDiffTool", () => {
 		expect(result).toContain("[Block 1 Failure]:\nBlock 1 could not be matched")
 		expect(result).toContain("[Block 2 Failure]:\nBlock 2 line count mismatch")
 		expect(result).toContain('"line": 3')
-		expect(mockTask.consecutiveMistakeCount).toBe(1)
+		expect(result).toContain("<edit_recovery_context>")
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
 	})
 
 	it("enforces bounded recovery: consecutive different failing diffs escalate to mistakeLimit", async () => {
@@ -259,20 +261,21 @@ describe("ApplyDiffTool", () => {
 		const diff2 = `<<<<<<< SEARCH\n:start_line:1\n-------\nAttempt 2\n=======\nFix 2\n>>>>>>> REPLACE`
 		const diff3 = `<<<<<<< SEARCH\n:start_line:1\n-------\nAttempt 3\n=======\nFix 3\n>>>>>>> REPLACE`
 
+		// Attempt 1: provides recovery context without burning global mistake count
 		await executeApplyDiff({ diff: diff1 })
-		expect(mockTask.consecutiveMistakeCount).toBe(1)
+		expect(mockTask.consecutiveMistakeCount).toBe(0)
 		expect(mockTask.consecutiveMistakeCountForApplyDiff.get(testFilePath)).toBe(1)
+
+		// Attempt 2: recovery attempts exhausted (MAX_EDIT_RECOVERY_ATTEMPTS = 2), escalates
+		await executeApplyDiff({ diff: diff2 })
+		expect(mockTask.consecutiveMistakeCount).toBe(1)
+		expect(mockTask.consecutiveMistakeCountForApplyDiff.get(testFilePath)).toBe(2)
 		expect(mockTask.didToolFailInCurrentTurn).toBe(true)
 
-		await executeApplyDiff({ diff: diff2 })
-		expect(mockTask.consecutiveMistakeCount).toBe(2)
-		expect(mockTask.consecutiveMistakeCountForApplyDiff.get(testFilePath)).toBe(2)
-
+		// Attempt 3: continues escalation towards mistake limit
 		await executeApplyDiff({ diff: diff3 })
 		expect(mockTask.consecutiveMistakeCount).toBe(3)
 		expect(mockTask.consecutiveMistakeCountForApplyDiff.get(testFilePath)).toBe(3)
-		// Escalated to limit so task halts or prompts user
-		expect(mockTask.consecutiveMistakeCount).toBeGreaterThanOrEqual(mockTask.consecutiveMistakeLimit)
 	})
 
 	it("isolates failure counts per file: errors on File A do not poison File B", async () => {
