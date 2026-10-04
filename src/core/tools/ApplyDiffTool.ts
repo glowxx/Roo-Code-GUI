@@ -14,6 +14,16 @@ import { computeDiffStats, sanitizeUnifiedDiff } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import {
+	classifyEditFailure,
+	isRecoverableEditFailure,
+	buildRecoveryFeedback,
+	computeFileHash,
+	normalizeTaskFilePath,
+	MAX_EDIT_RECOVERY_ATTEMPTS,
+	logEditRecoveryTelemetry,
+	EditFailureKind,
+} from "./edit-recovery/EditRecoveryService"
 
 interface ApplyDiffParams {
 	path: string
@@ -67,20 +77,31 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 				return
 			}
 
+			const normalizedRelPath = normalizeTaskFilePath(relPath)
 			const patchFingerprint = diffContent.trim()
-			const failedHashes = task.failedDiffHashesForPath?.get(relPath) || new Set<string>()
+			const failedHashes = task.failedDiffHashesForPath?.get(normalizedRelPath) || new Set<string>()
 
 			// Detect identical failed patch retry before running expensive diff matching
 			if (failedHashes.has(patchFingerprint)) {
 				task.consecutiveMistakeCount++
 				task.didToolFailInCurrentTurn = true
-				const currentCount = (task.consecutiveMistakeCountForApplyDiff.get(relPath) || 0) + 1
-				task.consecutiveMistakeCountForApplyDiff.set(relPath, currentCount)
+				const currentCount = (task.consecutiveMistakeCountForApplyDiff.get(normalizedRelPath) || 0) + 1
+				task.consecutiveMistakeCountForApplyDiff.set(normalizedRelPath, currentCount)
 				const mistakeLimit = task.consecutiveMistakeLimit || 3
 				if (currentCount >= mistakeLimit) {
 					task.consecutiveMistakeCount = Math.max(task.consecutiveMistakeCount, mistakeLimit)
 				}
 				const formattedError = `Unable to apply diff to file: ${absolutePath}\n\n<error_details>\nIDENTICAL FAILED PATCH RETRY: You submitted the exact same diff that previously failed for this file without changing the search or replacement content.\n\nTips to resolve:\n1. The file content on disk differs from your SEARCH block.\n2. Use read_file to inspect the current file content, indentation, and line breaks.\n3. Verify diff markers (:start_line:, -------) are not placed inside SEARCH or REPLACE blocks.\n4. Modify your SEARCH block to match the actual file lines before retrying.\n</error_details>`
+				logEditRecoveryTelemetry({
+					taskId: task.taskId,
+					tool: "apply_diff",
+					file: normalizedRelPath,
+					editAttempt: currentCount,
+					errorKind: EditFailureKind.NON_RECOVERABLE_IDENTICAL_RETRY,
+					currentFileHash: "",
+					recoveryAction: currentCount >= mistakeLimit ? "escalate_to_mistake_limit" : "escalate_to_diff_error",
+					mistakeCount: task.consecutiveMistakeCount,
+				})
 				await task.say("diff_error", formattedError)
 				task.recordToolError("apply_diff", formattedError)
 				pushToolResult(formattedError)
@@ -88,6 +109,9 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			}
 
 			const originalContent: string = await fs.readFile(absolutePath, "utf-8")
+			const currentFileHash = computeFileHash(originalContent)
+			const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
+			const isStaleBase = !!(trackedVersion && trackedVersion.hash !== currentFileHash)
 
 			// Apply the diff to the original content
 			const parsedStartLine = parseInt(params.diff.match(/:start_line:\s*(\d+)/i)?.[1] ?? "")
@@ -101,17 +125,11 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			}
 
 			if (!diffResult.success) {
-				task.consecutiveMistakeCount++
-				task.didToolFailInCurrentTurn = true
+				const currentCount = (task.consecutiveMistakeCountForApplyDiff.get(normalizedRelPath) || 0) + 1
+				task.consecutiveMistakeCountForApplyDiff.set(normalizedRelPath, currentCount)
 				failedHashes.add(patchFingerprint)
-				task.failedDiffHashesForPath?.set(relPath, failedHashes)
+				task.failedDiffHashesForPath?.set(normalizedRelPath, failedHashes)
 
-				const currentCount = (task.consecutiveMistakeCountForApplyDiff.get(relPath) || 0) + 1
-				task.consecutiveMistakeCountForApplyDiff.set(relPath, currentCount)
-				const mistakeLimit = task.consecutiveMistakeLimit || 3
-				if (currentCount >= mistakeLimit) {
-					task.consecutiveMistakeCount = Math.max(task.consecutiveMistakeCount, mistakeLimit)
-				}
 				let formattedError = ""
 
 				if (diffResult.failParts && diffResult.failParts.length > 0) {
@@ -133,6 +151,61 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 					}${errorDetails ? `\n\nDetails:\n${errorDetails}` : ""}\n</error_details>`
 				}
 
+				const failureKind = classifyEditFailure({
+					errorMessage: diffResult.error || formattedError,
+					isIdenticalRetry: false,
+					fileExists: true,
+					isAccessAllowed: true,
+					isStaleBase,
+				})
+				const isRecoverable = isRecoverableEditFailure(failureKind)
+
+				if (isRecoverable && currentCount < MAX_EDIT_RECOVERY_ATTEMPTS) {
+					logEditRecoveryTelemetry({
+						taskId: task.taskId,
+						tool: "apply_diff",
+						file: normalizedRelPath,
+						editAttempt: currentCount,
+						errorKind: failureKind,
+						baseFileHash: trackedVersion?.hash,
+						currentFileHash,
+						recoveryAction: "auto_retry_context",
+						mistakeCount: task.consecutiveMistakeCount,
+					})
+					const recoveryFeedback = buildRecoveryFeedback({
+						relPath: normalizedRelPath,
+						failureKind,
+						attemptNumber: currentCount,
+						maxAttempts: MAX_EDIT_RECOVERY_ATTEMPTS,
+						rawError: formattedError,
+						diskContent: originalContent,
+						targetLineHint: isNaN(parsedStartLine) ? undefined : parsedStartLine,
+						searchSnippet: diffContent,
+						baseHash: trackedVersion?.hash,
+						currentHash: currentFileHash,
+					})
+					pushToolResult(recoveryFeedback)
+					return
+				}
+
+				task.consecutiveMistakeCount++
+				task.didToolFailInCurrentTurn = true
+				const mistakeLimit = task.consecutiveMistakeLimit || 3
+				if (currentCount >= mistakeLimit) {
+					task.consecutiveMistakeCount = Math.max(task.consecutiveMistakeCount, mistakeLimit)
+				}
+				logEditRecoveryTelemetry({
+					taskId: task.taskId,
+					tool: "apply_diff",
+					file: normalizedRelPath,
+					editAttempt: currentCount,
+					errorKind: failureKind,
+					baseFileHash: trackedVersion?.hash,
+					currentFileHash,
+					recoveryAction: currentCount >= mistakeLimit ? "escalate_to_mistake_limit" : "escalate_to_diff_error",
+					mistakeCount: task.consecutiveMistakeCount,
+				})
+
 				if (currentCount >= 2) {
 					await task.say("diff_error", formattedError)
 				}
@@ -144,8 +217,15 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			}
 
 			task.consecutiveMistakeCount = 0
-			task.consecutiveMistakeCountForApplyDiff.delete(relPath)
-			task.failedDiffHashesForPath?.delete(relPath)
+			if (task.clearEditFailureState) {
+				task.clearEditFailureState(normalizedRelPath)
+			} else {
+				task.consecutiveMistakeCountForApplyDiff?.delete(relPath)
+				task.consecutiveMistakeCountForApplyDiff?.delete(normalizedRelPath)
+				task.failedDiffHashesForPath?.delete(relPath)
+				task.failedDiffHashesForPath?.delete(normalizedRelPath)
+			}
+			task.recordFileReadVersion?.(normalizedRelPath, diffResult.content)
 
 			// Generate backend-unified diff for display in chat/webview
 			const unifiedPatchRaw = formatResponse.createPrettyPatch(relPath, originalContent, diffResult.content)

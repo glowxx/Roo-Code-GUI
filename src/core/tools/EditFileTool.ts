@@ -14,6 +14,16 @@ import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import {
+	classifyEditFailure,
+	isRecoverableEditFailure,
+	buildRecoveryFeedback,
+	computeFileHash,
+	normalizeTaskFilePath,
+	MAX_EDIT_RECOVERY_ATTEMPTS,
+	logEditRecoveryTelemetry,
+	EditFailureKind,
+} from "./edit-recovery/EditRecoveryService"
 
 interface EditFileParams {
 	file_path: string
@@ -170,28 +180,85 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			await task.ask("tool", JSON.stringify(sharedMessageProps), false).catch(() => {})
 		}
 
-		const recordFailureForPathAndMaybeEscalate = async (relPath: string, formattedError: string): Promise<void> => {
-			const currentCount = (task.consecutiveMistakeCountForEditFile.get(relPath) || 0) + 1
-			task.consecutiveMistakeCountForEditFile.set(relPath, currentCount)
+		const recordFailureForPathAndMaybeEscalate = async (
+			relPath: string,
+			formattedError: string,
+			failureKind?: EditFailureKind,
+			contentForSlice?: string,
+		): Promise<boolean> => {
+			const normalizedRelPath = normalizeTaskFilePath(relPath)
+			const currentCount = (task.consecutiveMistakeCountForEditFile.get(normalizedRelPath) || 0) + 1
+			task.consecutiveMistakeCountForEditFile.set(normalizedRelPath, currentCount)
 
 			const oldLF = normalizeToLF(old_string ?? "")
 			const newLF = normalizeToLF(new_string ?? "")
 			const expectedReplacements = Math.max(1, expected_replacements)
 			if (oldLF || newLF) {
 				const editFingerprint = `${oldLF}::-->::${newLF}:${expectedReplacements}`
-				const failedHashes = task.failedDiffHashesForPath?.get(relPath) || new Set<string>()
+				const failedHashes = task.failedDiffHashesForPath?.get(normalizedRelPath) || new Set<string>()
 				failedHashes.add(editFingerprint)
-				task.failedDiffHashesForPath?.set(relPath, failedHashes)
+				task.failedDiffHashesForPath?.set(normalizedRelPath, failedHashes)
 			}
 
+			const isRecoverable = failureKind ? isRecoverableEditFailure(failureKind) : false
+
+			if (isRecoverable && currentCount < MAX_EDIT_RECOVERY_ATTEMPTS && contentForSlice) {
+				const currentFileHash = computeFileHash(contentForSlice)
+				const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
+				logEditRecoveryTelemetry({
+					taskId: task.taskId,
+					tool: "edit_file",
+					file: normalizedRelPath,
+					editAttempt: currentCount,
+					errorKind: failureKind!,
+					baseFileHash: trackedVersion?.hash,
+					currentFileHash,
+					recoveryAction: "auto_retry_context",
+					mistakeCount: task.consecutiveMistakeCount,
+				})
+				const recoveryFeedback = buildRecoveryFeedback({
+					relPath: normalizedRelPath,
+					failureKind: failureKind!,
+					attemptNumber: currentCount,
+					maxAttempts: MAX_EDIT_RECOVERY_ATTEMPTS,
+					rawError: formattedError,
+					diskContent: contentForSlice,
+					searchSnippet: old_string,
+					baseHash: trackedVersion?.hash,
+					currentHash: currentFileHash,
+				})
+				task.recordToolError("edit_file", formattedError)
+				await finalizePartialToolAskIfNeeded(relPath)
+				pushToolResult(recoveryFeedback)
+				return true
+			}
+
+			task.consecutiveMistakeCount++
+			task.didToolFailInCurrentTurn = true
 			const mistakeLimit = task.consecutiveMistakeLimit || 3
 			if (currentCount >= mistakeLimit) {
 				task.consecutiveMistakeCount = Math.max(task.consecutiveMistakeCount, mistakeLimit)
+			}
+			if (failureKind && contentForSlice) {
+				const currentFileHash = computeFileHash(contentForSlice)
+				const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
+				logEditRecoveryTelemetry({
+					taskId: task.taskId,
+					tool: "edit_file",
+					file: normalizedRelPath,
+					editAttempt: currentCount,
+					errorKind: failureKind,
+					baseFileHash: trackedVersion?.hash,
+					currentFileHash,
+					recoveryAction: currentCount >= mistakeLimit ? "escalate_to_mistake_limit" : "escalate_to_diff_error",
+					mistakeCount: task.consecutiveMistakeCount,
+				})
 			}
 
 			if (currentCount >= 2) {
 				await task.say("diff_error", formattedError)
 			}
+			return false
 		}
 
 		try {
@@ -251,8 +318,6 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 					// Normalize line endings to LF for matching
 					currentContentLF = normalizeToLF(currentContent)
 				} catch (error) {
-					task.consecutiveMistakeCount++
-					task.didToolFailInCurrentTurn = true
 					const errorDetails = error instanceof Error ? error.message : String(error)
 					const formattedError = `Failed to read file: ${absolutePath}\n\n<error_details>\nRead error: ${errorDetails}\n\nRecovery suggestions:\n1. Verify the file exists and is readable\n2. Check file permissions\n3. If the file may have changed, use read_file to confirm its current contents\n</error_details>`
 					await finalizePartialToolAskIfNeeded(relPath)
@@ -264,8 +329,6 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 
 				// Check if trying to create a file that already exists
 				if (old_string === "") {
-					task.consecutiveMistakeCount++
-					task.didToolFailInCurrentTurn = true
 					const formattedError = `File already exists: ${absolutePath}\n\n<error_details>\nYou provided an empty old_string, which indicates file creation, but the target file already exists.\n\nRecovery suggestions:\n1. To modify an existing file, provide a non-empty old_string that matches the current file contents\n2. Use read_file to confirm the exact text to match\n3. If you intended to overwrite the entire file, use write_to_file instead\n</error_details>`
 					await finalizePartialToolAskIfNeeded(relPath)
 					await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
@@ -280,8 +343,6 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 					isNewFile = true
 				} else {
 					// Trying to replace in non-existent file
-					task.consecutiveMistakeCount++
-					task.didToolFailInCurrentTurn = true
 					const formattedError = `File does not exist at path: ${absolutePath}\n\n<error_details>\nThe specified file could not be found, so the replacement could not be performed.\n\nRecovery suggestions:\n1. Verify the file path is correct\n2. If you intended to create a new file, set old_string to an empty string\n3. Use list_files or read_file to confirm the correct path\n</error_details>`
 					// Match apply_diff behavior: surface missing file via the generic error channel.
 					await finalizePartialToolAskIfNeeded(relPath)
@@ -293,30 +354,36 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 				}
 			}
 
+			const normalizedRelPath = normalizeTaskFilePath(relPath)
 			const oldLF = normalizeToLF(old_string)
 			const newLF = normalizeToLF(new_string)
 			const expectedReplacements = Math.max(1, expected_replacements)
 
 			const editFingerprint = `${oldLF}::-->::${newLF}:${expectedReplacements}`
-			const failedHashes = task.failedDiffHashesForPath?.get(relPath) || new Set<string>()
+			const failedHashes = task.failedDiffHashesForPath?.get(normalizedRelPath) || new Set<string>()
 
 			if (failedHashes.has(editFingerprint)) {
-				task.consecutiveMistakeCount++
-				task.didToolFailInCurrentTurn = true
 				const formattedError = `Failed to edit file: ${absolutePath}\n\n<error_details>\nIDENTICAL FAILED EDIT RETRY: You submitted the exact same old_string/new_string replacement that previously failed for this file.\n\nRecovery suggestions:\n1. Use read_file to inspect the current file content, indentation, and line breaks.\n2. Ensure old_string matches the target content uniquely.\n3. Modify old_string or provide more surrounding context before retrying.\n</error_details>`
 				await finalizePartialToolAskIfNeeded(relPath)
-				await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
+				await recordFailureForPathAndMaybeEscalate(
+					relPath,
+					formattedError,
+					EditFailureKind.NON_RECOVERABLE_IDENTICAL_RETRY,
+					currentContent ?? "",
+				)
 				task.recordToolError("edit_file", formattedError)
 				pushToolResult(formattedError)
 				return
 			}
 
+			const currentFileHash = currentContent ? computeFileHash(currentContent) : ""
+			const trackedVersion = task.getFileTrackedVersion?.(normalizedRelPath)
+			const isStaleBase = !!(trackedVersion && currentFileHash && trackedVersion.hash !== currentFileHash)
+
 			// Validate replacement operation
 			if (!isNewFile && currentContentLF !== null) {
 				// Validate that old_string and new_string are different (normalized for EOL)
 				if (oldLF === newLF) {
-					task.consecutiveMistakeCount++
-					task.didToolFailInCurrentTurn = true
 					const formattedError = `No changes to apply for file: ${absolutePath}\n\n<error_details>\nThe provided old_string and new_string are identical (after normalizing line endings), so there is nothing to change.\n\nRecovery suggestions:\n1. Update new_string to the intended replacement text\n2. If you intended to verify file state only, use read_file instead\n</error_details>`
 					await finalizePartialToolAskIfNeeded(relPath)
 					await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
@@ -347,11 +414,24 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 							// Error reporting
 							const anyMatches = exactOccurrences > 0 || wsOccurrences > 0 || tokenOccurrences > 0
 							if (!anyMatches) {
-								task.consecutiveMistakeCount++
-								task.didToolFailInCurrentTurn = true
 								const formattedError = `No match found in file: ${absolutePath}\n\n<error_details>\nThe provided old_string could not be found using exact, whitespace-tolerant, or token-based matching.\n\nRecovery suggestions:\n1. Use read_file to confirm the file's current contents\n2. Ensure old_string matches exactly (including whitespace/indentation and line endings)\n3. Provide more surrounding context in old_string to make the match unique\n4. If the file has changed since you constructed old_string, re-read and retry\n</error_details>`
+								const failureKind = classifyEditFailure({
+									errorMessage: "No match found",
+									isIdenticalRetry: false,
+									fileExists: true,
+									isAccessAllowed: true,
+									isStaleBase,
+								})
+								const recovered = await recordFailureForPathAndMaybeEscalate(
+									relPath,
+									formattedError,
+									failureKind,
+									currentContent ?? "",
+								)
+								if (recovered) {
+									return
+								}
 								await finalizePartialToolAskIfNeeded(relPath)
-								await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
 								task.recordToolError("edit_file", formattedError)
 								pushToolResult(formattedError)
 								return
@@ -359,21 +439,49 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 
 							// If exact matching finds occurrences but doesn't match expected, keep the existing message
 							if (exactOccurrences > 0) {
-								task.consecutiveMistakeCount++
-								task.didToolFailInCurrentTurn = true
 								const formattedError = `Occurrence count mismatch in file: ${absolutePath}\n\n<error_details>\nExpected ${expectedReplacements} occurrence(s) but found ${exactOccurrences} exact match(es).\n\nRecovery suggestions:\n1. Provide a more specific old_string so it matches exactly once\n2. If you intend to replace all occurrences, set expected_replacements to ${exactOccurrences}\n3. Use read_file to confirm the exact text and counts\n</error_details>`
+								const failureKind = classifyEditFailure({
+									errorMessage: "Occurrence count mismatch",
+									isIdenticalRetry: false,
+									fileExists: true,
+									isAccessAllowed: true,
+									isStaleBase,
+									ambiguousMatches: exactOccurrences > 1,
+								})
+								const recovered = await recordFailureForPathAndMaybeEscalate(
+									relPath,
+									formattedError,
+									failureKind,
+									currentContent ?? "",
+								)
+								if (recovered) {
+									return
+								}
 								await finalizePartialToolAskIfNeeded(relPath)
-								await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
 								task.recordToolError("edit_file", formattedError)
 								pushToolResult(formattedError)
 								return
 							}
 
-							task.consecutiveMistakeCount++
-							task.didToolFailInCurrentTurn = true
 							const formattedError = `Occurrence count mismatch in file: ${absolutePath}\n\n<error_details>\nExpected ${expectedReplacements} occurrence(s), but matching found ${wsOccurrences} (whitespace-tolerant) and ${tokenOccurrences} (token-based).\n\nRecovery suggestions:\n1. Provide more surrounding context in old_string to make the match unique\n2. If multiple replacements are intended, adjust expected_replacements to the intended count\n3. Use read_file to confirm the current file contents and refine the match\n</error_details>`
+							const failureKind = classifyEditFailure({
+								errorMessage: "Occurrence count mismatch",
+								isIdenticalRetry: false,
+								fileExists: true,
+								isAccessAllowed: true,
+								isStaleBase,
+								ambiguousMatches: wsOccurrences > 1 || tokenOccurrences > 1,
+							})
+							const recovered = await recordFailureForPathAndMaybeEscalate(
+								relPath,
+								formattedError,
+								failureKind,
+								currentContent ?? "",
+							)
+							if (recovered) {
+								return
+							}
 							await finalizePartialToolAskIfNeeded(relPath)
-							await recordFailureForPathAndMaybeEscalate(relPath, formattedError)
 							task.recordToolError("edit_file", formattedError)
 							pushToolResult(formattedError)
 							return
@@ -399,8 +507,15 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			}
 
 			task.consecutiveMistakeCount = 0
-			task.consecutiveMistakeCountForEditFile.delete(relPath)
-			task.failedDiffHashesForPath?.delete(relPath)
+			if (task.clearEditFailureState) {
+				task.clearEditFailureState(normalizedRelPath)
+			} else {
+				task.consecutiveMistakeCountForEditFile?.delete(relPath)
+				task.consecutiveMistakeCountForEditFile?.delete(normalizedRelPath)
+				task.failedDiffHashesForPath?.delete(relPath)
+				task.failedDiffHashesForPath?.delete(normalizedRelPath)
+			}
+			task.recordFileReadVersion?.(normalizedRelPath, newContent)
 
 			// Initialize diff view
 			task.diffViewProvider.editType = isNewFile ? "create" : "modify"
@@ -482,7 +597,17 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 
 			// Track file edit operation
 			if (relPath) {
+				const normalizedRelPath = normalizeTaskFilePath(relPath)
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+				if (task.clearEditFailureState) {
+					task.clearEditFailureState(normalizedRelPath)
+				} else {
+					task.consecutiveMistakeCountForEditFile?.delete(relPath)
+					task.consecutiveMistakeCountForEditFile?.delete(normalizedRelPath)
+					task.failedDiffHashesForPath?.delete(relPath)
+					task.failedDiffHashesForPath?.delete(normalizedRelPath)
+				}
+				task.recordFileReadVersion?.(normalizedRelPath, newContent)
 			}
 
 			task.didEditFile = true

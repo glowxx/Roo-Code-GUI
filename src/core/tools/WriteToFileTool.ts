@@ -171,6 +171,8 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 			if (relPath) {
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+				task.clearEditFailureState?.(relPath)
+				task.recordFileReadVersion?.(relPath, newContent)
 			}
 
 			task.didEditFile = true

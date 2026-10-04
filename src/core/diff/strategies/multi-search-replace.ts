@@ -321,17 +321,27 @@ export class MultiSearchReplaceDiffStrategy implements DiffStrategy {
 			searchContent = this.unescapeMarkers(searchContent)
 			replaceContent = this.unescapeMarkers(replaceContent)
 
-			// Defensive cleanup: if :start_line: or dashed separator leaked into searchContent, strip them
-			const leakedStartLine = searchContent.match(/^:start_line:\s*(\d+)[:\s]*\r?\n/)
-			if (leakedStartLine) {
-				if (startLine === 0) {
-					startLine = parseInt(leakedStartLine[1], 10)
+			// Defensive cleanup: strip leaked diff markers (:start_line:, :end_line:, dashed separators) from searchContent
+			while (true) {
+				const leakedStartLine = searchContent.match(/^:start_line:\s*(\d+)[:\s]*\r?\n/i)
+				if (leakedStartLine) {
+					if (startLine === 0) {
+						startLine = parseInt(leakedStartLine[1], 10)
+					}
+					searchContent = searchContent.slice(leakedStartLine[0].length)
+					continue
 				}
-				searchContent = searchContent.slice(leakedStartLine[0].length)
-			}
-			const leakedSeparator = searchContent.match(/^-------\s*\r?\n/)
-			if (leakedSeparator) {
-				searchContent = searchContent.slice(leakedSeparator[0].length)
+				const leakedEndLine = searchContent.match(/^:end_line:\s*(\d+)[:\s]*\r?\n/i)
+				if (leakedEndLine) {
+					searchContent = searchContent.slice(leakedEndLine[0].length)
+					continue
+				}
+				const leakedSeparator = searchContent.match(/^[-=]{3,}\s*\r?\n/)
+				if (leakedSeparator) {
+					searchContent = searchContent.slice(leakedSeparator[0].length)
+					continue
+				}
+				break
 			}
 
 			// Strip line numbers from search and replace content if every line starts with a line number

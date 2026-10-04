@@ -2012,7 +2012,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 						id: selectedModelId,
 						provider: selectedProvider,
 						name: cleanModelDisplayName(selectedModelId),
-						isCustom: Boolean(message.isCustomModel),
+						isCustom: Boolean((message as any).isCustomModel),
 						reasoningEffort: selectedReasoningEffort,
 						timestamp: Date.now(),
 					}
