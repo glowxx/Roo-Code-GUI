@@ -553,7 +553,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							break
 						}
 						case "completion_result": {
-							const isEvaluating = approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
+							const isEvaluating = messageToHandle.approvalState === "EVALUATING"
 							const hasTrailingSafetyWarning = messages
 								.slice(messages.lastIndexOf(messageToHandle) + 1)
 								.some((m) => m.say === "command_safety_warning")
@@ -561,13 +561,25 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								messageToHandle.approvalState === "USER_DECISION_REQUIRED" ||
 								(!messageToHandle.isAnswered && hasTrailingSafetyWarning && !isEvaluating)
 
+							const isBlockedOutcome =
+								currentTaskItem?.status === "blocked" ||
+								currentTaskItem?.isBlockedOutcome === true ||
+								Boolean(
+									messageToHandle.text &&
+										/status:\s*BLOCKED|concluded as BLOCKED|item\(s\) marked 'blocked'/i.test(
+											messageToHandle.text,
+										),
+								)
+
 							// Only play celebration sound if task completion is confirmed (not evaluating, denied, or requiring user decision)
-							// and there are no queued messages.
+							// and there are no queued messages, and not a blocked outcome.
 							if (
 								!isPartial &&
 								messageQueue.length === 0 &&
 								!isEvaluating &&
+								messageToHandle.approvalState !== "EVALUATING" &&
 								!isUserDecision &&
+								!isBlockedOutcome &&
 								messageToHandle.approvalState !== "DENIED"
 							) {
 								if (!messageToHandle.ts || lastCelebratedMsgTsRef.current !== messageToHandle.ts) {
@@ -620,10 +632,22 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						case "api_req_rate_limit_wait":
 							setSendingDisabled(true)
 							break
-						case "api_req_started":
+						case "api_req_started": {
 							// Clear button state when a new API request starts
 							// This fixes buttons persisting when the task continues
-							setSendingDisabled(true)
+							let reqData: any
+							try {
+								reqData = JSON.parse(lastMessage.text || "{}")
+							} catch {}
+							const isCancelled =
+								reqData?.cancelReason !== undefined ||
+								currentTaskItem?.status === "interrupted" ||
+								currentTaskItem?.status === "completed"
+							if (!isCancelled && reqData?.cost === undefined) {
+								setSendingDisabled(true)
+							} else {
+								setSendingDisabled(false)
+							}
 							// Note: Do NOT clear selectedImages here. This handler fires
 							// every time the backend starts an API call, which would wipe
 							// images the user has pasted while the chat is in progress.
@@ -634,13 +658,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setPrimaryButtonText(undefined)
 							setSecondaryButtonText(undefined)
 							break
+						}
 						case "api_req_finished":
 						case "error":
 						case "text":
 						case "command_output":
 						case "mcp_server_request_started":
 						case "mcp_server_response":
-						case "completion_result":
 							if (
 								!isPartial &&
 								messageQueue.length === 0 &&
@@ -654,6 +678,32 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								}
 							}
 							break
+						case "completion_result": {
+							const isBlockedOutcome =
+								currentTaskItem?.status === "blocked" ||
+								currentTaskItem?.isBlockedOutcome === true ||
+								Boolean(
+									lastMessage.text &&
+										/status:\s*BLOCKED|concluded as BLOCKED|item\(s\) marked 'blocked'/i.test(
+											lastMessage.text,
+										),
+								)
+
+							if (
+								!isPartial &&
+								messageQueue.length === 0 &&
+								!isBlockedOutcome &&
+								lastMessage.approvalState === "AUTO_APPROVED"
+							) {
+								if (!lastMessage.ts || lastCelebratedMsgTsRef.current !== lastMessage.ts) {
+									if (lastMessage.ts) {
+										lastCelebratedMsgTsRef.current = lastMessage.ts
+									}
+									playSound("celebration")
+								}
+							}
+							break
+						}
 					}
 					break
 			}
@@ -669,6 +719,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setSecondaryButtonText(undefined)
 		}
 	}, [messages.length])
+
+	useEffect(() => {
+		if (
+			currentTaskItem?.status === "interrupted" ||
+			currentTaskItem?.status === "completed" ||
+			currentTaskItem?.status === "blocked"
+		) {
+			setSendingDisabled(false)
+		}
+	}, [currentTaskItem?.status])
 
 	useEffect(() => {
 		setExpandedRows({})
@@ -779,6 +839,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	useEffect(() => () => {
 		if (stopAckTimeoutRef.current) clearTimeout(stopAckTimeoutRef.current)
 	}, [])
+	const isInterruptedOrStopped = useMemo(() => {
+		return (
+			currentTaskItem?.status === "interrupted" ||
+			currentTaskItem?.status === "completed" ||
+			currentTaskItem?.status === "blocked"
+		)
+	}, [currentTaskItem?.status])
 
 	const isTaskActive = useMemo(() => {
 		if (!currentTaskItem) {
@@ -879,20 +946,32 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					setShowRetiredProviderWarning(true)
 					return
 				}
-
-				// Queue message if:
-				// - Task is busy (sendingDisabled)
-				// - API request in progress (isStreaming)
-				// - Queue has items (preserve message order during drain)
+				// Queue message ONLY if task actively owns execution and cannot accept new turn:
+				// - Queue has items (preserve FIFO order)
+				// - API streaming is actively in progress (isStreaming)
 				// - Command is running (command_output) - user's message should be queued for AI, not sent to terminal
-				if (
-					sendingDisabled ||
-					isStreaming ||
+				// - Task is busy (sendingDisabled), UNLESS the task is stopped/interrupted/completed/blocked
+				const shouldQueue =
 					messageQueue.length > 0 ||
-					clineAskRef.current === "command_output"
-				) {
+					isStreaming ||
+					clineAskRef.current === "command_output" ||
+					(sendingDisabled && !isInterruptedOrStopped)
+
+				if (shouldQueue) {
 					try {
-						console.log("queueMessage", text, images)
+						const queueDecisionSource =
+							messageQueue.length > 0
+								? "QUEUE_NON_EMPTY"
+								: isStreaming
+									? "STREAMING"
+									: clineAskRef.current === "command_output"
+										? "COMMAND_OUTPUT"
+										: "SENDING_DISABLED"
+						console.log(
+							`[handleSendMessage] Queueing message (decision source: ${queueDecisionSource}, sendingDisabled=${sendingDisabled}, isInterruptedOrStopped=${isInterruptedOrStopped})`,
+							text,
+							images,
+						)
 						deleteDraft(cwd || "global", currentChatKeyRef.current)
 						vscode.postMessage({ type: "queueMessage", text, images, taskId: currentTaskItem?.id })
 						setInputValue("")
@@ -967,6 +1046,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			messageQueue.length,
 			apiConfiguration?.apiProvider,
 			currentTaskItem?.id,
+			currentTaskItem?.status,
 			cwd,
 		], // messagesRef and clineAskRef are stable
 	)
@@ -1245,6 +1325,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						stopRequestIdRef.current = null
 						setIsStopping(false)
 						setStopError(message.success !== true)
+						setSendingDisabled(false)
 					}
 					break
 				case "action":
@@ -1973,9 +2054,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				return
 			}
 
+			const canSend =
+				(!sendingDisabled ||
+					currentTaskItem?.status === "interrupted" ||
+					currentTaskItem?.status === "completed" ||
+					currentTaskItem?.status === "blocked") &&
+				!isProfileDisabled &&
+				hasInput
+
 			if (enableButtons && primaryButtonText) {
 				handlePrimaryButtonClick(inputValue, selectedImages)
-			} else if (!sendingDisabled && !isProfileDisabled && hasInput) {
+			} else if (canSend) {
 				handleSendMessage(inputValue, selectedImages)
 			}
 		},
@@ -2033,7 +2122,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						cacheReads={apiMetrics.totalCacheReads}
 						parentTaskId={currentTaskItem?.parentTaskId}
 						contextTokens={apiMetrics.contextTokens}
-						buttonsDisabled={sendingDisabled}
+						buttonsDisabled={(sendingDisabled && !isInterruptedOrStopped) || isCondensing}
 						isCondensing={isCondensing}
 						handleCondenseContext={handleCondenseContext}
 						todos={latestTodos}
@@ -2235,14 +2324,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				ref={textAreaRef}
 				inputValue={inputValue}
 				setInputValue={setInputValue}
-				sendingDisabled={sendingDisabled || isProfileDisabled}
+				sendingDisabled={(sendingDisabled && !isInterruptedOrStopped) || isProfileDisabled}
 				selectApiConfigDisabled={isStreaming}
 				placeholderText={placeholderText}
 				selectedImages={selectedImages}
 				setSelectedImages={setSelectedImages}
 				onSend={() => handleSendMessage(inputValue, selectedImages)}
 				onResume={
-					clineAsk === "resume_task" &&
+					(clineAsk === "resume_task" || currentTaskItem?.status === "interrupted") &&
 					currentTaskItem?.status !== "delegated" &&
 					!currentTaskItem?.awaitingChildId
 						? handleResumeTask

@@ -979,6 +979,72 @@ describe("ChatView - Message Queueing Tests", () => {
 			}),
 		)
 	})
+
+	it("sends message directly as askResponse after user stops task, without queueing", async () => {
+		const { getByTestId } = renderChatView()
+
+		// Hydrate state simulating a task stopped by user:
+		// status is interrupted, last message is api_req_started with cancelReason user_cancelled
+		mockPostMessage({
+			currentTaskId: "task-stopped-ui",
+			currentTaskItem: {
+				id: "task-stopped-ui",
+				ts: Date.now() - 3000,
+				task: "Initial prompt",
+				status: "interrupted",
+			},
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 3000,
+					text: "Initial prompt",
+				},
+				{
+					type: "say",
+					say: "api_req_started",
+					ts: Date.now() - 1000,
+					text: JSON.stringify({ request: "cancelled", cancelReason: "user_cancelled" }),
+				},
+			],
+			messageQueue: [],
+		})
+
+		await waitFor(() => {
+			expect(getByTestId("chat-textarea")).toBeInTheDocument()
+		})
+
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 50))
+		})
+
+		vi.mocked(vscode.postMessage).mockClear()
+
+		const chatTextArea = getByTestId("chat-textarea")
+		const input = chatTextArea.querySelector("input")! as HTMLInputElement
+
+		await act(async () => {
+			fireEvent.change(input, { target: { value: "teraz zrob X" } })
+			fireEvent.keyDown(input, { key: "Enter", code: "Enter" })
+		})
+
+		// Must send immediately as askResponse (new user turn) without queueing
+		await waitFor(() => {
+			expect(vscode.postMessage).toHaveBeenCalledWith({
+				type: "askResponse",
+				askResponse: "messageResponse",
+				text: "teraz zrob X",
+				images: [],
+				taskId: "task-stopped-ui",
+			})
+		})
+
+		expect(vscode.postMessage).not.toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "queueMessage",
+			}),
+		)
+	})
 })
 
 describe("ChatView - Context Condensing Indicator Tests", () => {

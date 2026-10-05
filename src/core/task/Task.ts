@@ -195,7 +195,7 @@ export interface TaskOptions extends CreateTaskOptions {
 	initialTodos?: TodoItem[]
 	workspacePath?: string
 	/** Initial status for the task's history item (e.g., "active" for child tasks) */
-	initialStatus?: "active" | "delegated" | "completed" | "interrupted"
+	initialStatus?: "active" | "delegated" | "completed" | "interrupted" | "blocked"
 	/** Initial in-memory clineMessages to prevent empty-state flicker during rehydration */
 	initialClineMessages?: ClineMessage[]
 }
@@ -268,6 +268,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private lastCompletionFingerprint: string | null = null
 	private consecutiveIdenticalCompletionCount: number = 0
 	private lastCompletionResultText?: string
+	public lastCompletionIsBlockedOutcome?: boolean
+	private lastDeniedActionSignature?: string
+	private consecutiveIdenticalDenialsCount: number = 0
 	private approvalOrchestrator: ApprovalOrchestrator = new ApprovalOrchestrator()
 	private lastFailedRequestFingerprint?: string
 	private consecutiveIdenticalFailures: number = 0
@@ -410,16 +413,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	clearEditFailureState(relPath?: string): void {
 		if (relPath) {
 			const normalized = normalizeTaskFilePath(relPath)
-			this.consecutiveMistakeCountForApplyDiff.delete(normalized)
-			this.consecutiveMistakeCountForApplyDiff.delete(relPath)
-			this.consecutiveMistakeCountForEditFile.delete(normalized)
-			this.consecutiveMistakeCountForEditFile.delete(relPath)
+			this.consecutiveMistakeCountForApplyDiff?.delete(normalized)
+			this.consecutiveMistakeCountForApplyDiff?.delete(relPath)
+			this.consecutiveMistakeCountForEditFile?.delete(normalized)
+			this.consecutiveMistakeCountForEditFile?.delete(relPath)
 			this.failedDiffHashesForPath?.delete(normalized)
 			this.failedDiffHashesForPath?.delete(relPath)
 		} else {
 			this.consecutiveMistakeCount = 0
-			this.consecutiveMistakeCountForApplyDiff.clear()
-			this.consecutiveMistakeCountForEditFile.clear()
+			this.consecutiveMistakeCountForApplyDiff?.clear()
+			this.consecutiveMistakeCountForEditFile?.clear()
 			this.failedDiffHashesForPath?.clear()
 			this.lastEditedPath = undefined
 		}
@@ -449,21 +452,26 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	public isDelegatingCompletion = false
 
 	public auditLifecycleState(event: string): void {
-		const provider = this.providerRef.deref()
-		const isProviderActive = typeof provider?.getCurrentTask === "function" ? provider.getCurrentTask()?.taskId === this.taskId : false
-		const finalMsg = this.clineMessages.at(-1)
-		const finalMessagePartial = finalMsg?.partial ?? false
+		const finalMessagePartial = this.clineMessages?.at(-1)?.partial ?? false
+		const isProviderActive =
+			typeof this.providerRef?.deref?.()?.getCurrentTask === "function"
+				? this.providerRef.deref()?.getCurrentTask()?.taskId === this.taskId
+				: false
 		console.log(
-			`[TaskLifecycleAudit] taskId=${this.taskId} event=${event} isTaskCompleted=${this.isTaskCompleted} isStreaming=${this.isStreaming} pendingAsk=${this.askResponse !== undefined ? false : Boolean(this.lastMessageTs)} pendingApproval=${Boolean(this.autoApprovalTimeoutRef)} pendingTools=${this.userMessageContent.length} finalMessagePartial=${finalMessagePartial} providerActiveTask=${isProviderActive} inputBlocked=${this.isStreaming || this.isTaskCompleted}`,
+			`[TaskLifecycleAudit] taskId=${this.taskId} event=${event} isTaskCompleted=${this.isTaskCompleted} isStreaming=${this.isStreaming} pendingAsk=${this.askResponse !== undefined ? false : Boolean(this.lastMessageTs)} pendingApproval=${Boolean(this.autoApprovalTimeoutRef)} pendingTools=${this.userMessageContent?.length ?? 0} finalMessagePartial=${finalMessagePartial} providerActiveTask=${isProviderActive} inputBlocked=${this.isStreaming || this.isTaskCompleted}`,
 		)
 	}
 
-	public markTaskCompleted(): void {
+	public markTaskCompleted(isBlocked?: boolean): void {
 		this.isTaskCompleted = true
 		this.isStreaming = false
 		this.isWaitingForFirstChunk = false
+		const blocked =
+			isBlocked ??
+			(this.lastCompletionIsBlockedOutcome || (this.todoList?.some((t) => t.status === "blocked") ?? false))
 		if (this.historyItem) {
-			this.historyItem.status = "completed"
+			this.historyItem.status = blocked ? "blocked" : "completed"
+			this.historyItem.isBlockedOutcome = blocked
 			this.historyItem.needsAttention = false
 		}
 
@@ -1483,7 +1491,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// - Final state is emitted when updates stop (trailing: true)
 			this.debouncedEmitTokenUsage(tokenUsage, this.toolUsage)
 
-			if (this.messageQueueService) {
+			if (this.messageQueueService && (!this.abort || this.messageQueueService.messages.length > 0)) {
 				historyItem.promptQueue = structuredClone(this.messageQueueService.messages)
 			}
 
@@ -1544,19 +1552,67 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const scopedPostfixDeny = /([a-z0-9_./\\-]+)\s+(?:już\s+)?nie\s+(?:ruszaj|zmieniaj|modyfikuj)/i
 		const normalizeScope = (scope: string) => scope.trim().replace(/^(backend|frontend)u$/i, "$1")
 
-		// Scoped modify in initial goal
-		const scopedModifyDenyMatch = initialGoal.match(
-			/(?:nie\s+modyfikuj\s+(?:plików\s+w|kodu\s+w)?|do\s+not\s+modify\s+(?:files\s+in|code\s+in)?)\s*([^\n.;]+)/i
-		)
-		const scopedModifyAllowMatch = initialGoal.match(
-			/(?:możesz\s+modyfikować\s+wyłącznie|modyfikuj\s+wyłącznie|you\s+may\s+modify\s+only|modify\s+only|write\s+authorization:\s*you\s+may\s+modify\s+only:?)\s*([^\n.;]+)/i
-		)
-		if (scopedModifyDenyMatch && scopedModifyDenyMatch[1]) {
-			const clean = scopedModifyDenyMatch[1].replace(/[\(\)].*$/, "").trim()
-			if (clean && !/^(kodu|code|all\s+files|wszystko)$/i.test(clean)) {
-				scopedWriteDenies.push(clean)
+		const sanitizeScopeCandidate = (scope: string) => {
+			let cleaned = scope
+				.replace(/^[\s*\->•:]+/, "")
+				.replace(/[\(\)].*$/, "")
+				.replace(/[.,:;!]+$/, "")
+				.trim()
+			if (cleaned.length > 4 && cleaned.endsWith("u")) {
+				cleaned = cleaned.slice(0, -1)
 			}
+			return cleaned.replace(/\\/g, "/").replace(/\/+$/, "").trim()
 		}
+		const isValidScopeCandidate = (s: string) =>
+			Boolean(
+				s &&
+				s !== ":" &&
+				!/^[:.,;!\s]+$/.test(s) &&
+				!/^(kodu|code|all\s+files|wszystko|pliki|files|everything\s+else.*)$/i.test(s) &&
+				!s.startsWith("everything else")
+			)
+
+		const extractScopesFromDirective = (text: string, pattern: RegExp): string[] => {
+			const found: string[] = []
+			for (const match of text.matchAll(pattern)) {
+				if (!match[1]) continue
+				const trimmedMatch = match[1].replace(/^[\s*•\-:]+/, "").trim()
+				if (!trimmedMatch) continue
+				const rawSection = trimmedMatch.split(
+					/\n\s*\n|\b(?:do\s+not|nie\s+(?:modyfikuj|commituj|zmieniaj|ruszaj)|zakaz|goals?|instructions?|everything\s+else)\b/i,
+				)[0]
+				const items = rawSection.split(/\n|;|,|\s+and\s+|\s+or\s+|\s+oraz\s+|\s+i\s+/)
+				for (const item of items) {
+					const tokens = item.trim().split(/\s+/)
+					for (const tok of tokens) {
+						const cleaned = sanitizeScopeCandidate(tok)
+						if (isValidScopeCandidate(cleaned) && !found.includes(cleaned)) {
+							if (cleaned.includes("/") || cleaned.includes(".") || /^[a-z0-9_-]+$/i.test(cleaned)) {
+								found.push(cleaned)
+							}
+						}
+					}
+				}
+			}
+			return found
+		}
+
+		// Scoped modify allowances in initial goal
+		const allowPattern =
+			/(?:możesz\s+modyfikować\s+wyłącznie|modyfikuj\s+wyłącznie|you\s+may\s+modify\s+only|modify\s+only|write\s+(?:authorization|access):\s*(?:you\s+may\s+modify\s+only)?|authorized\s+to\s+modify\s+only):?\s*([\s\S]*?)(?=(?:\n\s*\n(?!\s*[-*•\w/])|\b(?:do\s+not|nie\s+(?:modyfikuj|commituj|zmieniaj|ruszaj)|zakaz|goals?|instructions?|everything\s+else)\b|$))/gi
+		const extractedAllows = extractScopesFromDirective(initialGoal, allowPattern)
+		for (const a of extractedAllows) {
+			if (!scopedWriteAllows.includes(a)) scopedWriteAllows.push(a)
+		}
+
+		// Scoped modify denials in initial goal
+		const denyPattern =
+			/(?:nie\s+modyfikuj\s*(?:plików\s+w|kodu\s+w)?|do\s+not\s+modify\s*(?:files\s+in|code\s+in)?):?\s*([\s\S]*?)(?=(?:\n\s*\n(?!\s*[-*•\w/])|\b(?:modify\s+only|commit\s+only|change\s+only|modyfikuj\s+wyłącznie|do\s+not\s+stage|do\s+not\s+commit|goals?|instructions?)\b|$))/gi
+		const extractedDenies = extractScopesFromDirective(initialGoal, denyPattern)
+		for (const d of extractedDenies) {
+			if (!scopedWriteDenies.includes(d)) scopedWriteDenies.push(d)
+		}
+
 		const initialNoTouchMatches = [
 			...initialGoal.matchAll(new RegExp(scopedNoTouch.source, "gi")),
 			...initialGoal.matchAll(new RegExp(scopedPostfixDeny.source, "gi")),
@@ -1565,12 +1621,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			if (match[1] && !/^(?:code|files|anything|kodu|plików|niczego)$/i.test(match[1].trim())) {
 				const scope = normalizeScope(match[1])
 				if (!scopedWriteDenies.includes(scope)) scopedWriteDenies.push(scope)
-			}
-		}
-		if (scopedModifyAllowMatch && scopedModifyAllowMatch[1]) {
-			const clean = scopedModifyAllowMatch[1].replace(/[\(\)].*$/, "").trim()
-			if (clean && !/^(kodu|code|all\s+files|wszystko)$/i.test(clean)) {
-				scopedWriteAllows.push(clean)
 			}
 		}
 
@@ -1589,7 +1639,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		// Initial prompt flags
-		const explicitGlobalNoModify = globalNoModifyRegex.test(initialGoal)
+		const explicitGlobalNoModify = globalNoModifyRegex.test(initialGoal) && scopedWriteAllows.length === 0
 		let hasNoModify = explicitGlobalNoModify || (noModifyRegex.test(initialGoal) && scopedWriteDenies.length === 0 && scopedWriteAllows.length === 0)
 		let hasNoCommit = noCommitRegex.test(initialGoal) && !scopedCommitDenyMatch && !scopedCommitAllowMatch
 		let hasNoBuild = noBuildRegex.test(initialGoal)
@@ -1651,15 +1701,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 
 				// Check follow-up scoped write allowances/denials
-				const followUpModifyAllow = text.match(
-					/(?:możesz\s+modyfikować\s+wyłącznie|modyfikuj\s+wyłącznie|you\s+may\s+modify\s+only|modify\s+only|write\s+authorization:\s*you\s+may\s+modify\s+only:?)\s*([^\n.;]+)/i
-				)
-				if (followUpModifyAllow && followUpModifyAllow[1]) {
-					const cleanScope = followUpModifyAllow[1].replace(/[\(\)].*$/, "").trim()
-					if (cleanScope && !scopedWriteAllows.includes(cleanScope)) {
-						scopedWriteAllows.push(cleanScope)
-					}
+				const followUpAllows = extractScopesFromDirective(text, allowPattern)
+				for (const a of followUpAllows) {
+					if (!scopedWriteAllows.includes(a)) scopedWriteAllows.push(a)
 					hasNoModify = false
+				}
+				const followUpDenies = extractScopesFromDirective(text, denyPattern)
+				for (const d of followUpDenies) {
+					if (!scopedWriteDenies.includes(d)) scopedWriteDenies.push(d)
 				}
 
 				if (
@@ -1823,9 +1872,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const isWithinWorkspace = Boolean(
 			this.workspacePath &&
-				(this.cwd === this.workspacePath ||
-					this.cwd.startsWith(this.workspacePath + path.sep) ||
-					this.cwd.startsWith(this.workspacePath + "/"))
+				(() => {
+					const normCwd = process.platform === "win32" ? path.normalize(this.cwd).toLowerCase() : path.normalize(this.cwd)
+					const normWs = process.platform === "win32" ? path.normalize(this.workspacePath).toLowerCase() : path.normalize(this.workspacePath)
+					return normCwd === normWs || normCwd.startsWith(normWs + path.sep) || normCwd.startsWith(normWs + "/")
+				})()
 		)
 
 		let actionType: ApprovalActionType = "execute_command"
@@ -1961,14 +2012,22 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	private computeActionSignature(req: UnifiedApprovalRequest): string {
-		const targetStr =
+		let actionType = req.actionType as string
+		let targetStr =
 			req.target.command ||
 			req.target.filePath ||
 			req.target.mcpToolName ||
 			req.target.completionSummary ||
 			req.target.completionResult ||
 			""
-		return `${req.actionType}:${targetStr.trim()}`
+
+		// Group all file edit/write operations into a unified file_write category with normalized path
+		if (["write_to_file", "apply_diff", "insert_content", "edit_file", "save_file"].includes(actionType)) {
+			actionType = "file_write"
+			targetStr = targetStr.replace(/\\/g, "/").replace(/^\.?\//, "").toLowerCase().trim()
+		}
+
+		return `${actionType}:${targetStr.trim()}`
 	}
 
 	private computeCompletionFingerprint(req: UnifiedApprovalRequest): string {
@@ -2233,6 +2292,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					}
 				}
 
+				if (request.actionType === "attempt_completion") {
+					this.lastCompletionIsBlockedOutcome = Boolean(decisionResult.isBlockedOutcome)
+				}
+
 				if (decisionResult.auditLog) {
 					console.log(decisionResult.auditLog)
 				}
@@ -2378,8 +2441,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					if (this.deniedActionHistory.length > 5) {
 						this.deniedActionHistory.shift()
 					}
+					if (this.lastDeniedActionSignature === signature) {
+						this.consecutiveIdenticalDenialsCount = (this.consecutiveIdenticalDenialsCount || 0) + 1
+					} else {
+						this.consecutiveIdenticalDenialsCount = 1
+						this.lastDeniedActionSignature = signature
+					}
 					this.consecutiveReplanCount = (this.consecutiveReplanCount || 0) + 1
 					this.totalReplanCount = (this.totalReplanCount || 0) + 1
+
+					// Deterministic loop prevention: max 1 confirmation attempt for identical denied signature, stop before 3rd attempt
+					const isDeterministicDenialLoop = this.consecutiveIdenticalDenialsCount >= 2
+					const isThrashing = isDeterministicDenialLoop || isRepeated || this.consecutiveReplanCount > 3 || this.totalReplanCount > 10
 
 					const isHardConstraintOrBoundary =
 						decisionResult.decision === "HARD_BLOCK" ||
@@ -2387,7 +2460,35 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						decisionResult.isUserConstraintViolation === true ||
 						/nie\s+modyfikuj|do\s+not\s+modify|read-only|nie\s+commituj|do\s+not\s+commit|user\s+constraint/i.test(decisionResult.reason)
 
-					if (isHardConstraintOrBoundary) {
+					if (isDeterministicDenialLoop || (!isHardConstraintOrBoundary && isThrashing)) {
+						approval = { decision: "ask" }
+						if (askMsg) {
+							askMsg.approvalState = "USER_DECISION_REQUIRED"
+							this.updateClineMessage(askMsg)
+						}
+						if (request.actionType === "attempt_completion") {
+							const completionSayMsg = findLast(this.clineMessages, (m) => m.say === "completion_result")
+							if (completionSayMsg) {
+								completionSayMsg.approvalState = "USER_DECISION_REQUIRED"
+								this.updateClineMessage(completionSayMsg)
+							}
+						}
+						const loopReason = isDeterministicDenialLoop
+							? `Deterministic constraint loop prevented: Multiple attempts on '${signature}' were denied (${decisionResult.reason}). Cannot continue automatic retries. User decision or replanning required.`
+							: `Safety replan limit reached or action repeated (${decisionResult.reason}). Manual approval required.`
+
+						const warningPayload: SafetyEvaluationResult = {
+							isSafe: false,
+							riskLevel: decisionResult.risk || "high",
+							reason: loopReason,
+						}
+						await this.say("command_safety_warning", JSON.stringify(warningPayload))
+						this.lastMessageTs = askTs
+						this.interactiveAsk = askMsg
+						this.emit(RooCodeEventName.TaskInteractive, this.taskId)
+						const prov = this.providerRef.deref()
+						prov?.postMessageToWebview({ type: "interactionRequired" })
+					} else if (isHardConstraintOrBoundary) {
 						// HARD CONSTRAINT OR BOUNDARY VIOLATION:
 						// RUN MUST NEVER BE OFFERED IN AUTO MODE!
 						if (askMsg) {
@@ -2415,48 +2516,23 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 								: formatResponse.toolDeniedAndReplan(decisionResult.reason, guidance)
 						this.denyAsk({ text: payload })
 					} else {
-						// Loop / thrashing protection: repeated rejected action or consecutive limit > 3 or total > 10
-						const isThrashing = isRepeated || this.consecutiveReplanCount > 3 || this.totalReplanCount > 10
-
-						if (isThrashing) {
-							approval = { decision: "ask" }
-							if (askMsg) {
-								askMsg.approvalState = "USER_DECISION_REQUIRED"
-								this.updateClineMessage(askMsg)
-							}
-							if (request.actionType === "attempt_completion") {
-								const completionSayMsg = findLast(this.clineMessages, (m) => m.say === "completion_result")
-								if (completionSayMsg) {
-									completionSayMsg.approvalState = "USER_DECISION_REQUIRED"
-									this.updateClineMessage(completionSayMsg)
-								}
-							}
-							const warningPayload: SafetyEvaluationResult = {
-								isSafe: false,
-								riskLevel: decisionResult.risk || "high",
-								reason: `Safety replan limit reached or action repeated (${decisionResult.reason}). Manual approval required.`,
-							}
-							await this.say("command_safety_warning", JSON.stringify(warningPayload))
-							this.lastMessageTs = askTs
-						} else {
-							if (askMsg) {
-								askMsg.approvalState = "DENIED"
-								this.updateClineMessage(askMsg)
-							}
-							if (request.actionType === "attempt_completion") {
-								const completionSayMsg = findLast(this.clineMessages, (m) => m.say === "completion_result")
-								if (completionSayMsg) {
-									completionSayMsg.approvalState = "DENIED"
-									this.updateClineMessage(completionSayMsg)
-								}
-							}
-							approval = { decision: "deny" }
-							const payload =
-								decisionResult.decision === "HARD_BLOCK"
-									? formatResponse.toolHardBlocked(decisionResult.reason, decisionResult.replanGuidance)
-									: formatResponse.toolDeniedAndReplan(decisionResult.reason, decisionResult.replanGuidance)
-							this.denyAsk({ text: payload })
+						if (askMsg) {
+							askMsg.approvalState = "DENIED"
+							this.updateClineMessage(askMsg)
 						}
+						if (request.actionType === "attempt_completion") {
+							const completionSayMsg = findLast(this.clineMessages, (m) => m.say === "completion_result")
+							if (completionSayMsg) {
+								completionSayMsg.approvalState = "DENIED"
+								this.updateClineMessage(completionSayMsg)
+							}
+						}
+						approval = { decision: "deny" }
+						const payload =
+							decisionResult.decision === "HARD_BLOCK"
+								? formatResponse.toolHardBlocked(decisionResult.reason, decisionResult.replanGuidance)
+								: formatResponse.toolDeniedAndReplan(decisionResult.reason, decisionResult.replanGuidance)
+						this.denyAsk({ text: payload })
 					}
 				} else {
 					// MANUAL_APPROVAL (or fail-closed)
@@ -2532,9 +2608,11 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 
 						const isWithinWorkspace = Boolean(
 							this.workspacePath &&
-								(this.cwd === this.workspacePath ||
-									this.cwd.startsWith(this.workspacePath + path.sep) ||
-									this.cwd.startsWith(this.workspacePath + "/"))
+								(() => {
+									const normCwd = process.platform === "win32" ? path.normalize(this.cwd).toLowerCase() : path.normalize(this.cwd)
+									const normWs = process.platform === "win32" ? path.normalize(this.workspacePath).toLowerCase() : path.normalize(this.workspacePath)
+									return normCwd === normWs || normCwd.startsWith(normWs + path.sep) || normCwd.startsWith(normWs + "/")
+								})()
 						)
 
 						const context: CompactSafetyContext = {
@@ -2720,6 +2798,31 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 
 		this.emit(RooCodeEventName.TaskAskResponded)
 		return result
+	}
+
+	/**
+	 * Resumes the task with a user prompt or button response from the webview.
+	 * If the task is a dormant shell (e.g. rehydrated after Stop with startTask: false),
+	 * this transitions the task to running, registers it in provider.runningTasks, and starts execution.
+	 */
+	public async resumeWithResponse(
+		askResponse: ClineAskResponse,
+		text?: string,
+		images?: string[],
+	): Promise<void> {
+		if (this.abort || this.abandoned) {
+			return
+		}
+		const provider = this.providerRef.deref()
+		if (provider && !provider.runningTasks.has(this.taskId)) {
+			provider.runningTasks.set(this.taskId, this)
+		}
+		if (!this._started) {
+			this._started = true
+			return this.resumeTaskFromHistory({ response: askResponse, text, images })
+		} else {
+			this.handleWebviewAskResponse(askResponse, text, images)
+		}
 	}
 
 	handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[]) {
@@ -3924,7 +4027,11 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 		}
 	}
 
-	private async resumeTaskFromHistory() {
+	public async resumeTaskFromHistory(initialResponse?: {
+		response: ClineAskResponse
+		text?: string
+		images?: string[]
+	}) {
 		try {
 			const modifiedClineMessages = await this.getSavedClineMessages()
 
@@ -4038,27 +4145,38 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 				this.emit(RooCodeEventName.TaskInteractive, this.taskId)
 				await this.providerRef.deref()?.postStateToWebview()
 
-				// Wait for the user to respond to this existing pending ask
-				await pWaitFor(
-					() => {
-						if (this.abort) {
-							return true
-						}
-						return this.askResponse !== undefined
-					},
-					{ interval: 100 },
-				)
+				let response: ClineAskResponse
+				let text: string | undefined
+				let images: string[] | undefined
 
-				if (this.abort) {
-					return
+				if (initialResponse) {
+					response = initialResponse.response
+					text = initialResponse.text
+					images = initialResponse.images
+				} else {
+					// Wait for the user to respond to this existing pending ask
+					await pWaitFor(
+						() => {
+							if (this.abort) {
+								return true
+							}
+							return this.askResponse !== undefined
+						},
+						{ interval: 100 },
+					)
+
+					if (this.abort) {
+						return
+					}
+
+					response = this.askResponse!
+					text = this.askResponseText
+					images = this.askResponseImages
+					this.askResponse = undefined
+					this.askResponseText = undefined
+					this.askResponseImages = undefined
 				}
 
-				const response = this.askResponse!
-				const text = this.askResponseText
-				const images = this.askResponseImages
-				this.askResponse = undefined
-				this.askResponseText = undefined
-				this.askResponseImages = undefined
 				this.interactiveAsk = undefined
 				this.emit(RooCodeEventName.TaskActive, this.taskId)
 				this.emit(RooCodeEventName.TaskAskResponded)
@@ -4066,9 +4184,27 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 				if (lastAsk.ask === "completion_result") {
 					if (response === "yesButtonClicked") {
 						this.isTaskCompleted = true
+						const blockedTodos = (this.todoList || []).filter((t) => t.status === "blocked")
+						const isBlockedOutcome =
+							this.lastCompletionIsBlockedOutcome === true ||
+							blockedTodos.length > 0 ||
+							Boolean(lastAsk.text && /status:\s*BLOCKED|concluded as BLOCKED|item\(s\) marked 'blocked'/i.test(lastAsk.text)) ||
+							this.historyItem?.isBlockedOutcome === true ||
+							this.historyItem?.status === "blocked"
+
 						if (this.historyItem) {
-							this.historyItem.status = "completed"
+							this.historyItem.status = isBlockedOutcome ? "blocked" : "completed"
+							this.historyItem.isBlockedOutcome = isBlockedOutcome
 							this.historyItem.needsAttention = false
+							if (isBlockedOutcome && !this.historyItem.taskBlockerState) {
+								this.historyItem.taskBlockerState = {
+									blockKind: "platform_constraint",
+									blockReason: `Task concluded with ${blockedTodos.length} blocked item(s): ${blockedTodos.map((t) => t.content).join("; ")}`,
+									evidence: (lastAsk.text || "").slice(0, 500),
+									requiredUnblockAction: "Resolve external constraints or permissions before resuming.",
+									blockedAt: Date.now(),
+								}
+							}
 							await this.providerRef.deref()?.updateTaskHistory(this.historyItem)
 						}
 						lastAsk.approvalState = "AUTO_APPROVED"
@@ -4080,7 +4216,11 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 							this.updateClineMessage(completionSayMsg)
 						}
 						await this.saveClineMessages()
-						await this.say("completion_result", "Task completed successfully.")
+						if (isBlockedOutcome) {
+							await this.say("completion_result", `Task concluded as BLOCKED with ${blockedTodos.length} unresolved item(s).`)
+						} else {
+							await this.say("completion_result", "Task completed successfully.")
+						}
 						await this.providerRef.deref()?.postStateToWebview()
 						return
 					} else {
@@ -4153,11 +4293,42 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 					!lastClineMessage.partial &&
 					!this.clineMessages.some((m) => m.say === "error" && m === lastClineMessage)
 
+				const isTaskBlocked =
+					this.initialStatus === "blocked" ||
+					this.historyItem?.status === "blocked" ||
+					this.historyItem?.isBlockedOutcome === true ||
+					this.lastCompletionIsBlockedOutcome === true ||
+					Boolean(
+						this.todoList &&
+							this.todoList.length > 0 &&
+							this.todoList.some((t) => t.status === "blocked") &&
+							hasCompletionMessage,
+					)
+
+				const isInterrupted =
+					this.initialStatus === "interrupted" ||
+					this.historyItem?.status === "interrupted" ||
+					Boolean(
+						this.clineMessages.findLast(
+							(m) =>
+								m.say === "api_req_started" &&
+								(() => {
+									try {
+										return JSON.parse(m.text || "{}").cancelReason !== undefined
+									} catch {
+										return false
+									}
+								})(),
+						),
+					)
+
 				const isTaskCompletedOrIdle =
-					this.initialStatus === "completed" ||
-					this.historyItem?.status === "completed" ||
-					hasCompletionMessage ||
-					isFinishedTextResponse
+					!isTaskBlocked &&
+					!isInterrupted &&
+					(this.initialStatus === "completed" ||
+						this.historyItem?.status === "completed" ||
+						hasCompletionMessage ||
+						isFinishedTextResponse)
 
 				if (this.historyItem?.status === "delegated" && this.historyItem?.awaitingChildId) {
 					this.isInitialized = true
@@ -4166,7 +4337,15 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 				}
 
 				let askType: ClineAsk
-				if (isTaskCompletedOrIdle) {
+				if (isTaskBlocked) {
+					this.isTaskCompleted = true
+					if (this.historyItem) {
+						this.historyItem.status = "blocked"
+						this.historyItem.isBlockedOutcome = true
+						this.historyItem.needsAttention = false
+					}
+					askType = "resume_completed_task"
+				} else if (isTaskCompletedOrIdle) {
 					this.isTaskCompleted = true
 					if (this.historyItem) {
 						this.historyItem.status = "completed"
@@ -4177,9 +4356,20 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 					askType = "resume_task"
 				}
 
-				this.isInitialized = true
+				let response: ClineAskResponse
+				let text: string | undefined
+				let images: string[] | undefined
 
-				const { response, text, images } = await this.ask(askType) // Calls `postStateToWebview`.
+				if (initialResponse) {
+					response = initialResponse.response
+					text = initialResponse.text
+					images = initialResponse.images
+				} else {
+					const askResult = await this.ask(askType) // Calls `postStateToWebview`.
+					response = askResult.response
+					text = askResult.text
+					images = askResult.images
+				}
 
 				if (response === "messageResponse") {
 					this.isTaskCompleted = false
@@ -4191,8 +4381,8 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 					await this.say("user_feedback", text, images)
 					responseText = text
 					responseImages = images
-				} else if (isTaskCompletedOrIdle) {
-					// Task is completed/idle and user did not submit a continuation message.
+				} else if (isTaskCompletedOrIdle || isTaskBlocked) {
+					// Task is completed/blocked/idle and user did not submit a continuation message.
 					// Do not make any API requests.
 					return
 				}
@@ -4236,15 +4426,25 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 							(block) => block.type === "tool_use",
 						) as Anthropic.Messages.ToolUseBlock[]
 						const isTaskActuallyCompleted =
-							this.isTaskCompleted ||
-							this.historyItem?.status === "completed" ||
-							this.initialStatus === "completed"
+							(this.isTaskCompleted ||
+								this.historyItem?.status === "completed" ||
+								this.initialStatus === "completed") &&
+							this.historyItem?.status !== "blocked" &&
+							!this.historyItem?.isBlockedOutcome
+						const isTaskConcludedBlocked =
+							this.historyItem?.status === "blocked" ||
+							this.historyItem?.isBlockedOutcome === true ||
+							this.lastCompletionIsBlockedOutcome === true
 						const toolResponses: Anthropic.ToolResultBlockParam[] = toolUseBlocks.map((block) => ({
 							type: "tool_result",
 							tool_use_id: block.id,
 							content:
-								block.name === "attempt_completion" && isTaskActuallyCompleted
-									? "Task completed successfully."
+								block.name === "attempt_completion"
+									? isTaskActuallyCompleted
+										? "Task completed successfully."
+										: isTaskConcludedBlocked
+											? "Task was concluded with status: BLOCKED due to unresolved constraints."
+											: "Task was interrupted before this tool call could be completed."
 									: "Task was interrupted before this tool call could be completed.",
 						}))
 						modifiedApiConversationHistory = [...existingApiConversationHistory] // no changes
@@ -4277,9 +4477,15 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 							) as Anthropic.ToolResultBlockParam[]
 
 							const isTaskActuallyCompleted =
-								this.isTaskCompleted ||
-								this.historyItem?.status === "completed" ||
-								this.initialStatus === "completed"
+								(this.isTaskCompleted ||
+									this.historyItem?.status === "completed" ||
+									this.initialStatus === "completed") &&
+								this.historyItem?.status !== "blocked" &&
+								!this.historyItem?.isBlockedOutcome
+							const isTaskConcludedBlocked =
+								this.historyItem?.status === "blocked" ||
+								this.historyItem?.isBlockedOutcome === true ||
+								this.lastCompletionIsBlockedOutcome === true
 							const missingToolResponses: Anthropic.ToolResultBlockParam[] = toolUseBlocks
 								.filter(
 									(toolUse) =>
@@ -4289,8 +4495,12 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 									type: "tool_result",
 									tool_use_id: toolUse.id,
 									content:
-										toolUse.name === "attempt_completion" && isTaskActuallyCompleted
-											? "Task completed successfully."
+										toolUse.name === "attempt_completion"
+											? isTaskActuallyCompleted
+												? "Task completed successfully."
+												: isTaskConcludedBlocked
+													? "Task was concluded with status: BLOCKED due to unresolved constraints."
+													: "Task was interrupted before this tool call could be completed."
 											: "Task was interrupted before this tool call could be completed.",
 								}))
 
@@ -4344,13 +4554,21 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 				newUserContent.push(...formatResponse.imageBlocks(responseImages))
 			}
 
+			const blockedItems = (this.todoList || []).filter((t) => t.status === "blocked")
 			// Ensure we have at least some content to send to the API.
-			// If newUserContent is empty, add a minimal resumption message.
+			// If newUserContent is empty, add a minimal resumption message with blocker context if present.
 			if (newUserContent.length === 0) {
-				newUserContent.push({
-					type: "text",
-					text: "[TASK RESUMPTION] Resuming task...",
-				})
+				if (blockedItems.length > 0) {
+					newUserContent.push({
+						type: "text",
+						text: `[TASK RESUMPTION] Resuming task. Note that ${blockedItems.length} item(s) were previously marked as BLOCKED:\n${blockedItems.map((item) => `- ${item.content}${item.blockReason ? ` (Reason: ${item.blockReason})` : ""}`).join("\n")}\nDo NOT blindly repeat previously denied operations. If constraints remain, seek user guidance or safe alternatives.`,
+					})
+				} else {
+					newUserContent.push({
+						type: "text",
+						text: "[TASK RESUMPTION] Resuming task...",
+					})
+				}
 			}
 
 			await this.overwriteApiConversationHistory(modifiedApiConversationHistory)
@@ -4494,6 +4712,9 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 		this.consecutiveNoToolUseCount = 0
 		this.consecutiveNoAssistantMessagesCount = 0
 
+		// Snapshot queue before disposal so abort does not wipe out pre-existing queued messages
+		const preDisposalQueue = this.messageQueueService ? structuredClone(this.messageQueueService.messages) : []
+
 		// Force final token usage update before abort event
 		this.emitFinalTokenUsageUpdate()
 
@@ -4505,7 +4726,10 @@ You MUST continue the task using strictly compliant, read-only inspection or alt
 			console.error(`Error during task ${this.taskId}.${this.instanceId} disposal:`, error)
 			// Don't rethrow - we want abort to always succeed
 		}
-		// Save the countdown message in the automatic retry or other content.
+		// If promptQueue was populated before disposal, restore it on historyItem so saveClineMessages persists it
+		if (this.historyItem && preDisposalQueue.length > 0) {
+			this.historyItem.promptQueue = preDisposalQueue
+		}
 		try {
 			// Save the countdown message in the automatic retry or other content.
 			await this.saveClineMessages()

@@ -28,6 +28,7 @@ import { customToolRegistry } from "@roo-code/core"
 
 import { type ApiMessage } from "../task-persistence/apiMessages"
 import { saveTaskMessages } from "../task-persistence"
+import { TaskStatus } from "../task/Task"
 
 import { ClineProvider } from "./ClineProvider"
 import { DecisionLogStore } from "../security/DecisionLogStore"
@@ -688,10 +689,20 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 					break
 				}
 
+				// If there is an in-flight stop/cancel for this task, await its finalization first (Phase 5/6 race handling)
+				if (provider.hasInFlightCancel(message.taskId)) {
+					await provider.waitForCancelTask(message.taskId)
+				}
+
 				const targetTask =
 					(message.taskId ? provider.runningTasks.get(message.taskId) : undefined) ??
 					provider.getCurrentTask()
-				targetTask?.handleWebviewAskResponse(message.askResponse!, resolved.text, resolved.images)
+				if (targetTask) {
+					console.log(
+						`[askResponse] routing to task ${targetTask.taskId}, response=${message.askResponse}, started=${targetTask._started}`,
+					)
+					await targetTask.resumeWithResponse(message.askResponse!, resolved.text, resolved.images)
+				}
 			}
 			break
 
@@ -3123,10 +3134,26 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 
 		case "queueMessage": {
 			const resolved = await resolveIncomingImages({ text: message.text, images: message.images })
+			if (provider.hasInFlightCancel(message.taskId)) {
+				await provider.waitForCancelTask(message.taskId)
+			}
 			const targetTask =
 				(message.taskId ? provider.runningTasks.get(message.taskId) : undefined) ??
 				provider.getCurrentTask()
-			targetTask?.messageQueueService.addMessage(resolved.text, resolved.images)
+			if (
+				targetTask &&
+				!targetTask.isStreaming &&
+				targetTask.currentAskType !== "command_output" &&
+				!provider.runningTasks.has(targetTask.taskId) &&
+				targetTask.messageQueueService.isEmpty()
+			) {
+				console.log(
+					`[queueMessage] task ${targetTask.taskId} is stopped/idle and queue is empty, routing directly to resumeWithResponse`,
+				)
+				await targetTask.resumeWithResponse("messageResponse", resolved.text, resolved.images)
+			} else {
+				targetTask?.messageQueueService.addMessage(resolved.text, resolved.images)
+			}
 			break
 		}
 		case "removeQueuedMessage": {

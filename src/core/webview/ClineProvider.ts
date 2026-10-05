@@ -141,6 +141,7 @@ export class ClineProvider
 	private clineStack: Task[] = []
 	public readonly runningTasks: Map<string, Task> = new Map()
 	public foregroundTaskId?: string
+	private inFlightCancelPromises: Map<string, Promise<void>> = new Map()
 	private codeIndexStatusSubscription?: vscode.Disposable
 	private codeIndexManager?: CodeIndexManager
 	private _workspaceTracker?: WorkspaceTracker // workSpaceTracker read-only for access outside this class
@@ -1040,6 +1041,8 @@ export class ClineProvider
 			initialStatus:
 				historyItem.status === "completed"
 					? "completed"
+					: historyItem.status === "blocked"
+					? "blocked"
 					: historyItem.status === "delegated"
 					? "delegated"
 					: historyItem.status === "interrupted"
@@ -1049,10 +1052,11 @@ export class ClineProvider
 
 		if (isRehydratingCurrentTask) {
 			// Replace the current task in-place to avoid UI flicker
-			const stackIndex = this.clineStack.length - 1
+			const stackIndex = this.clineStack.findIndex((t) => t.taskId === historyItem.id)
+			const targetIndex = stackIndex !== -1 ? stackIndex : this.clineStack.length - 1
 
 			// Properly dispose of the old task to ensure garbage collection
-			const oldTask = this.clineStack[stackIndex]
+			const oldTask = this.clineStack[targetIndex]
 
 			// Abort the old task to stop running processes and mark as abandoned
 			try {
@@ -1071,7 +1075,7 @@ export class ClineProvider
 			}
 
 			// Replace the task in the stack
-			this.clineStack[stackIndex] = task
+			this.clineStack[targetIndex] = task
 			task.emit(RooCodeEventName.TaskFocused)
 
 			// Perform preparation tasks and set up event listeners
@@ -3095,6 +3099,25 @@ export class ClineProvider
 		return task
 	}
 
+	private getCancelPromises(): Map<string, Promise<void>> {
+		if (!this.inFlightCancelPromises) {
+			this.inFlightCancelPromises = new Map()
+		}
+		return this.inFlightCancelPromises
+	}
+
+	public hasInFlightCancel(taskId?: string): boolean {
+		const id = taskId || this.foregroundTaskId || this.getCurrentTask()?.taskId
+		return Boolean(id && this.getCancelPromises().has(id))
+	}
+
+	public async waitForCancelTask(taskId?: string): Promise<void> {
+		const id = taskId || this.foregroundTaskId || this.getCurrentTask()?.taskId
+		if (id && this.getCancelPromises().has(id)) {
+			await this.getCancelPromises().get(id)
+		}
+	}
+
 	public async cancelTask(targetTaskId?: string): Promise<void> {
 		const task = targetTaskId
 			? this.runningTasks.get(targetTaskId)
@@ -3103,16 +3126,36 @@ export class ClineProvider
 		if (!task) {
 			return
 		}
+
+		const taskId = task.taskId
+		const inFlight = this.getCancelPromises()
+		if (inFlight.has(taskId)) {
+			return inFlight.get(taskId)
+		}
+
 		if (task.abandoned || task.abort) {
 			return
 		}
 
+		const cancelPromise = this.executeCancelTask(task)
+		inFlight.set(taskId, cancelPromise)
+		try {
+			await cancelPromise
+		} finally {
+			inFlight.delete(taskId)
+		}
+	}
+
+	private async executeCancelTask(task: Task): Promise<void> {
 		console.log(`[cancelTask] cancelling task ${task.taskId}.${task.instanceId}`)
 		const wasForeground = !this.foregroundTaskId || this.foregroundTaskId === task.taskId
 
 		// Preserve parent and root task information for history item.
 		const rootTask = task.rootTask
 		const parentTask = task.parentTask
+
+		// Snapshot queue before Stop to preserve pre-existing queued messages
+		const preStopQueue = task.messageQueueService ? structuredClone(task.messageQueueService.messages) : []
 
 		// Mark this as a user-initiated cancellation so provider-only rehydration can occur
 		task.abortReason = "user_cancelled"
@@ -3145,6 +3188,9 @@ export class ClineProvider
 		if (historyItem && historyItem.status !== "completed") {
 			historyItem.status = "interrupted"
 			historyItem.needsAttention = true
+			if (preStopQueue.length > 0) {
+				historyItem.promptQueue = preStopQueue
+			}
 			await this.updateTaskHistory(historyItem)
 		}
 
@@ -3181,7 +3227,7 @@ export class ClineProvider
 		}
 
 		const rehydrated = await this.createTaskWithHistoryItem(
-			{ ...historyItem, status: "interrupted", rootTask, parentTask },
+			{ ...historyItem, status: "interrupted", promptQueue: preStopQueue, rootTask, parentTask },
 			{ startTask: false, initialClineMessages },
 		)
 
