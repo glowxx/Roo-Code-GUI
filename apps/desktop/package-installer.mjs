@@ -115,6 +115,8 @@ export async function runPackageAndVerify(options = {}) {
 		buildStartTimeMs: effectiveBuildStartTimeMs,
 		preBuildSnapshot,
 		releaseDir,
+		verifyOnly,
+		writeManifest: !verifyOnly,
 	})
 
 	if (!result.success) {
@@ -124,10 +126,12 @@ export async function runPackageAndVerify(options = {}) {
 
 	const buildFinishedAt = new Date().toISOString()
 	console.log("\n=======================================================")
-	console.log("ROO CODE GUI — WINDOWS INSTALLER BUILD SUCCESS")
+	console.log(verifyOnly ? "ROO CODE GUI — WINDOWS INSTALLER VERIFICATION" : "ROO CODE GUI — WINDOWS INSTALLER BUILD SUCCESS")
 	console.log("=======================================================")
 	console.log(`STATUS:                    SUCCESS`)
-	console.log(`SOURCE_GIT_SHA:            ${result.sourceGitSha}`)
+	console.log(`SOURCE_GIT_SHA_AT_BUILD:   ${result.sourceGitShaAtBuild}`)
+	console.log(`CURRENT_GIT_HEAD:          ${result.currentGitHead}`)
+	console.log(`APPLICATION_CODE_CURRENT:  ${result.hasAppCodeChanges ? "NO (REBUILD REQUIRED)" : "YES (MATCHES SOURCES)"}`)
 	console.log(`BUILD_STARTED_AT:          ${buildStartedAt}`)
 	console.log(`BUILD_FINISHED_AT:         ${buildFinishedAt}`)
 	console.log(`INSTALLER_FILENAME:        ${result.installerFilename}`)
@@ -136,7 +140,9 @@ export async function runPackageAndVerify(options = {}) {
 	console.log(`INSTALLER_SHA256:          ${result.installerSha256}`)
 	console.log(`INSTALLER_LAST_WRITE_TIME: ${result.installerLastWriteTime?.toISOString()}`)
 	console.log(`FRESH_ARTIFACT_VERIFIED:   YES`)
-	console.log(`MANIFEST_PATH:             ${result.manifestPath}`)
+	if (result.manifestPath) {
+		console.log(`MANIFEST_PATH:             ${result.manifestPath}`)
+	}
 	console.log("=======================================================\n")
 
 	return result

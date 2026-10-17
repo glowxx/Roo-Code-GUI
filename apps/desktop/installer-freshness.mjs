@@ -4,6 +4,18 @@ import crypto from "crypto"
 import { execSync } from "child_process"
 
 /**
+ * Defines source file paths that contribute directly to the packaged application binary.
+ */
+export const APPLICATION_SOURCE_PATHS = [
+	"apps/desktop/src",
+	"apps/desktop/assets",
+	"apps/desktop/build.mjs",
+	"src",
+	"webview-ui",
+	"packages",
+]
+
+/**
  * Resolves the expected installer filename from package.json and electron-builder build settings.
  * If build.artifactName is set, interpolates ${productName}, ${version}, ${arch}, and ${ext}.
  * Otherwise defaults to standard NSIS naming: `${productName} Setup ${version}.${ext}`.
@@ -73,8 +85,62 @@ export function getGitHeadSha(cwd) {
 }
 
 /**
+ * Checks whether application source files have been modified between a base commit and HEAD,
+ * or have uncommitted local modifications in the working tree.
+ *
+ * @param {string} baseSha
+ * @param {string} [rootDir]
+ * @param {string[]} [sourcePaths=APPLICATION_SOURCE_PATHS]
+ * @returns {{ hasAppCodeChanges: boolean, changedFiles: string[] }}
+ */
+export function checkApplicationCodeChanges(baseSha, rootDir = process.cwd(), sourcePaths = APPLICATION_SOURCE_PATHS) {
+	const pathArgs = sourcePaths.map((p) => `"${p}"`).join(" ")
+	const changedFiles = new Set()
+
+	// 1. Check uncommitted changes in working tree for application paths
+	try {
+		const statusOut = execSync(`git status --porcelain -- ${pathArgs}`, {
+			cwd: rootDir,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim()
+
+		if (statusOut) {
+			for (const line of statusOut.split(/\r?\n/)) {
+				const file = line.slice(3).trim()
+				if (file) changedFiles.add(file)
+			}
+		}
+	} catch {}
+
+	// 2. Check committed changes between baseSha and HEAD for application paths
+	if (baseSha && baseSha !== "UNKNOWN") {
+		try {
+			const diffOut = execSync(`git diff --name-only ${baseSha} HEAD -- ${pathArgs}`, {
+				cwd: rootDir,
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			}).trim()
+
+			if (diffOut) {
+				for (const line of diffOut.split(/\r?\n/)) {
+					const file = line.trim()
+					if (file) changedFiles.add(file)
+				}
+			}
+		} catch {}
+	}
+
+	return {
+		hasAppCodeChanges: changedFiles.size > 0,
+		changedFiles: Array.from(changedFiles),
+	}
+}
+
+/**
  * Verifies that the installer in release directory is fresh, non-empty,
  * matches the current build session, and that no duplicate Fixed-911169b was generated.
+ * Also checks whether application sources have diverged from the build commit.
  *
  * @param {Object} params
  * @param {Record<string, any>} params.packageJson
@@ -83,6 +149,7 @@ export function getGitHeadSha(cwd) {
  * @param {{ exists: boolean, mtimeMs: number, size: number, sha256?: string } | null} [params.preBuildSnapshot]
  * @param {string} [params.releaseDir]
  * @param {string} [params.gitSha]
+ * @param {boolean} [params.verifyOnly=false]
  * @param {boolean} [params.writeManifest=true]
  * @param {string} [params.manifestFilename="installer-manifest.json"]
  * @returns {{
@@ -90,6 +157,10 @@ export function getGitHeadSha(cwd) {
  *   code?: string,
  *   error?: string,
  *   sourceGitSha?: string,
+ *   sourceGitShaAtBuild?: string,
+ *   currentGitHead?: string,
+ *   hasAppCodeChanges?: boolean,
+ *   changedFiles?: string[],
  *   installerFilename?: string,
  *   installerPath?: string,
  *   installerSize?: number,
@@ -107,12 +178,14 @@ export function verifyInstallerFreshness(params) {
 		preBuildSnapshot = null,
 		releaseDir = getReleaseOutputDir(packageJson, desktopDir),
 		gitSha = null,
+		verifyOnly = false,
 		writeManifest = true,
 		manifestFilename = "installer-manifest.json",
 	} = params
 
 	const expectedFilename = getExpectedInstallerFilename(packageJson)
 	const installerPath = path.join(releaseDir, expectedFilename)
+	const manifestPath = path.join(releaseDir, manifestFilename)
 
 	// 1. Check existence
 	if (!fs.existsSync(installerPath)) {
@@ -174,17 +247,53 @@ export function verifyInstallerFreshness(params) {
 	// 5. Compute SHA-256
 	const sha256 = computeFileSha256(installerPath)
 
-	// 6. Source Git SHA
-	const sourceGitSha = gitSha || getGitHeadSha(desktopDir)
+	// 6. Resolve build commit vs current git HEAD
+	const currentGitHead = getGitHeadSha(desktopDir)
+	let sourceGitShaAtBuild = gitSha
 
-	// 7. Write Manifest
-	let manifestPath = ""
-	if (writeManifest) {
-		manifestPath = path.join(releaseDir, manifestFilename)
+	let existingManifest = null
+	if (fs.existsSync(manifestPath)) {
+		try {
+			existingManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"))
+			if (!sourceGitShaAtBuild) {
+				sourceGitShaAtBuild = existingManifest.SOURCE_GIT_SHA_AT_BUILD || existingManifest.SOURCE_GIT_SHA
+			}
+		} catch {}
+	}
+
+	if (!sourceGitShaAtBuild) {
+		sourceGitShaAtBuild = currentGitHead
+	}
+
+	// 7. Check if application code diverged since build commit
+	let repoRootDir = desktopDir
+	while (repoRootDir !== path.dirname(repoRootDir)) {
+		if (fs.existsSync(path.join(repoRootDir, "pnpm-workspace.yaml"))) break
+		repoRootDir = path.dirname(repoRootDir)
+	}
+
+	const { hasAppCodeChanges, changedFiles } = checkApplicationCodeChanges(sourceGitShaAtBuild, repoRootDir)
+
+	if (verifyOnly && hasAppCodeChanges) {
+		return {
+			success: false,
+			code: "STALE_CODE",
+			error: `Application source files have changed since build commit ${sourceGitShaAtBuild} (${changedFiles.length} file(s) modified: ${changedFiles.slice(0, 3).join(", ")}${changedFiles.length > 3 ? "..." : ""}). Rebuild required.`,
+			sourceGitShaAtBuild,
+			sourceGitSha: sourceGitShaAtBuild,
+			currentGitHead,
+			hasAppCodeChanges,
+			changedFiles,
+		}
+	}
+
+	// 8. Write Manifest (only when actively packaging, never in verifyOnly mode)
+	if (writeManifest && !verifyOnly) {
 		const manifestData = {
 			BUILD_STARTED_AT: new Date(buildStartTimeMs).toISOString(),
 			BUILD_FINISHED_AT: new Date().toISOString(),
-			SOURCE_GIT_SHA: sourceGitSha,
+			SOURCE_GIT_SHA_AT_BUILD: sourceGitShaAtBuild,
+			SOURCE_GIT_SHA: sourceGitShaAtBuild,
 			INSTALLER_FILENAME: expectedFilename,
 			INSTALLER_PATH: installerPath,
 			INSTALLER_SIZE: stats.size,
@@ -197,7 +306,11 @@ export function verifyInstallerFreshness(params) {
 
 	return {
 		success: true,
-		sourceGitSha,
+		sourceGitShaAtBuild,
+		sourceGitSha: sourceGitShaAtBuild,
+		currentGitHead,
+		hasAppCodeChanges,
+		changedFiles,
 		installerFilename: expectedFilename,
 		installerPath,
 		installerSize: stats.size,

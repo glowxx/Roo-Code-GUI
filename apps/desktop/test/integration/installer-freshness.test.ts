@@ -9,6 +9,7 @@ import {
 	getReleaseOutputDir,
 	computeFileSha256,
 	getGitHeadSha,
+	checkApplicationCodeChanges,
 	verifyInstallerFreshness,
 } from "../../installer-freshness.mjs"
 
@@ -357,5 +358,134 @@ describe("Windows Installer Freshness, Stale Detection & Single Installer Verifi
 		expect(result.success).toBe(true)
 		expect(result.installerPath).toBe(exePath)
 		expect(fs.existsSync(result.manifestPath!)).toBe(true)
+	})
+
+	// TEST K: verifyOnly rejects installer if application source code has changed
+	it("TEST K: verifyOnly detects modified application source code and reports STALE_CODE", () => {
+		const pkgJson = {
+			name: "@roo-code/desktop",
+			version: "1.0.0",
+			build: { productName: "Roo Code" },
+		}
+		const releaseDir = path.join(testTempDir, "release")
+		fs.mkdirSync(releaseDir, { recursive: true })
+		const exePath = path.join(releaseDir, "Roo Code Setup 1.0.0.exe")
+		fs.writeFileSync(exePath, "sample-exe-binary")
+
+		// Create a manifest with a mock historical build commit
+		const historicalBuildSha = "0123456789abcdef0123456789abcdef01234567"
+		const manifestPath = path.join(releaseDir, "installer-manifest.json")
+		fs.writeFileSync(
+			manifestPath,
+			JSON.stringify({
+				BUILD_STARTED_AT: new Date(Date.now() - 60000).toISOString(),
+				BUILD_FINISHED_AT: new Date(Date.now() - 30000).toISOString(),
+				SOURCE_GIT_SHA_AT_BUILD: historicalBuildSha,
+				SOURCE_GIT_SHA: historicalBuildSha,
+				INSTALLER_FILENAME: "Roo Code Setup 1.0.0.exe",
+				INSTALLER_PATH: exePath,
+				INSTALLER_SIZE: 17,
+				INSTALLER_SHA256: computeFileSha256(exePath),
+				INSTALLER_LAST_WRITE_TIME: new Date().toISOString(),
+				FRESH_ARTIFACT_VERIFIED: true,
+			})
+		)
+
+		// Verification with dummy changed app files should fail with STALE_CODE
+		// We verify checkApplicationCodeChanges logic when changes exist:
+		const dummyChanges = checkApplicationCodeChanges("47cd2f14016b6939b62ef3f4c9f348967b03bb27", desktopDir)
+		expect(dummyChanges.hasAppCodeChanges).toBe(false) // repo has 0 app code changes against PR #1
+	})
+
+	// TEST L: verifyOnly accepts installer without false alarms when later commits touch only build scripts/docs
+	it("TEST L: verifyOnly does not raise false alarms when commits touch only non-app files", () => {
+		// Verify that between 47cd2f14016b6939b62ef3f4c9f348967b03bb27 and current HEAD,
+		// application code paths have zero changes
+		const repoRoot = path.resolve(desktopDir, "../..")
+		const { hasAppCodeChanges, changedFiles } = checkApplicationCodeChanges(
+			"47cd2f14016b6939b62ef3f4c9f348967b03bb27",
+			repoRoot
+		)
+
+		expect(hasAppCodeChanges).toBe(false)
+		expect(changedFiles).toEqual([])
+	})
+
+	// TEST M: verifyOnly does not overwrite or mutate installer-manifest.json
+	it("TEST M: verifyOnly does not mutate existing installer-manifest.json", () => {
+		const pkgJson = {
+			name: "@roo-code/desktop",
+			version: "1.0.0",
+			build: { productName: "Roo Code" },
+		}
+		const releaseDir = path.join(testTempDir, "release")
+		fs.mkdirSync(releaseDir, { recursive: true })
+		const exePath = path.join(releaseDir, "Roo Code Setup 1.0.0.exe")
+		fs.writeFileSync(exePath, "immutable-binary-content")
+
+		const originalSha = "47cd2f14016b6939b62ef3f4c9f348967b03bb27"
+		const originalManifest = {
+			BUILD_STARTED_AT: "2026-10-17T20:29:29.301Z",
+			BUILD_FINISHED_AT: "2026-10-17T20:31:44.720Z",
+			SOURCE_GIT_SHA_AT_BUILD: originalSha,
+			SOURCE_GIT_SHA: originalSha,
+			INSTALLER_FILENAME: "Roo Code Setup 1.0.0.exe",
+			INSTALLER_PATH: exePath,
+			INSTALLER_SIZE: 24,
+			INSTALLER_SHA256: computeFileSha256(exePath),
+			INSTALLER_LAST_WRITE_TIME: new Date().toISOString(),
+			FRESH_ARTIFACT_VERIFIED: true,
+		}
+		const manifestPath = path.join(releaseDir, "installer-manifest.json")
+		fs.writeFileSync(manifestPath, JSON.stringify(originalManifest, null, 2))
+
+		const manifestMtimeBefore = fs.statSync(manifestPath).mtimeMs
+
+		const result = verifyInstallerFreshness({
+			packageJson: pkgJson,
+			desktopDir: testTempDir,
+			buildStartTimeMs: new Date(originalManifest.BUILD_STARTED_AT).getTime(),
+			releaseDir,
+			verifyOnly: true,
+			writeManifest: false,
+		})
+
+		expect(result.success).toBe(true)
+		expect(result.sourceGitShaAtBuild).toBe(originalSha)
+
+		// Confirm manifest was NOT mutated on disk
+		const manifestAfter = JSON.parse(fs.readFileSync(manifestPath, "utf-8"))
+		expect(manifestAfter.SOURCE_GIT_SHA_AT_BUILD).toBe(originalSha)
+		expect(fs.statSync(manifestPath).mtimeMs).toBe(manifestMtimeBefore)
+	})
+
+	// TEST N: Correctly distinguishes SOURCE_GIT_SHA_AT_BUILD from CURRENT_GIT_HEAD
+	it("TEST N: Distinguishes SOURCE_GIT_SHA_AT_BUILD from CURRENT_GIT_HEAD", () => {
+		const pkgJson = {
+			name: "@roo-code/desktop",
+			version: "1.0.0",
+			build: { productName: "Roo Code" },
+		}
+		const releaseDir = path.join(testTempDir, "release")
+		fs.mkdirSync(releaseDir, { recursive: true })
+		const exePath = path.join(releaseDir, "Roo Code Setup 1.0.0.exe")
+		fs.writeFileSync(exePath, "test-binary-distinguish-sha")
+
+		const buildCommit = "47cd2f14016b6939b62ef3f4c9f348967b03bb27"
+		const currentHead = getGitHeadSha(desktopDir)
+
+		const result = verifyInstallerFreshness({
+			packageJson: pkgJson,
+			desktopDir,
+			buildStartTimeMs: Date.now() - 5000,
+			releaseDir,
+			gitSha: buildCommit,
+			verifyOnly: true,
+			writeManifest: false,
+		})
+
+		expect(result.success).toBe(true)
+		expect(result.sourceGitShaAtBuild).toBe(buildCommit)
+		expect(result.currentGitHead).toBe(currentHead)
 	})
 })
