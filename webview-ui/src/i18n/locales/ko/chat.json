@@ -19,12 +19,19 @@
 		"shareSuccessPublic": "공개 링크가 클립보드에 복사되었습니다",
 		"openApiHistory": "API 기록 열기",
 		"openUiHistory": "UI 기록 열기",
-		"backToParentTask": "상위 작업"
+		"backToParentTask": "상위 작업",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"unpin": "고정 해제하기",
 	"pin": "고정하기",
 	"fileChangesInConversation": {
-		"header": "이 대화에서 {{count}}개 파일이 변경됨"
+		"header": "이 대화에서 {{count}}개 파일이 변경됨",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"tokenProgress": {
 		"availableSpace": "사용 가능한 공간: {{amount}} 토큰",
@@ -81,7 +88,8 @@
 	},
 	"stop": {
 		"title": "정지",
-		"tooltip": "현재 작업 정지"
+		"tooltip": "현재 작업 정지",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"cancel": {
 		"title": "취소",
@@ -151,12 +159,16 @@
 			"403": "권한 없음. API 키는 유효하지만 공급자가 이 요청을 완료하기를 거부했습니다.",
 			"429": "너무 많은 요청입니다. 공급자에 의해 요청 제한이 적용되고 있습니다. 다음 API 호출 전에 잠깐 기다려주세요.",
 			"500": "공급자 서버 오류입니다. 공급자 쪽에 문제가 있으며 요청에는 문제가 없습니다.",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "문서",
 			"goToSettings": "설정",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "연결 오류입니다. 인터넷 연결이 제대로 작동하는지 확인하세요.",
 			"claudeCodeNotAuthenticated": "Claude Code를 사용하려면 로그인해야 합니다. 설정으로 이동하여 \"Claude Code에 로그인\"을 클릭하여 인증하세요."
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "체크포인트",
@@ -231,7 +243,11 @@
 		"expandOutput": "출력 확장",
 		"collapseOutput": "출력 축소",
 		"expandManagement": "명령 관리 섹션 확장",
-		"collapseManagement": "명령 관리 섹션 축소"
+		"collapseManagement": "명령 관리 섹션 축소",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "응답",
 	"arguments": "인수",
@@ -299,7 +315,8 @@
 		"triggerLabel_zero": "0개 자동 승인됨",
 		"triggerLabel_one": "1개 자동 승인됨",
 		"triggerLabel_other": "{{count}}개 자동 승인됨",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"reasoning": {
 		"thinking": "생각 중",
@@ -317,7 +334,8 @@
 			"inProgress": "컨텍스트 자르는 중...",
 			"messagesRemoved": "{{count}}개 메시지 제거됨",
 			"messagesRemoved_other": "{{count}}개 메시지 제거됨",
-			"description": "컨텍스트 윈도우 제한 내에 유지하기 위해 대화에서 오래된 메시지가 제거되었습니다. 이것은 압축에 비해 빠르지만 컨텍스트 보존 능력이 낮은 접근 방식입니다."
+			"description": "컨텍스트 윈도우 제한 내에 유지하기 위해 대화에서 오래된 메시지가 제거되었습니다. 이것은 압축에 비해 빠르지만 컨텍스트 보존 능력이 낮은 접근 방식입니다.",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -487,5 +505,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "설정 열기",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

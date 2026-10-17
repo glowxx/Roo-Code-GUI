@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "Reactie onderbroken door gebruiker",
 		"responseInterruptedByApiError": "Reactie onderbroken door API-fout",
-		"streamTerminatedByProvider": "Provider heeft het verzoek beëindigd"
+		"streamTerminatedByProvider": "Provider heeft het verzoek beëindigd",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "Voer een aangepast opslagpad voor gespreksgeschiedenis in, laat leeg voor standaardlocatie",

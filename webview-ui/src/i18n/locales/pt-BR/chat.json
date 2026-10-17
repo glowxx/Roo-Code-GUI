@@ -19,12 +19,19 @@
 		"shareSuccessPublic": "Link público copiado para a área de transferência",
 		"openApiHistory": "Abrir histórico da API",
 		"openUiHistory": "Abrir histórico da UI",
-		"backToParentTask": "Tarefa pai"
+		"backToParentTask": "Tarefa pai",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"unpin": "Desfixar",
 	"pin": "Fixar",
 	"fileChangesInConversation": {
-		"header": "{{count}} arquivo(s) alterado(s) nesta conversa"
+		"header": "{{count}} arquivo(s) alterado(s) nesta conversa",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"tokenProgress": {
 		"availableSpace": "Espaço disponível: {{amount}} tokens",
@@ -81,7 +88,8 @@
 	},
 	"stop": {
 		"title": "Parar",
-		"tooltip": "Parar a tarefa atual"
+		"tooltip": "Parar a tarefa atual",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"cancel": {
 		"title": "Cancelar",
@@ -151,12 +159,16 @@
 			"403": "Não autorizado. Sua chave API é válida, mas o provedor se recusou a concluir esta solicitação.",
 			"429": "Muitas solicitações. Você está sendo limitado pelo provedor. Por favor, aguarde um pouco antes de sua próxima chamada de API.",
 			"500": "Erro do servidor do provedor. Algo está errado do lado do provedor, não há nada de errado com sua solicitação.",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "Documentação",
 			"goToSettings": "Configurações",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "Erro de conexão. Certifique-se de que você tem uma conexão de internet funcionando.",
 			"claudeCodeNotAuthenticated": "Você precisa fazer login para usar o Claude Code. Vá para Configurações e clique em \"Entrar no Claude Code\" para autenticar."
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "Ponto de verificação",
@@ -231,7 +243,11 @@
 		"expandOutput": "Expandir saída",
 		"collapseOutput": "Recolher saída",
 		"expandManagement": "Expandir seção de gerenciamento de comandos",
-		"collapseManagement": "Recolher seção de gerenciamento de comandos"
+		"collapseManagement": "Recolher seção de gerenciamento de comandos",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "Resposta",
 	"arguments": "Argumentos",
@@ -299,7 +315,8 @@
 		"triggerLabel_zero": "0 aprovados automaticamente",
 		"triggerLabel_one": "1 aprovado automaticamente",
 		"triggerLabel_other": "{{count}} aprovados automaticamente",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"reasoning": {
 		"thinking": "Pensando",
@@ -317,7 +334,8 @@
 			"inProgress": "Truncando contexto...",
 			"messagesRemoved": "{{count}} mensagem removida",
 			"messagesRemoved_other": "{{count}} mensagens removidas",
-			"description": "Mensagens mais antigas foram removidas da conversa para permanecer dentro do limite da janela de contexto. Esta é uma abordagem rápida, mas menos preservadora de contexto em comparação com a condensação."
+			"description": "Mensagens mais antigas foram removidas da conversa para permanecer dentro do limite da janela de contexto. Esta é uma abordagem rápida, mas menos preservadora de contexto em comparação com a condensação.",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -487,5 +505,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "Abrir configurações",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

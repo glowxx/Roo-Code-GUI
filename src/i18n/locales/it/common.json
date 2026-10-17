@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "Risposta interrotta dall'utente",
 		"responseInterruptedByApiError": "Risposta interrotta da errore API",
-		"streamTerminatedByProvider": "Il provider ha terminato la richiesta"
+		"streamTerminatedByProvider": "Il provider ha terminato la richiesta",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "Inserisci il percorso di archiviazione personalizzato per la cronologia delle conversazioni, lascia vuoto per utilizzare la posizione predefinita",

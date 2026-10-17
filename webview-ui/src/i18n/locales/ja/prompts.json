@@ -53,7 +53,7 @@
 	},
 	"exportMode": {
 		"title": "モードをエクスポート",
-		"description": "このモードをすべてのルールを含むYAMLファイルにエクスポートして、他のユーザーと簡単に共有できます。",
+		"description": "Export this mode with rules from the .roo/rules-{{slug}}/ folder combined into a shareable YAML file. The original files remain unchanged.",
 		"export": "モードをエクスポート",
 		"exporting": "エクスポート中..."
 	},

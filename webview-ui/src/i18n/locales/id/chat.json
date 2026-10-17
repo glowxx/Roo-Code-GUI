@@ -19,7 +19,12 @@
 		"shareSuccessPublic": "Tautan publik disalin ke clipboard",
 		"openApiHistory": "Buka Riwayat API",
 		"openUiHistory": "Buka Riwayat UI",
-		"backToParentTask": "Tugas Induk"
+		"backToParentTask": "Tugas Induk",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"history": {
 		"title": "Riwayat"
@@ -27,7 +32,9 @@
 	"unpin": "Lepas Pin",
 	"pin": "Pin",
 	"fileChangesInConversation": {
-		"header": "{{count}} file diubah dalam percakapan ini"
+		"header": "{{count}} file diubah dalam percakapan ini",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"retry": {
 		"title": "Coba Lagi",
@@ -111,7 +118,8 @@
 	},
 	"stop": {
 		"title": "Stop",
-		"tooltip": "Hentikan tugas saat ini"
+		"tooltip": "Hentikan tugas saat ini",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"cancel": {
 		"title": "Batal",
@@ -176,12 +184,16 @@
 			"403": "Tidak sah. Kunci API Anda valid, tetapi penyedia menolak untuk menyelesaikan permintaan ini.",
 			"429": "Terlalu banyak permintaan. Anda dibatasi tingkat oleh penyedia. Harap tunggu sebentar sebelum panggilan API berikutnya Anda.",
 			"500": "Kesalahan server penyedia. Ada yang salah di sisi penyedia, tidak ada yang salah dengan permintaan Anda.",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "Dokumentasi",
 			"goToSettings": "Pengaturan",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "Kesalahan koneksi. Pastikan Anda memiliki koneksi internet yang berfungsi.",
 			"claudeCodeNotAuthenticated": "Anda perlu masuk untuk menggunakan Claude Code. Buka Pengaturan dan klik \"Masuk ke Claude Code\" untuk mengautentikasi."
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "Checkpoint",
@@ -214,7 +226,8 @@
 			"inProgress": "Memotong konteks...",
 			"messagesRemoved": "{{count}} pesan dihapus",
 			"messagesRemoved_other": "{{count}} pesan dihapus",
-			"description": "Pesan lama telah dihapus dari percakapan untuk tetap dalam batas jendela konteks. Ini adalah pendekatan yang cepat tetapi kurang mempertahankan konteks dibandingkan dengan kondensasi."
+			"description": "Pesan lama telah dihapus dari percakapan untuk tetap dalam batas jendela konteks. Ini adalah pendekatan yang cepat tetapi kurang mempertahankan konteks dibandingkan dengan kondensasi.",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -282,7 +295,11 @@
 		"expandOutput": "Perluas keluaran",
 		"collapseOutput": "Ciutkan keluaran",
 		"expandManagement": "Perluas bagian manajemen perintah",
-		"collapseManagement": "Ciutkan bagian manajemen perintah"
+		"collapseManagement": "Ciutkan bagian manajemen perintah",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "Respons",
 	"arguments": "Argumen",
@@ -355,7 +372,8 @@
 		"triggerLabel_zero": "0 disetujui otomatis",
 		"triggerLabel_one": "1 disetujui otomatis",
 		"triggerLabel_other": "{{count}} disetujui otomatis",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"announcement": {
 		"title": "Roo Code {{version}} Dirilis",
@@ -493,5 +511,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "Buka Pengaturan",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

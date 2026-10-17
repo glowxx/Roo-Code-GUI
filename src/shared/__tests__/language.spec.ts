@@ -13,6 +13,15 @@ describe("formatLanguage", () => {
 		expect(formatLanguage("fr")).toBe("fr")
 	})
 
+	it("should return base language for region-qualified locales when region variant is not defined", () => {
+		expect(formatLanguage("pl-PL")).toBe("pl")
+		expect(formatLanguage("pl-pl")).toBe("pl")
+		expect(formatLanguage("de-DE")).toBe("de")
+		expect(formatLanguage("fr-FR")).toBe("fr")
+		expect(formatLanguage("es-ES")).toBe("es")
+		expect(formatLanguage("ja-JP")).toBe("ja")
+	})
+
 	it("should handle empty or undefined input", () => {
 		expect(formatLanguage("")).toBe("en")
 		expect(formatLanguage(undefined as unknown as string)).toBe("en")

@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "Antwort vom Benutzer unterbrochen",
 		"responseInterruptedByApiError": "Antwort durch API-Fehler unterbrochen",
-		"streamTerminatedByProvider": "Der Anbieter hat die Anfrage beendet"
+		"streamTerminatedByProvider": "Der Anbieter hat die Anfrage beendet",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "Gib den benutzerdefinierten Speicherpfad für den Gesprächsverlauf ein, leer lassen für Standardspeicherort",

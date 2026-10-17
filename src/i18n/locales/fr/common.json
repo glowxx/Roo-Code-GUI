@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "Réponse interrompue par l'utilisateur",
 		"responseInterruptedByApiError": "Réponse interrompue par une erreur d'API",
-		"streamTerminatedByProvider": "Le fournisseur a terminé la demande"
+		"streamTerminatedByProvider": "Le fournisseur a terminé la demande",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "Entrez le chemin de stockage personnalisé pour l'historique des conversations, laissez vide pour utiliser l'emplacement par défaut",

@@ -19,12 +19,19 @@
 		"shareSuccessPublic": "公开链接已复制到剪贴板",
 		"openApiHistory": "打开 API 历史",
 		"openUiHistory": "打开 UI 历史",
-		"backToParentTask": "父任务"
+		"backToParentTask": "父任务",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"unpin": "取消置顶",
 	"pin": "置顶",
 	"fileChangesInConversation": {
-		"header": "此对话中已更改 {{count}} 个文件"
+		"header": "此对话中已更改 {{count}} 个文件",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"tokenProgress": {
 		"availableSpace": "可用: {{amount}}",
@@ -85,7 +92,8 @@
 	},
 	"stop": {
 		"title": "停止",
-		"tooltip": "停止当前任务"
+		"tooltip": "停止当前任务",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"enqueueMessage": "将消息加入队列（当前任务完成后发送）",
 	"scrollToBottom": "滚动到聊天底部",
@@ -151,12 +159,16 @@
 			"403": "无权限。您的 API 密钥有效，但提供商拒绝完成此请求。",
 			"429": "请求过于频繁。提供商已对您的请求进行速率限制。请在下一次 API 调用前稍候。",
 			"500": "提供商服务器错误。提供商端出现问题，您的请求无问题。",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "文档",
 			"goToSettings": "设置",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "连接错误。确保您有可用的互联网连接。",
 			"claudeCodeNotAuthenticated": "你需要登录才能使用 Claude Code。前往设置并点击「登录到 Claude Code」进行身份验证。"
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "检查点",
@@ -232,7 +244,11 @@
 		"expandOutput": "展开输出",
 		"collapseOutput": "折叠输出",
 		"expandManagement": "展开命令管理部分",
-		"collapseManagement": "折叠命令管理部分"
+		"collapseManagement": "折叠命令管理部分",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "响应",
 	"arguments": "参数",
@@ -300,7 +316,8 @@
 		"triggerLabel_zero": "0 个自动批准",
 		"triggerLabel_one": "1 个自动批准",
 		"triggerLabel_other": "{{count}} 个自动批准",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"reasoning": {
 		"thinking": "思考中",
@@ -318,7 +335,8 @@
 			"inProgress": "正在截断上下文...",
 			"messagesRemoved": "已移除 {{count}} 条消息",
 			"messagesRemoved_other": "已移除 {{count}} 条消息",
-			"description": "为保持在上下文窗口限制内，已从对话中移除较旧的消息。与压缩相比，这是一种快速但上下文保留较少的方法。"
+			"description": "为保持在上下文窗口限制内，已从对话中移除较旧的消息。与压缩相比，这是一种快速但上下文保留较少的方法。",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -488,5 +506,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "打开设置",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

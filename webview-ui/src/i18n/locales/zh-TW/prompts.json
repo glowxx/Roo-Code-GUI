@@ -54,7 +54,8 @@
 	"exportMode": {
 		"title": "匯出模式",
 		"description": "將此模式與 .roo/rules-{{slug}}/ 資料夾中的規則匯出，並合併成一個可分享的 YAML 檔案。原始檔案將維持不變。",
-		"exporting": "正在匯出..."
+		"exporting": "正在匯出...",
+		"export": "Export Mode"
 	},
 	"importMode": {
 		"selectLevel": "選擇匯入模式的位置：",

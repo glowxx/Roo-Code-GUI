@@ -19,12 +19,19 @@
 		"shareSuccessPublic": "Genel bağlantı panoya kopyalandı",
 		"openApiHistory": "API Geçmişini Aç",
 		"openUiHistory": "UI Geçmişini Aç",
-		"backToParentTask": "Üst görev"
+		"backToParentTask": "Üst görev",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"unpin": "Sabitlemeyi iptal et",
 	"pin": "Sabitle",
 	"fileChangesInConversation": {
-		"header": "Bu sohbette {{count}} dosya değiştirildi"
+		"header": "Bu sohbette {{count}} dosya değiştirildi",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"tokenProgress": {
 		"availableSpace": "Kullanılabilir alan: {{amount}} token",
@@ -81,7 +88,8 @@
 	},
 	"stop": {
 		"title": "Durdur",
-		"tooltip": "Mevcut görevi durdur"
+		"tooltip": "Mevcut görevi durdur",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"cancel": {
 		"title": "İptal",
@@ -151,12 +159,16 @@
 			"403": "Yetkisiz. API anahtarınız geçerli ama sağlayıcı bu isteği tamamlamayı reddetti.",
 			"429": "Çok fazla istek. Sağlayıcı tarafından oran sınırlaması uygulanıyor. Lütfen sonraki API çağrısından önce biraz bekle.",
 			"500": "Sağlayıcı sunucu hatası. Sağlayıcı tarafında bir sorun var, isteğinizde sorun yok.",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "Belgeler",
 			"goToSettings": "Ayarlar",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "Bağlantı hatası. Çalışan bir internet bağlantınız olduğundan emin olun.",
 			"claudeCodeNotAuthenticated": "Claude Code'u kullanmak için oturum açmanız gerekiyor. Ayarlar'a gidin ve kimlik doğrulaması yapmak için \"Claude Code'da Oturum Aç\" seçeneğine tıklayın."
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "Kontrol Noktası",
@@ -232,7 +244,11 @@
 		"expandOutput": "Çıktıyı genişlet",
 		"collapseOutput": "Çıktıyı daralt",
 		"expandManagement": "Komut yönetimi bölümünü genişlet",
-		"collapseManagement": "Komut yönetimi bölümünü daralt"
+		"collapseManagement": "Komut yönetimi bölümünü daralt",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "Yanıt",
 	"arguments": "Argümanlar",
@@ -300,7 +316,8 @@
 		"triggerLabel_zero": "0 otomatik onaylandı",
 		"triggerLabel_one": "1 otomatik onaylandı",
 		"triggerLabel_other": "{{count}} otomatik onaylandı",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"reasoning": {
 		"thinking": "Düşünüyor",
@@ -318,7 +335,8 @@
 			"inProgress": "Bağlam kısaltılıyor...",
 			"messagesRemoved": "{{count}} mesaj kaldırıldı",
 			"messagesRemoved_other": "{{count}} mesaj kaldırıldı",
-			"description": "Bağlam penceresi sınırında kalmak için eski mesajlar konuşmadan kaldırıldı. Bu, yoğunlaştırmaya kıyasla hızlı ancak daha az bağlam koruyucu bir yaklaşımdır."
+			"description": "Bağlam penceresi sınırında kalmak için eski mesajlar konuşmadan kaldırıldı. Bu, yoğunlaştırmaya kıyasla hızlı ancak daha az bağlam koruyucu bir yaklaşımdır.",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -488,5 +506,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "Ayarları aç",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

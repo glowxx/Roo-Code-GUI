@@ -161,7 +161,14 @@
 		"description": "Choose the AI model for this session.",
 		"searchPlaceholder": "Search AI models...",
 		"noResults": "No matching models found",
-		"configureMore": "Configure API & providers in Settings..."
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
 	},
 	"enhancePromptDescription": "The 'Enhance Prompt' button helps improve your prompt by providing additional context, clarification, or rephrasing. Try typing a prompt in here and clicking the button again to see how it works.",
 	"addImages": "Add images to message",
@@ -236,7 +243,8 @@
 			"inProgress": "Truncating context...",
 			"messagesRemoved": "{{count}} message removed",
 			"messagesRemoved_other": "{{count}} messages removed",
-			"description": "Older messages were removed from the conversation to stay within the context window limit. This is a fast but less context-preserving approach compared to condensation."
+			"description": "Older messages were removed from the conversation to stay within the context window limit. This is a fast but less context-preserving approach compared to condensation.",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -260,7 +268,9 @@
 		"wantsToCreate": "Roo wants to create a new file",
 		"wantsToInsert": "Roo wants to insert content into this file",
 		"wantsToInsertWithLineNumber": "Roo wants to insert content into this file at line {{lineNumber}}",
-		"wantsToInsertAtEnd": "Roo wants to append content to the end of this file"
+		"wantsToInsertAtEnd": "Roo wants to append content to the end of this file",
+		"wantsToSearchReplace": "Roo wants to search and replace in this file",
+		"didSearchReplace": "Roo performed search and replace in this file"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Roo wants to view the top level files in this directory",
@@ -330,7 +340,8 @@
 		"resultContent": "Subtask completed",
 		"defaultResult": "Please continue to the next task.",
 		"completionInstructions": "You can review the results and suggest any corrections or next steps. If everything looks good, confirm to return the result to the parent task.",
-		"goToSubtask": "View task"
+		"goToSubtask": "View task",
+		"completionContent": "Subtask completed"
 	},
 	"questions": {
 		"hasQuestion": "Roo has a question"
@@ -377,7 +388,9 @@
 		"triggerLabel_zero": "0 auto-approve",
 		"triggerLabel_one": "1 auto-approved",
 		"triggerLabel_other": "{{count}} auto-approved",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"toggle": "Toggle auto-approval",
+		"triggerLabelNone": "Manual approval"
 	},
 	"announcement": {
 		"title": "Roo Code {{version}} Released",
@@ -524,5 +537,54 @@
 		"medium": "Medium",
 		"high": "High",
 		"xhigh": "XHigh"
+	},
+	"instructions": {
+		"wantsToFetch": "Roo wants to fetch detailed instructions to help with the current task"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

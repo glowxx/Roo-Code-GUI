@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "Ответ прерван пользователем",
 		"responseInterruptedByApiError": "Ответ прерван ошибкой API",
-		"streamTerminatedByProvider": "Провайдер завершил запрос"
+		"streamTerminatedByProvider": "Провайдер завершил запрос",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "Введите пользовательский путь хранения истории разговоров, оставьте пустым для использования расположения по умолчанию",

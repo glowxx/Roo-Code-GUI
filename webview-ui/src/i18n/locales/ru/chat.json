@@ -19,12 +19,19 @@
 		"shareSuccessPublic": "Публичная ссылка скопирована в буфер обмена",
 		"openApiHistory": "Открыть историю API",
 		"openUiHistory": "Открыть историю UI",
-		"backToParentTask": "Родительская задача"
+		"backToParentTask": "Родительская задача",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"unpin": "Открепить",
 	"pin": "Закрепить",
 	"fileChangesInConversation": {
-		"header": "{{count}} файл(ов) изменено в этом разговоре"
+		"header": "{{count}} файл(ов) изменено в этом разговоре",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"retry": {
 		"title": "Повторить",
@@ -81,7 +88,8 @@
 	},
 	"stop": {
 		"title": "Остановить",
-		"tooltip": "Остановить текущую задачу"
+		"tooltip": "Остановить текущую задачу",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"cancel": {
 		"title": "Отмена",
@@ -146,12 +154,16 @@
 			"403": "Без авторизации. Ваш ключ API действителен, но провайдер отказался выполнить этот запрос.",
 			"429": "Слишком много запросов. Провайдер ограничивает частоту ваших запросов. Пожалуйста, подождите немного перед следующим вызовом API.",
 			"500": "Ошибка сервера провайдера. На стороне провайдера что-то пошло не так, с вашим запросом все в порядке.",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "Документация",
 			"goToSettings": "Настройки",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "Ошибка подключения. Убедитесь, что у вас есть рабочее подключение к Интернету.",
 			"claudeCodeNotAuthenticated": "Вам необходимо войти в систему, чтобы использовать Claude Code. Перейдите в Настройки и нажмите «Войти в Claude Code» для аутентификации."
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "Точка сохранения",
@@ -227,7 +239,11 @@
 		"expandOutput": "Развернуть вывод",
 		"collapseOutput": "Свернуть вывод",
 		"expandManagement": "Развернуть раздел управления командами",
-		"collapseManagement": "Свернуть раздел управления командами"
+		"collapseManagement": "Свернуть раздел управления командами",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "Ответ",
 	"arguments": "Аргументы",
@@ -300,7 +316,8 @@
 		"triggerLabel_zero": "0 авто-утвержденных",
 		"triggerLabel_one": "1 авто-утвержден",
 		"triggerLabel_other": "{{count}} авто-утвержденных",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"announcement": {
 		"title": "Выпущен Roo Code {{version}}",
@@ -341,7 +358,10 @@
 			"inProgress": "Усечение контекста...",
 			"messagesRemoved": "{{count}} сообщение удалено",
 			"messagesRemoved_other": "{{count}} сообщений удалено",
-			"description": "Более старые сообщения были удалены из разговора, чтобы остаться в пределах контекстного окна. Это быстрый, но менее сохраняющий контекст подход по сравнению со сжатием."
+			"description": "Более старые сообщения были удалены из разговора, чтобы остаться в пределах контекстного окна. Это быстрый, но менее сохраняющий контекст подход по сравнению со сжатием.",
+			"messagesRemoved_one": "{{count}} сообщение удалено",
+			"messagesRemoved_few": "{{count}} сообщения удалено",
+			"messagesRemoved_many": "{{count}} сообщений удалено"
 		}
 	},
 	"skill": {
@@ -488,5 +508,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "Открыть настройки",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }

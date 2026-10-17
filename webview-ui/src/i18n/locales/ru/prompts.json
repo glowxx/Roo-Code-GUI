@@ -53,7 +53,7 @@
 	},
 	"exportMode": {
 		"title": "Экспортировать режим",
-		"description": "Экспортировать этот режим в файл YAML со всеми включенными правилами для удобного обмена с другими.",
+		"description": "Export this mode with rules from the .roo/rules-{{slug}}/ folder combined into a shareable YAML file. The original files remain unchanged.",
 		"export": "Экспортировать режим",
 		"exporting": "Экспорт..."
 	},

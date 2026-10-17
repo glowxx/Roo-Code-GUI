@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "回應被使用者中斷",
 		"responseInterruptedByApiError": "回應被 API 錯誤中斷",
-		"streamTerminatedByProvider": "提供方終止了請求"
+		"streamTerminatedByProvider": "提供方終止了請求",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "輸入自訂會話歷史儲存路徑，留空以使用預設位置",

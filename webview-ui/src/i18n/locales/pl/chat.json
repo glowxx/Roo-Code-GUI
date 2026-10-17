@@ -142,7 +142,14 @@
 		"description": "Wybierz model AI do bieżącej sesji.",
 		"searchPlaceholder": "Szukaj modeli AI...",
 		"noResults": "Nie znaleziono pasujących modeli",
-		"configureMore": "Skonfiguruj dostawców i klucze w Ustawieniach..."
+		"configureMore": "Skonfiguruj dostawców i klucze w Ustawieniach...",
+		"selected": "Wybrany",
+		"context": "Kontekst",
+		"provider": "Dostawca:",
+		"selectModel": "Wybierz model",
+		"apiProvider": "Dostawca API:",
+		"filterModels": "Filtruj modele",
+		"choose": "Wybierz"
 	},
 	"errorReadingFile": "Błąd odczytu pliku",
 	"noValidImages": "Nie przetworzono żadnych prawidłowych obrazów",
@@ -347,8 +354,11 @@
 			"title": "Kontekst obcięty",
 			"inProgress": "Obcinanie kontekstu...",
 			"messagesRemoved": "{{count}} wiadomość usunięta",
-			"messagesRemoved_other": "{{count}} wiadomości usunięte",
-			"description": "Starsze wiadomości zostały usunięte z konwersacji, aby pozostać w granicach okna kontekstu. To szybsze, ale mniej zachowujące kontekst podejście w porównaniu z kondensacją."
+			"messagesRemoved_other": "{{count}} wiadomości usuniętych",
+			"description": "Starsze wiadomości zostały usunięte z konwersacji, aby pozostać w granicach okna kontekstu. To szybsze, ale mniej zachowujące kontekst podejście w porównaniu z kondensacją.",
+			"messagesRemoved_one": "{{count}} wiadomość usunięta",
+			"messagesRemoved_few": "{{count}} wiadomości usunięte",
+			"messagesRemoved_many": "{{count}} wiadomości usuniętych"
 		}
 	},
 	"skill": {
@@ -546,5 +556,39 @@
 	"compactionError": {
 		"title": "Nie udało się skrócić kontekstu",
 		"dismiss": "Zamknij"
+	},
+	"guardrail": {
+		"evaluating": "Ocena reguł bezpieczeństwa...",
+		"warning": "Ostrzeżenie reguł bezpieczeństwa",
+		"passed": "Reguły bezpieczeństwa spełnione",
+		"blocked": "Zablokowano przez reguły bezpieczeństwa"
+	},
+	"analyzer": {
+		"analyzing": "Analiza wyniku polecenia...",
+		"safe": "Nie wykryto problemów w wyniku"
+	},
+	"mentions": {
+		"addFile": "Dodaj plik do kontekstu",
+		"selectCommand": "Wybierz polecenie"
+	},
+	"reasoningEffort": {
+		"title": "Poziom rozumowania",
+		"off": "Wyłączone",
+		"minimal": "Minimalny",
+		"low": "Niski",
+		"medium": "Średni",
+		"high": "Wysoki",
+		"xhigh": "Maksymalny"
+	},
+	"nativeChat": {
+		"title": "Czat AI",
+		"newChat": "Nowa rozmowa",
+		"emptyPrompt": "O czym porozmawiamy?",
+		"regenerate": "Wygeneruj ponownie",
+		"reasoning": "Tok rozumowania",
+		"cancel": "Anuluj",
+		"total": "Razem:",
+		"conversationModel": "Model rozmowy",
+		"separateContext": "Osobny kontekst"
 	}
 }

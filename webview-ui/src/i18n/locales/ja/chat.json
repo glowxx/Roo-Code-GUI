@@ -19,12 +19,19 @@
 		"shareSuccessPublic": "公開リンクをクリップボードにコピーしました",
 		"openApiHistory": "API履歴を開く",
 		"openUiHistory": "UI履歴を開く",
-		"backToParentTask": "親タスク"
+		"backToParentTask": "親タスク",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"partialUsage": "Some requests have no provider usage data",
+		"partial": "partial",
+		"compactContext": "Compress conversation history and reclaim context tokens"
 	},
 	"unpin": "ピン留めを解除",
 	"pin": "ピン留め",
 	"fileChangesInConversation": {
-		"header": "この会話で {{count}} 個のファイルが変更されました"
+		"header": "この会話で {{count}} 個のファイルが変更されました",
+		"header_one": "{{count}} file changed in this conversation",
+		"header_other": "{{count}} files changed in this conversation"
 	},
 	"tokenProgress": {
 		"availableSpace": "利用可能な空き容量: {{amount}} トークン",
@@ -81,7 +88,8 @@
 	},
 	"stop": {
 		"title": "停止",
-		"tooltip": "現在のタスクを停止"
+		"tooltip": "現在のタスクを停止",
+		"failed": "Could not confirm this task stopped. Try again."
 	},
 	"cancel": {
 		"title": "キャンセル",
@@ -151,12 +159,16 @@
 			"403": "認可されていません。API キーは有効ですが、プロバイダーがこのリクエストの完了を拒否しました。",
 			"429": "リクエストが多すぎます。プロバイダーによってレート制限されています。次の API 呼び出しの前にお待ちください。",
 			"500": "プロバイダー サーバー エラー。プロバイダー側に問題があり、リクエスト自体に問題はありません。",
+			"502": "Bad gateway. The provider's upstream server returned an invalid response. Please try again later.",
+			"503": "Service unavailable. The provider or upstream model is temporarily overloaded or down for maintenance. Please try again shortly.",
+			"504": "Gateway timeout. The provider or upstream service took too long to respond. Please try again later.",
 			"docs": "ドキュメント",
 			"goToSettings": "設定",
 			"unknown": "Unknown API error. Please report this on GitHub.",
 			"connection": "接続エラー。インターネット接続が機能していることを確認してください。",
 			"claudeCodeNotAuthenticated": "Claude Codeを使用するにはサインインが必要です。設定に移動して「Claude Codeにサインイン」をクリックして認証してください。"
-		}
+		},
+		"stalledRetrying": "Connection stalled — retrying..."
 	},
 	"checkpoint": {
 		"regular": "チェックポイント",
@@ -231,7 +243,11 @@
 		"expandOutput": "出力を展開",
 		"collapseOutput": "出力を折りたたむ",
 		"expandManagement": "コマンド管理セクションを展開",
-		"collapseManagement": "コマンド管理セクションを折りたたむ"
+		"collapseManagement": "コマンド管理セクションを折りたたむ",
+		"checkingSafety": "Checking command safety...",
+		"autoApproved": "Auto-approved",
+		"awaitingApproval": "Awaiting Approval",
+		"command": "Command"
 	},
 	"response": "応答",
 	"arguments": "引数",
@@ -299,7 +315,8 @@
 		"triggerLabel_zero": "0個の自動承認",
 		"triggerLabel_one": "1個の自動承認済み",
 		"triggerLabel_other": "{{count}}個の自動承認済み",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"triggerLabelNone": "Manual approval"
 	},
 	"reasoning": {
 		"thinking": "考え中",
@@ -317,7 +334,8 @@
 			"inProgress": "コンテキストを切り詰め中...",
 			"messagesRemoved": "{{count}}件のメッセージを削除",
 			"messagesRemoved_other": "{{count}}件のメッセージを削除",
-			"description": "コンテキストウィンドウの制限内に収めるため、古いメッセージが会話から削除されました。これは圧縮と比較して高速ですが、コンテキストの保持性が低いアプローチです。"
+			"description": "コンテキストウィンドウの制限内に収めるため、古いメッセージが会話から削除されました。これは圧縮と比較して高速ですが、コンテキストの保持性が低いアプローチです。",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -487,5 +505,86 @@
 		"message": "This provider is no longer supported. Please select a different provider in your API profile settings.",
 		"openSettings": "設定を開く",
 		"rooMessage": "As part of our decision to sunset the Roo Code extension, we also ended the Roo Code Router, which only existed to support the extension. Sorry about the hassle."
+	},
+	"compactionError": {
+		"title": "Context Compaction Failed",
+		"dismiss": "Dismiss"
+	},
+	"selectModel": "Select AI model",
+	"modelSelector": {
+		"title": "AI Models",
+		"settings": "API & Provider Settings",
+		"description": "Choose the AI model for this session.",
+		"searchPlaceholder": "Search AI models...",
+		"noResults": "No matching models found",
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
+	},
+	"verifyingCompletion": "Verifying Task Completion...",
+	"completionReviewContinued": "Completion Review: Continued Work Required",
+	"candidateCompletion": "Proposed Task Completion",
+	"openSettings": "Open Settings",
+	"effort": {
+		"title": "Reasoning Effort",
+		"label": "Effort: {{level}}",
+		"tooltip": "Reasoning Effort: {{level}}",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "XHigh"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
 	}
 }
