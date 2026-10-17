@@ -37,10 +37,25 @@ export async function runPackageAndVerify(options = {}) {
 		fs.mkdirSync(releaseDir, { recursive: true })
 	}
 
-	// 1. Take pre-build snapshot of the expected installer
+	const buildStartTimeMs = Date.now()
+	const buildStartedAt = new Date(buildStartTimeMs).toISOString()
+
+	// 1. Take pre-build snapshot of the expected installer (for packaging mode)
 	/** @type {{ exists: boolean, mtimeMs: number, size: number } | null} */
 	let preBuildSnapshot = null
-	if (fs.existsSync(installerPath)) {
+	let effectiveBuildStartTimeMs = buildStartTimeMs
+
+	if (verifyOnly) {
+		const manifestPath = path.join(releaseDir, "installer-manifest.json")
+		if (fs.existsSync(manifestPath)) {
+			try {
+				const manifestData = JSON.parse(fs.readFileSync(manifestPath, "utf-8"))
+				if (manifestData.BUILD_STARTED_AT) {
+					effectiveBuildStartTimeMs = new Date(manifestData.BUILD_STARTED_AT).getTime()
+				}
+			} catch {}
+		}
+	} else if (fs.existsSync(installerPath)) {
 		const stats = fs.statSync(installerPath)
 		preBuildSnapshot = {
 			exists: true,
@@ -50,9 +65,6 @@ export async function runPackageAndVerify(options = {}) {
 	} else {
 		preBuildSnapshot = { exists: false, mtimeMs: 0, size: 0 }
 	}
-
-	const buildStartTimeMs = Date.now()
-	const buildStartedAt = new Date(buildStartTimeMs).toISOString()
 
 	if (!verifyOnly) {
 		// Step A: Build application dist
@@ -100,7 +112,7 @@ export async function runPackageAndVerify(options = {}) {
 	const result = verifyInstallerFreshness({
 		packageJson: pkgJson,
 		desktopDir,
-		buildStartTimeMs,
+		buildStartTimeMs: effectiveBuildStartTimeMs,
 		preBuildSnapshot,
 		releaseDir,
 	})
