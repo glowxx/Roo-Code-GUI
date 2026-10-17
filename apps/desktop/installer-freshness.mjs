@@ -181,6 +181,7 @@ export function verifyInstallerFreshness(params) {
 		verifyOnly = false,
 		writeManifest = true,
 		manifestFilename = "installer-manifest.json",
+		sourcePaths = APPLICATION_SOURCE_PATHS,
 	} = params
 
 	const expectedFilename = getExpectedInstallerFilename(packageJson)
@@ -272,7 +273,7 @@ export function verifyInstallerFreshness(params) {
 		repoRootDir = path.dirname(repoRootDir)
 	}
 
-	const { hasAppCodeChanges, changedFiles } = checkApplicationCodeChanges(sourceGitShaAtBuild, repoRootDir)
+	const { hasAppCodeChanges, changedFiles } = checkApplicationCodeChanges(sourceGitShaAtBuild, repoRootDir, sourcePaths)
 
 	if (verifyOnly && hasAppCodeChanges) {
 		return {

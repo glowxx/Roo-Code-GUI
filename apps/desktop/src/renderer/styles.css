@@ -1,9 +1,9 @@
 /* Roo Code Desktop - Luxury Developer Theme (Linear / Cursor tier) */
 :root {
-	--bg-canvas: #090a0f;
-	--bg-header: #0e1017;
-	--bg-surface: #12141c;
-	--bg-surface-elevated: #181b26;
+	--bg-canvas: #202123;
+	--bg-header: #191a1c;
+	--bg-surface: #28292c;
+	--bg-surface-elevated: #303135;
 	--bg-subtle: rgba(255, 255, 255, 0.04);
 	--bg-hover: rgba(255, 255, 255, 0.07);
 	--bg-active: rgba(255, 255, 255, 0.1);
@@ -2001,7 +2001,7 @@ body.light-theme #clear-terminal-btn:hover,
 	font-size: 12.5px;
 	line-height: 1.6;
 	color: #e2e8f0;
-	background: #090a0f;
+	background: var(--bg-canvas);
 	user-select: text;
 }
 

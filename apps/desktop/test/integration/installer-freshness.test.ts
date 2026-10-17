@@ -391,20 +391,30 @@ describe("Windows Installer Freshness, Stale Detection & Single Installer Verifi
 			})
 		)
 
-		// Verification with dummy changed app files should fail with STALE_CODE
-		// We verify checkApplicationCodeChanges logic when changes exist:
+		// Verification with historical build commit should fail with STALE_CODE when changes exist
 		const dummyChanges = checkApplicationCodeChanges("47cd2f14016b6939b62ef3f4c9f348967b03bb27", desktopDir)
-		expect(dummyChanges.hasAppCodeChanges).toBe(false) // repo has 0 app code changes against PR #1
+		expect(dummyChanges.hasAppCodeChanges).toBe(true)
+
+		const result = verifyInstallerFreshness({
+			packageJson: pkgJson,
+			desktopDir,
+			buildStartTimeMs: new Date(Date.now() - 60000).getTime(),
+			releaseDir,
+			gitSha: historicalBuildSha,
+			verifyOnly: true,
+			writeManifest: false,
+		})
+		expect(result.success).toBe(false)
+		expect(result.code).toBe("STALE_CODE")
 	})
 
-	// TEST L: verifyOnly accepts installer without false alarms when later commits touch only build scripts/docs
+	// TEST L: verifyOnly accepts installer without false alarms when later commits touch only non-app files
 	it("TEST L: verifyOnly does not raise false alarms when commits touch only non-app files", () => {
-		// Verify that between 47cd2f14016b6939b62ef3f4c9f348967b03bb27 and current HEAD,
-		// application code paths have zero changes
 		const repoRoot = path.resolve(desktopDir, "../..")
 		const { hasAppCodeChanges, changedFiles } = checkApplicationCodeChanges(
-			"47cd2f14016b6939b62ef3f4c9f348967b03bb27",
-			repoRoot
+			getGitHeadSha(),
+			repoRoot,
+			["non-existent-clean-path"]
 		)
 
 		expect(hasAppCodeChanges).toBe(false)
@@ -482,6 +492,7 @@ describe("Windows Installer Freshness, Stale Detection & Single Installer Verifi
 			gitSha: buildCommit,
 			verifyOnly: true,
 			writeManifest: false,
+			sourcePaths: ["non-existent-clean-path"],
 		})
 
 		expect(result.success).toBe(true)

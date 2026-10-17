@@ -10,6 +10,7 @@ export interface VerifyFreshnessParams {
 	verifyOnly?: boolean
 	writeManifest?: boolean
 	manifestFilename?: string
+	sourcePaths?: string[]
 }
 
 export interface VerifyFreshnessResult {

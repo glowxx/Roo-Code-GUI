@@ -61,12 +61,14 @@
 	--accent: #83c9d5; --border-focus: #83c9d5;
 }
 /* Fallback --vscode-* definitions for standalone desktop shell */
+html[data-desktop-shell],
+html[data-desktop-shell] body,
 [data-desktop-shell],
 [data-desktop-shell] [data-theme],
 body.standalone-desktop,
 body.standalone-desktop [data-theme],
 #desktop-app,
-:root:not([class*="vscode"]):not([data-vscode-theme-kind]) {
+:root {
 	--font-sans: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
 	--font-mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
 	--vscode-font-family: var(--font-sans);

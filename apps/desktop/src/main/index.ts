@@ -273,7 +273,7 @@ export async function startDesktopApp(options: DesktopRunOptions = {}) {
 				minWidth: 900,
 				minHeight: 600,
 				title: "Roo Code Desktop",
-				backgroundColor: "#090a0f",
+				backgroundColor: "#202123",
 				icon: fs.existsSync(iconCandidate) ? iconCandidate : undefined,
 				frame: false,
 				titleBarStyle: "hidden",
