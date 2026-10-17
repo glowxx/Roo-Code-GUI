@@ -368,7 +368,7 @@ export const ChatRowContent = ({
 					isCommandExecuting || isEvaluating ? (
 						<ProgressIndicator />
 					) : (
-						<TerminalSquare className="size-4" aria-label="Terminal" />
+						<TerminalSquare className="size-4" aria-label={t("chat:tools.terminal", "Terminal")} />
 					),
 					<span style={{ color: normalColor, fontWeight: "bold" }}>
 						{isCommandExecuting
@@ -528,7 +528,7 @@ export const ChatRowContent = ({
 				]
 			case "followup":
 				return [
-					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label="Pytanie" />,
+					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label={t("chat:tools.question", "Pytanie")} />,
 					<span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:questions.hasQuestion")}</span>,
 				]
 			default:
@@ -604,7 +604,7 @@ export const ChatRowContent = ({
 					return (
 						<>
 							<div style={headerStyle}>
-								<FileDiff className="w-4 shrink-0" aria-label="Zmiany w plikach" />
+								<FileDiff className="w-4 shrink-0" aria-label={t("chat:tools.fileChanges", "Zmiany w plikach")} />
 								<span style={{ fontWeight: "bold" }}>
 									{t("chat:fileOperations.wantsToApplyBatchChanges")}
 								</span>
@@ -752,7 +752,7 @@ export const ChatRowContent = ({
 									values: tool.startLine ? { line: tool.startLine } : undefined,
 								})
 							}>
-							<FileCode2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground/80" aria-label="Odczyt pliku" />
+							<FileCode2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground/80" aria-label={t("chat:tools.readFile", "Odczyt pliku")} />
 							<span className="font-medium text-foreground/80">{t("chat:fileOperations.didRead")}</span>
 							<span className="text-border/60">·</span>
 							<PathTooltip content={formatPathTooltip(tool.path, tool.reason)}>
@@ -772,7 +772,7 @@ export const ChatRowContent = ({
 				return (
 					<>
 						<div style={headerStyle}>
-							<FileCode2 className="w-4 shrink-0" aria-label="Odczyt pliku" />
+							<FileCode2 className="w-4 shrink-0" aria-label={t("chat:tools.readFile", "Odczyt pliku")} />
 							<span style={{ fontWeight: "bold" }}>
 								{tool.isOutsideWorkspace
 									? t("chat:fileOperations.wantsToReadOutsideWorkspace")
@@ -1185,9 +1185,11 @@ export const ChatRowContent = ({
 			case "webSearch":
 				return (
 					<div style={headerStyle}>
-						<Globe className="w-4 shrink-0 text-sky-400" aria-label="Wyszukiwanie w internecie" />
+						<Globe className="w-4 shrink-0 text-sky-400" aria-label={t("chat:tools.webSearch", "Wyszukiwanie w internecie")} />
 						<span style={{ fontWeight: "bold" }}>
-							{message.type === "ask" ? "Wants to search the web" : "Searched the web"}
+							{message.type === "ask"
+								? t("chat:webSearch.wantsToSearch", { defaultValue: "Wants to search the web" })
+								: t("chat:webSearch.didSearch", { defaultValue: "Searched the web" })}
 						</span>
 						<span className="text-xs ml-1" style={{ color: "var(--vscode-descriptionForeground)" }}>
 							"{tool.query}"
@@ -1197,9 +1199,11 @@ export const ChatRowContent = ({
 			case "fetchUrl":
 				return (
 					<div style={headerStyle}>
-						<Globe className="w-4 shrink-0 text-sky-400" aria-label="Odczyt strony" />
+						<Globe className="w-4 shrink-0 text-sky-400" aria-label={t("chat:tools.fetchUrl", "Odczyt strony")} />
 						<span style={{ fontWeight: "bold" }}>
-							{message.type === "ask" ? "Wants to fetch URL" : "Fetched URL"}
+							{message.type === "ask"
+								? t("chat:fetchUrl.wantsToFetch", { defaultValue: "Wants to fetch URL" })
+								: t("chat:fetchUrl.didFetch", { defaultValue: "Fetched URL" })}
 						</span>
 						<span className="text-xs ml-1 truncate max-w-[300px]" style={{ color: "var(--vscode-descriptionForeground)" }}>
 							{tool.url}
@@ -1751,7 +1755,7 @@ export const ChatRowContent = ({
 
 							return (
 								<div style={headerStyle}>
-									<FileCode2 className="w-4 shrink-0" aria-label="Wynik polecenia" />
+									<FileCode2 className="w-4 shrink-0" aria-label={t("chat:tools.commandOutput", "Wynik polecenia")} />
 									<span style={{ fontWeight: "bold" }}>{t("chat:readCommandOutput.title")}</span>
 									{infoText && (
 										<span
@@ -1768,8 +1772,8 @@ export const ChatRowContent = ({
 							const count = (sayTool as any).resultCount
 							return (
 								<div style={headerStyle}>
-									<Globe className="w-4 shrink-0 text-sky-400" aria-label="Wyszukiwanie w internecie" />
-									<span style={{ fontWeight: "bold" }}>Wyszukiwanie w internecie</span>
+									<Globe className="w-4 shrink-0 text-sky-400" aria-label={t("chat:tools.webSearch", "Wyszukiwanie w internecie")} />
+									<span style={{ fontWeight: "bold" }}>{t("chat:tools.webSearch", "Wyszukiwanie w internecie")}</span>
 									<span className="text-xs ml-1" style={{ color: "var(--vscode-descriptionForeground)" }}>
 										"{query}"{count !== undefined ? ` (${count} results)` : ""}
 									</span>
@@ -1780,8 +1784,8 @@ export const ChatRowContent = ({
 							const url = (sayTool as any).url || ""
 							return (
 								<div style={headerStyle}>
-									<Globe className="w-4 shrink-0 text-sky-400" aria-label="Odczyt strony" />
-									<span style={{ fontWeight: "bold" }}>Odczyt strony</span>
+									<Globe className="w-4 shrink-0 text-sky-400" aria-label={t("chat:tools.fetchUrl", "Odczyt strony")} />
+									<span style={{ fontWeight: "bold" }}>{t("chat:tools.fetchUrl", "Odczyt strony")}</span>
 									<span className="text-xs ml-1 truncate max-w-[300px]" style={{ color: "var(--vscode-descriptionForeground)" }}>
 										{url}
 									</span>
@@ -1854,28 +1858,36 @@ export const ChatRowContent = ({
 						evaluation.reason?.includes("Approval response schema validation") ||
 						evaluation.reason?.includes("Malformed JSON response from Approval Authority model")
 					const title = isRejected
-						? `🛡️ AI Command Safety Guardrail: ACTION REJECTED`
+						? t("chat:guardrail.rejected", "🛡️ AI Command Safety Guardrail: ACTION REJECTED")
 						: isModelUnavailable
-							? `🛡️ AI Command Safety Guardrail: VERIFIER MODEL UNAVAILABLE`
+							? t("chat:guardrail.verifierUnavailable", "🛡️ AI Command Safety Guardrail: VERIFIER MODEL UNAVAILABLE")
 							: isRateLimited
-								? `🛡️ AI Command Safety Guardrail: VERIFIER RATE LIMITED`
+								? t("chat:guardrail.verifierRateLimited", "🛡️ AI Command Safety Guardrail: VERIFIER RATE LIMITED")
 								: isTemporarilyUnavailable
-									? `🛡️ AI Command Safety Guardrail: VERIFICATION TEMPORARILY UNAVAILABLE`
+									? t("chat:guardrail.verificationTemporarilyUnavailable", "🛡️ AI Command Safety Guardrail: VERIFICATION TEMPORARILY UNAVAILABLE")
 									: isInfra
-										? `🛡️ AI Command Safety Guardrail: VERIFICATION FAILED (Fail-Closed)`
-										: `🛡️ AI Command Safety Guardrail: ${(evaluation.riskLevel || "unknown").toUpperCase()} RISK DETECTED`
+										? t("chat:guardrail.verificationFailed", "🛡️ AI Command Safety Guardrail: VERIFICATION FAILED (Fail-Closed)")
+										: t("chat:guardrail.riskDetected", {
+												defaultValue: `🛡️ AI Command Safety Guardrail: ${(evaluation.riskLevel || "unknown").toUpperCase()} RISK DETECTED`,
+												riskLevel: (evaluation.riskLevel || "unknown").toUpperCase(),
+										  })
 
 					let messageText = evaluation.reason
 					if (evaluation.deferredRetry) {
 						const seconds = Math.max(1, Math.round(evaluation.deferredRetry.delayMs / 1000))
-						messageText = `${evaluation.reason}\n\n⏳ Retrying verification in ~${seconds}s (Attempt ${evaluation.deferredRetry.attempt} of ${evaluation.deferredRetry.maxAttempts}). You can still Run or Deny manually at any time.`
+						messageText = `${evaluation.reason}\n\n${t("chat:guardrail.retrying", {
+							defaultValue: `⏳ Retrying verification in ~${seconds}s (Attempt ${evaluation.deferredRetry.attempt} of ${evaluation.deferredRetry.maxAttempts}). You can still Run or Deny manually at any time.`,
+							seconds,
+							attempt: evaluation.deferredRetry.attempt,
+							maxAttempts: evaluation.deferredRetry.maxAttempts,
+						})}`
 					}
 
 					return (
 						<WarningRow
 							title={title}
 							message={messageText}
-							actionText="Configure Safety Guardrail"
+							actionText={t("chat:guardrail.configureButton", "Configure Safety Guardrail")}
 							onAction={() =>
 								openSettings({ section: "commandSafety", source: "command_safety_warning" })
 							}

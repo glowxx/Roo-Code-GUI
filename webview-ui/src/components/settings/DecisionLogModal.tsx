@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge, Button, Input } from "@/components/ui"
 import { vscode } from "@/utils/vscode"
 import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, Search, RefreshCw, Clock } from "lucide-react"
+import { useAppTranslation } from "@/i18n"
 
 interface DecisionLogModalProps {
 	isOpen: boolean
@@ -12,6 +13,7 @@ interface DecisionLogModalProps {
 }
 
 export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onClose, taskId }) => {
+	const { t } = useAppTranslation()
 	const [entries, setEntries] = useState<DecisionLogEntry[]>([])
 	const [searchQuery, setSearchQuery] = useState("")
 	const [filterDecision, setFilterDecision] = useState<string>("all")
@@ -66,28 +68,28 @@ export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onCl
 				return (
 					<Badge className="bg-[var(--success-subtle)] text-[var(--success)] border border-[var(--border-light)] flex items-center gap-1 font-mono text-[10px]">
 						<CheckCircle2 className="size-3" />
-						ZATWIERDZONO
+						{t("settings:decisionLog.badgeAllowed", { defaultValue: "ZATWIERDZONO" })}
 					</Badge>
 				)
 			case "DENIED_AND_REPLAN":
 				return (
 					<Badge className="bg-[var(--warning-subtle)] text-[var(--warning)] border border-[var(--border-light)] flex items-center gap-1 font-mono text-[10px]">
 						<AlertTriangle className="size-3" />
-						ZMIEŃ PLAN
+						{t("settings:decisionLog.badgeReplan", { defaultValue: "ZMIEŃ PLAN" })}
 					</Badge>
 				)
 			case "HARD_BLOCK":
 				return (
 					<Badge className="bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1 font-mono text-[10px]">
 						<XCircle className="size-3" />
-						ZABLOKOWANO
+						{t("settings:decisionLog.badgeBlocked", { defaultValue: "ZABLOKOWANO" })}
 					</Badge>
 				)
 			case "MANUAL_APPROVAL":
 				return (
 					<Badge className="bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--border-light)] flex items-center gap-1 font-mono text-[10px]">
 						<ShieldCheck className="size-3" />
-						PYTANIE DO UŻYTKOWNIKA
+						{t("settings:decisionLog.badgeManual", { defaultValue: "PYTANIE DO UŻYTKOWNIKA" })}
 					</Badge>
 				)
 			default:
@@ -107,7 +109,9 @@ export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onCl
 					<div className="flex items-center justify-between pr-6">
 						<div className="flex items-center gap-2">
 							<ShieldCheck className="size-5 text-vscode-textLink-foreground" />
-							<DialogTitle className="text-base font-semibold">Historia decyzji agenta</DialogTitle>
+							<DialogTitle className="text-base font-semibold">
+								{t("settings:decisionLog.title", { defaultValue: "Historia decyzji agenta" })}
+							</DialogTitle>
 						</div>
 						<Button
 							variant="ghost"
@@ -116,11 +120,13 @@ export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onCl
 							disabled={isLoading}
 							className="h-7 px-2">
 							<RefreshCw className={`size-3.5 mr-1 ${isLoading ? "animate-spin" : ""}`} />
-							Odśwież
+							{t("settings:decisionLog.refresh", { defaultValue: "Odśwież" })}
 						</Button>
 					</div>
 					<DialogDescription className="text-xs text-vscode-descriptionForeground">
-						Decyzje niezależnego modelu dotyczące bezpieczeństwa działań agenta.
+						{t("settings:decisionLog.description", {
+							defaultValue: "Decyzje niezależnego modelu dotyczące bezpieczeństwa działań agenta.",
+						})}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -128,29 +134,29 @@ export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onCl
 					<div className="relative flex-1">
 						<Search className="absolute left-2.5 top-2.5 size-3.5 text-vscode-descriptionForeground" />
 						<Input
-							placeholder="Szukaj działań, uzasadnień lub modeli…"
+							placeholder={t("settings:decisionLog.searchPlaceholder", {
+								defaultValue: "Szukaj działań, uzasadnień lub modeli…",
+							})}
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							className="pl-8 h-8 text-xs"
 						/>
 					</div>
 					<div className="flex items-center gap-1">
-						{["all", "ALLOW_AUTO", "DENIED_AND_REPLAN", "HARD_BLOCK", "MANUAL_APPROVAL"].map((type) => (
+						{[
+							{ key: "all", label: t("settings:decisionLog.filterAll", { defaultValue: "Wszystkie" }) },
+							{ key: "ALLOW_AUTO", label: t("settings:decisionLog.filterAllowed", { defaultValue: "Zatwierdzone" }) },
+							{ key: "DENIED_AND_REPLAN", label: t("settings:decisionLog.filterReplan", { defaultValue: "Zmiana planu" }) },
+							{ key: "HARD_BLOCK", label: t("settings:decisionLog.filterBlocked", { defaultValue: "Zablokowane" }) },
+							{ key: "MANUAL_APPROVAL", label: t("settings:decisionLog.filterManual", { defaultValue: "Ręcznie" }) },
+						].map(({ key, label }) => (
 							<Button
-								key={type}
-								variant={filterDecision === type ? "primary" : "secondary"}
+								key={key}
+								variant={filterDecision === key ? "primary" : "secondary"}
 								size="sm"
 								className="h-8 text-xs px-2.5"
-								onClick={() => setFilterDecision(type)}>
-								{type === "all"
-									? "Wszystkie"
-									: type === "ALLOW_AUTO"
-										? "Zatwierdzone"
-										: type === "DENIED_AND_REPLAN"
-											? "Zmiana planu"
-											: type === "HARD_BLOCK"
-												? "Zablokowane"
-												: "Ręcznie"}
+								onClick={() => setFilterDecision(key)}>
+								{label}
 							</Button>
 						))}
 					</div>
@@ -160,9 +166,11 @@ export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onCl
 					{filteredEntries.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-12 text-vscode-descriptionForeground text-sm">
 							<Clock className="size-8 mb-2 opacity-50" />
-							<p>Nie ma jeszcze żadnych decyzji.</p>
+							<p>{t("settings:decisionLog.noDecisionsYet", { defaultValue: "Nie ma jeszcze żadnych decyzji." })}</p>
 							<p className="text-xs opacity-75">
-								Tutaj pojawią się zatwierdzenia i zalecenia zmiany planu.
+								{t("settings:decisionLog.noDecisionsDescription", {
+									defaultValue: "Tutaj pojawią się zatwierdzenia i zalecenia zmiany planu.",
+								})}
 							</p>
 						</div>
 					) : (
@@ -192,14 +200,18 @@ export const DecisionLogModal: React.FC<DecisionLogModalProps> = ({ isOpen, onCl
 
 								{entry.reason && (
 									<div className="text-[11px] text-[var(--warning)] bg-[var(--warning-subtle)] p-1.5 rounded border border-[var(--border-light)]">
-										<span className="font-semibold">Uzasadnienie: </span>
+										<span className="font-semibold">
+											{t("settings:decisionLog.reasonLabel", { defaultValue: "Uzasadnienie: " })}
+										</span>
 										{entry.reason}
 									</div>
 								)}
 
 								{entry.replanGuidance && (
 									<div className="text-[11px] text-vscode-descriptionForeground italic">
-										<span className="font-semibold not-italic">Wskazówki dla agenta: </span>
+										<span className="font-semibold not-italic">
+											{t("settings:decisionLog.replanGuidanceLabel", { defaultValue: "Wskazówki dla agenta: " })}
+										</span>
 										{entry.replanGuidance}
 									</div>
 								)}

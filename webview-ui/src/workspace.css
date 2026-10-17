@@ -2,8 +2,24 @@
 @import "./ui-surfaces.css";
 
 :root {
+	--bg-canvas: #202123;
+	--bg-header: #191a1c;
+	--bg-surface: #28292c;
+	--bg-surface-elevated: #303135;
+	--text-primary: #edeef0;
+	--text-secondary: #b2b3b9;
+	--text-muted: #93959d;
+	--accent: #a8c7fa;
+	--border-subtle: #ffffff0e;
+	--border-light: #ffffff20;
+	--border-focus: #8aaef0;
+}
+
+/* In VS Code extension host (without desktop shell/theme override), inherit directly from editor tokens */
+body.vscode-dark:not([data-desktop-shell]):not([data-theme]),
+body.vscode-light:not([data-desktop-shell]):not([data-theme]) {
 	--bg-canvas: var(--vscode-editor-background, #202123);
-	--bg-header: var(--vscode-editor-background, #191a1c);
+	--bg-header: var(--vscode-sideBar-background, var(--vscode-editor-background, #191a1c));
 	--bg-surface: var(--vscode-sideBar-background, var(--vscode-editor-background, #28292c));
 	--bg-surface-elevated: var(--vscode-editorWidget-background, #303135);
 	--text-primary: var(--vscode-editor-foreground, #edeef0);
@@ -16,6 +32,8 @@
 }
 
 body {
+	background-color: var(--bg-canvas);
+	color: var(--text-primary);
 	font-family: var(--font-sans);
 	font-size: 14px;
 	line-height: 1.55;

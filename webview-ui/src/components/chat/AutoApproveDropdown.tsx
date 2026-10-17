@@ -49,7 +49,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 
 	const isAutoMode = approvalMode === "auto"
 	const isSafetyConfigured = isSafetyModelConfigured(state)
-	const approvalModel = commandSafetyConfig?.modelId || "Brak modelu — wymagane potwierdzenie"
+	const approvalModel = commandSafetyConfig?.modelId || t("chat:autoApprove.noModelFallback", "Brak modelu — wymagane potwierdzenie")
 
 	const toggles = useAutoApprovalToggles()
 
@@ -152,7 +152,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 	const { effectiveAutoApprovalEnabled } = useAutoApprovalState(toggles, autoApprovalEnabled)
 
 	const tooltipText = isAutoMode
-		? `Samodzielna praca agenta. Model oceniający: ${approvalModel}. Brak oceny wymaga potwierdzenia.`
+		? `${t("chat:autoApprove.autonomousWork", "Samodzielna praca agenta")}. ${t("chat:autoApprove.evaluatorModel", "Model oceniający:")} ${approvalModel}. ${t("chat:autoApprove.noEvaluationRequiresConfirmation", "Brak oceny wymaga potwierdzenia.")}`
 		: !effectiveAutoApprovalEnabled || enabledCount === 0
 			? t("chat:autoApprove.tooltipManage")
 			: t("chat:autoApprove.tooltipStatus", {
@@ -225,7 +225,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 									vscode.postMessage({ type: "approvalMode", approvalMode: "manual" })
 								}}>
 								<Sliders className="size-3" />
-								<span>Ręcznie</span>
+								<span>{t("chat:autoApprove.manual", "Ręcznie")}</span>
 							</button>
 							<button
 								type="button"
@@ -241,7 +241,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 									vscode.postMessage({ type: "approvalMode", approvalMode: "auto" })
 								}}>
 								<Zap className="size-3 text-vscode-descriptionForeground" />
-								<span>Automatycznie</span>
+								<span>{t("chat:autoApprove.automatic", "Automatycznie")}</span>
 							</button>
 						</div>
 					</div>
@@ -255,7 +255,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 										<Zap className="size-3.5" />
 									</div>
 									<h4 className="m-0 font-semibold text-sm text-vscode-foreground">
-										Samodzielna praca agenta
+										{t("chat:autoApprove.autonomousWork", "Samodzielna praca agenta")}
 									</h4>
 								</div>
 								<Settings
@@ -264,12 +264,16 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 								/>
 							</div>
 							<p className="m-0 text-xs text-vscode-descriptionForeground leading-relaxed">
-								Tryb samodzielny jest aktywny. Bezpieczne operacje są wykonywane od razu. Działania
-								mogące usunąć dane lub wpłynąć na komputer ocenia niezależny model.
+								{t(
+									"chat:autoApprove.autoModeDescription",
+									"Tryb samodzielny jest aktywny. Bezpieczne operacje są wykonywane od razu. Działania mogące usunąć dane lub wpłynąć na komputer ocenia niezależny model.",
+								)}
 							</p>
 							<div className="approval-facts space-y-2">
 								<div className="flex justify-between items-center">
-									<span className="text-vscode-descriptionForeground">Model oceniający:</span>
+									<span className="text-vscode-descriptionForeground">
+										{t("chat:autoApprove.evaluatorModelLabel", "Model oceniający:")}
+									</span>
 									<span
 										className="font-mono text-vscode-foreground font-medium text-[11px] truncate max-w-[180px]"
 										title={approvalModel}>
@@ -277,12 +281,20 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 									</span>
 								</div>
 								<div className="flex justify-between items-center">
-									<span className="text-vscode-descriptionForeground">Zasady bezpieczeństwa:</span>
-									<span className="text-[var(--success)] font-medium">Zawsze obowiązują</span>
+									<span className="text-vscode-descriptionForeground">
+										{t("chat:autoApprove.safetyRulesLabel", "Zasady bezpieczeństwa:")}
+									</span>
+									<span className="text-[var(--success)] font-medium">
+										{t("chat:autoApprove.safetyRulesAlwaysApply", "Zawsze obowiązują")}
+									</span>
 								</div>
 								<div className="flex justify-between items-center">
-									<span className="text-vscode-descriptionForeground">W razie braku oceny:</span>
-									<span className="text-vscode-foreground font-medium">Wymagane potwierdzenie</span>
+									<span className="text-vscode-descriptionForeground">
+										{t("chat:autoApprove.inCaseOfNoEvaluationLabel", "W razie braku oceny:")}
+									</span>
+									<span className="text-vscode-foreground font-medium">
+										{t("chat:autoApprove.requiresConfirmation", "Wymagane potwierdzenie")}
+									</span>
 								</div>
 							</div>
 							<Button
@@ -290,7 +302,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 								size="sm"
 								className="w-full h-7 text-xs"
 								onClick={handleOpenSettings}>
-								Otwórz ustawienia bezpieczeństwa
+								{t("chat:autoApprove.openSafetySettings", "Otwórz ustawienia bezpieczeństwa")}
 							</Button>
 						</div>
 					) : (
@@ -363,7 +375,7 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 															className="approval-lock-label flex items-center gap-1 flex-shrink-0"
 															data-testid="requires-safety-model-badge">
 															<Lock className="size-2.5" />
-															<span>Wymaga modelu oceniającego</span>
+															<span>{t("chat:autoApprove.requiresEvaluator", "Wymaga modelu oceniającego")}</span>
 														</span>
 													)}
 												</Button>
@@ -417,11 +429,13 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 									}}>
 									<ToggleSwitch
 										checked={effectiveAutoApprovalEnabled}
-										aria-label="Zmień tryb zatwierdzania"
+										aria-label={t("chat:autoApprove.toggleApprovalMode", "Zmień tryb zatwierdzania")}
 										onChange={handleAutoApprovalToggle}
 									/>
 									<span className={cn("text-sm font-bold select-none")}>
-										{effectiveAutoApprovalEnabled ? "Włączone" : "Wyłączone"}
+										{effectiveAutoApprovalEnabled
+											? t("chat:autoApprove.enabled", "Włączone")
+											: t("chat:autoApprove.disabled", "Wyłączone")}
 									</span>
 								</label>
 							</div>

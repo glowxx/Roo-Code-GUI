@@ -2,6 +2,7 @@ import React from "react"
 import { Check } from "lucide-react"
 import { type ThemeType } from "@roo-code/types"
 import { cn } from "@/lib/utils"
+import { useAppTranslation } from "@/i18n"
 
 interface ThemeOption {
 	id: ThemeType
@@ -69,15 +70,21 @@ interface ThemeSettingsProps {
 }
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ selectedTheme = "linear-dark", onThemeChange }) => {
+	const { t } = useAppTranslation()
 	const handleSelect = (themeId: ThemeType) => {
 		onThemeChange(themeId)
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="text-sm font-medium text-vscode-foreground">Motyw i kolory</div>
+			<div className="text-sm font-medium text-vscode-foreground">
+				{t("settings:theme.title", { defaultValue: "Motyw i kolory" })}
+			</div>
 			<div className="text-xs text-vscode-descriptionForeground">
-				Wybierz wygląd całej aplikacji. Podgląd zobaczysz od razu; zatwierdź wybór przyciskiem „Zapisz”.
+				{t("settings:theme.description", {
+					defaultValue:
+						"Wybierz wygląd całej aplikacji. Podgląd zobaczysz od razu; zatwierdź wybór przyciskiem „Zapisz”.",
+				})}
 			</div>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-1">
 				{THEMES.map((theme) => {
@@ -127,7 +134,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ selectedTheme = "l
 											backgroundColor: theme.bgCanvas,
 											borderColor: theme.isLight ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.2)",
 										}}
-										title="Tło"
+										title={t("settings:theme.backgroundTooltip", { defaultValue: "Tło" })}
 									/>
 									<div
 										className="w-3.5 h-3.5 rounded-full border"
@@ -135,12 +142,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ selectedTheme = "l
 											backgroundColor: theme.bgSurface,
 											borderColor: theme.isLight ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.2)",
 										}}
-										title="Powierzchnia"
+										title={t("settings:theme.surfaceTooltip", { defaultValue: "Powierzchnia" })}
 									/>
 									<div
 										className="w-3.5 h-3.5 rounded-full shadow-xs"
 										style={{ backgroundColor: theme.accent }}
-										title="Akcent"
+										title={t("settings:theme.accentTooltip", { defaultValue: "Akcent" })}
 									/>
 								</div>
 							</div>
@@ -150,16 +157,16 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ selectedTheme = "l
 								<div>
 									<div className="flex items-center gap-1.5">
 										<span className="text-sm font-semibold text-vscode-foreground">
-											{theme.name}
+											{t(`settings:theme.names.${theme.id}`, { defaultValue: theme.name })}
 										</span>
 										{theme.id === "linear-dark" && (
 											<span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-vscode-descriptionForeground font-medium">
-												Domyślny
+												{t("settings:theme.defaultBadge", { defaultValue: "Domyślny" })}
 											</span>
 										)}
 									</div>
 									<p className="text-xs text-vscode-descriptionForeground mt-0.5 leading-relaxed">
-										{theme.description}
+										{t(`settings:theme.descriptions.${theme.id}`, { defaultValue: theme.description })}
 									</p>
 								</div>
 

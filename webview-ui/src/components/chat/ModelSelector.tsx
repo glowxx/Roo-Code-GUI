@@ -1185,13 +1185,13 @@ export const ModelSelector = ({
 			const context = formatContextWindow(m.contextWindow)
 			const variant = m.id.includes(":") ? m.id.slice(m.id.indexOf(":") + 1) : null
 			const capability = m.isReasoning
-				? { label: "Rozumowanie", Icon: Brain }
+				? { label: t("chat:modelSelector.badges.reasoning", "Rozumowanie"), Icon: Brain }
 				: m.isCoder
-					? { label: "Programowanie", Icon: Code2 }
+					? { label: t("chat:modelSelector.badges.coding", "Programowanie"), Icon: Code2 }
 					: m.isFast
-						? { label: "Szybki", Icon: Zap }
+						? { label: t("chat:modelSelector.badges.speed", "Szybki"), Icon: Zap }
 						: m.isVision
-							? { label: "Obrazy", Icon: Eye }
+							? { label: t("chat:modelSelector.badges.vision", "Obrazy"), Icon: Eye }
 							: null
 			return (
 				<button
@@ -1204,7 +1204,7 @@ export const ModelSelector = ({
 						m.id,
 						m.description,
 						m.contextWindow
-							? `Kontekst: ${new Intl.NumberFormat("pl").format(m.contextWindow)} tokenów`
+							? `${t("chat:modelSelector.context", "Kontekst")}: ${new Intl.NumberFormat().format(m.contextWindow)} ${t("chat:modelSelector.tokens", "tokenów")}`
 							: null,
 					]
 						.filter(Boolean)
@@ -1221,12 +1221,12 @@ export const ModelSelector = ({
 							{isSelected && (
 								<span className="model-option-selected">
 									<Check aria-hidden="true" />
-									Wybrany
+									{t("chat:modelSelector.selected", "Wybrany")}
 								</span>
 							)}
 						</div>
 						<div className="model-option-meta">
-							<span className="model-option-provider" title={"Dostawca API: " + currentProviderLabel}>
+							<span className="model-option-provider" title={`${t("chat:modelSelector.apiProvider", "Dostawca API:")} ${currentProviderLabel}`}>
 								{currentProviderLabel}
 							</span>
 							{capability ? (
@@ -1238,15 +1238,15 @@ export const ModelSelector = ({
 								<span />
 							)}
 							<span className="model-option-context">
-								<span>Kontekst</span>
-								<strong>{context || "Brak danych"}</strong>
+								<span>{t("chat:modelSelector.context", "Kontekst")}</span>
+								<strong>{context || t("chat:modelSelector.noData", "Brak danych")}</strong>
 							</span>
 						</div>
 					</div>
 				</button>
 			)
 		},
-		[effectiveModelId, effectiveProvider, currentProviderLabel, handleSelectModel],
+		[effectiveModelId, effectiveProvider, currentProviderLabel, handleSelectModel, t],
 	)
 
 	// Keep keyboard navigation local to the search field and model rows.
@@ -1294,7 +1294,7 @@ export const ModelSelector = ({
 			onClick={() => handleSelectCustomModel(searchQuery.trim())}>
 			<Plus aria-hidden="true" />
 			<span>
-				Użyj modelu <strong>„{searchQuery.trim()}”</strong>
+				{t("chat:modelSelector.useModel", "Użyj modelu")} <strong>„{searchQuery.trim()}”</strong>
 			</span>
 		</button>
 	)
@@ -1306,7 +1306,9 @@ export const ModelSelector = ({
 					<div className="flex flex-col gap-0.5 text-xs text-left">
 						<div className="font-semibold">{effectiveDisplayName}</div>
 						<div className="text-vscode-descriptionForeground">{effectiveModelId}</div>
-						<div className="text-vscode-descriptionForeground">Dostawca: {effectiveProviderLabel}</div>
+						<div className="text-vscode-descriptionForeground">
+							{t("chat:modelSelector.provider", "Dostawca:")} {effectiveProviderLabel}
+						</div>
 					</div>
 				}>
 				<PopoverTrigger
@@ -1335,7 +1337,7 @@ export const ModelSelector = ({
 				collisionPadding={16}
 				container={portalContainer}
 				className="model-selector-panel"
-				aria-label="Wybór modelu AI"
+				aria-label={t("chat:modelSelector.ariaSelectModel", "Wybór modelu AI")}
 				onKeyDown={handlePanelKeyDown}
 				onOpenAutoFocus={(event) => {
 					event.preventDefault()
@@ -1344,10 +1346,10 @@ export const ModelSelector = ({
 				<div className="model-selector-header">
 					<div className="model-selector-titlebar">
 						<div>
-							<h3>Wybierz model</h3>
+							<h3>{t("chat:modelSelector.title", "Wybierz model")}</h3>
 							<div className="model-selector-source">
 								<ProviderIcon provider={effectiveProvider} />
-								<span>Dostawca API: {currentProviderLabel}</span>
+								<span>{t("chat:modelSelector.apiProvider", "Dostawca API:")} {currentProviderLabel}</span>
 							</div>
 						</div>
 						<div className="model-selector-actions">
@@ -1370,8 +1372,12 @@ export const ModelSelector = ({
 									type="button"
 									className="model-selector-action"
 									data-testid="refresh-models-button"
-									aria-label="Odśwież modele"
-									title={isRefreshingModels ? "Odświeżam modele…" : "Odśwież modele"}
+									aria-label={t("chat:modelSelector.refreshModels", "Odśwież modele")}
+									title={
+										isRefreshingModels
+											? t("chat:modelSelector.refreshingModels", "Odświeżam modele…")
+											: t("chat:modelSelector.refreshModels", "Odśwież modele")
+									}
 									disabled={isRefreshingModels}
 									onClick={handleRefreshModels}>
 									<RefreshCw className={cn(isRefreshingModels && "animate-spin")} />
@@ -1403,12 +1409,12 @@ export const ModelSelector = ({
 									}
 								}
 							}}
-							placeholder="Szukaj po nazwie lub identyfikatorze…"
+							placeholder={t("chat:modelSelector.searchPlaceholder")}
 						/>
 						{searchQuery && (
 							<button
 								type="button"
-								aria-label="Wyczyść wyszukiwanie"
+								aria-label={t("chat:modelSelector.clearSearch", "Wyczyść wyszukiwanie")}
 								onClick={() => {
 									setSearchQuery("")
 									searchInputRef.current?.focus()
@@ -1418,14 +1424,14 @@ export const ModelSelector = ({
 						)}
 					</div>
 
-					<div className="model-selector-filters" role="group" aria-label="Filtruj modele">
+					<div className="model-selector-filters" role="group" aria-label={t("chat:modelSelector.filterModels", "Filtruj modele")}>
 						{[
-							{ key: "all", label: "Wszystkie", count: categoryCounts.all },
-							{ key: "reasoning", label: "Rozumowanie", count: categoryCounts.reasoning },
-							{ key: "fast", label: "Szybkie", count: categoryCounts.fast },
-							{ key: "coder", label: "Kod", count: categoryCounts.coder },
-							{ key: "vision", label: "Obrazy", count: categoryCounts.vision },
-							{ key: "default", label: "Ogólne", count: categoryCounts.default },
+							{ key: "all", label: t("chat:modelSelector.filters.all", "Wszystkie"), count: categoryCounts.all },
+							{ key: "reasoning", label: t("chat:modelSelector.filters.reasoning", "Rozumowanie"), count: categoryCounts.reasoning },
+							{ key: "fast", label: t("chat:modelSelector.filters.fast", "Szybkie"), count: categoryCounts.fast },
+							{ key: "coder", label: t("chat:modelSelector.filters.code", "Kod"), count: categoryCounts.coder },
+							{ key: "vision", label: t("chat:modelSelector.filters.images", "Obrazy"), count: categoryCounts.vision },
+							{ key: "default", label: t("chat:modelSelector.filters.general", "Ogólne"), count: categoryCounts.default },
 						]
 							.filter((cat) => cat.key === "all" || cat.count > 0)
 							.map((cat) => (
@@ -1440,7 +1446,7 @@ export const ModelSelector = ({
 					</div>
 				</div>
 
-				<div className="model-selector-list" aria-label="Dostępne modele">
+				<div className="model-selector-list" aria-label={t("chat:modelSelector.availableModels", "Dostępne modele")}>
 					{filteredModels.length === 0 ? (
 						<div className="model-selector-empty">
 							<p>{t("chat:modelSelector.noResults")}</p>
@@ -1448,7 +1454,7 @@ export const ModelSelector = ({
 								renderCustomSearchOption()
 							) : (
 								<button type="button" onClick={() => setSelectedCategory("all")}>
-									Pokaż wszystkie modele
+									{t("chat:modelSelector.showAllModels", "Pokaż wszystkie modele")}
 								</button>
 							)}
 						</div>
@@ -1459,7 +1465,7 @@ export const ModelSelector = ({
 									className="model-selector-section model-family-section"
 									aria-labelledby="models-all-heading">
 									<div className="model-section-heading">
-										<h4 id="models-all-heading">Modele według rodzin</h4>
+										<h4 id="models-all-heading">{t("chat:modelSelector.modelsByFamily", "Modele według rodzin")}</h4>
 										<span>{filteredModels.length}</span>
 									</div>
 									{familyGroups.map(({ family, models }) => (
@@ -1479,7 +1485,9 @@ export const ModelSelector = ({
 													onClick={() => toggleSection(family)}>
 													<ModelFamilyIcon family={family} />
 													<span className="model-family-name">
-														{modelFamilies[family].name}
+														{family === "other"
+															? t("chat:modelFamilies.other", { defaultValue: modelFamilies[family].name })
+															: modelFamilies[family].name}
 													</span>
 													{modelFamilies[family].company !== modelFamilies[family].name && (
 														<span className="model-family-company">
@@ -1519,13 +1527,13 @@ export const ModelSelector = ({
 						}}>
 						<input
 							type="text"
-							aria-label="Własny identyfikator modelu"
+							aria-label={t("chat:modelSelector.customModelIdAria", "Własny identyfikator modelu")}
 							value={customModelInput}
 							onChange={(e) => setCustomModelInput(e.target.value)}
-							placeholder="Własny identyfikator modelu…"
+							placeholder={t("chat:modelSelector.customModelId", "Własny identyfikator modelu…")}
 						/>
 						<Button type="submit" disabled={!customModelInput.trim()} size="sm">
-							Wybierz
+							{t("chat:modelSelector.selectButton", "Wybierz")}
 						</Button>
 					</form>
 				</div>
