@@ -372,8 +372,8 @@ describe("Windows Installer Freshness, Stale Detection & Single Installer Verifi
 		const exePath = path.join(releaseDir, "Roo Code Setup 1.0.0.exe")
 		fs.writeFileSync(exePath, "sample-exe-binary")
 
-		// Create a manifest with a mock historical build commit
-		const historicalBuildSha = "0123456789abcdef0123456789abcdef01234567"
+		// Create a manifest with a real historical build commit from PR #1
+		const historicalBuildSha = "47cd2f14016b6939b62ef3f4c9f348967b03bb27"
 		const manifestPath = path.join(releaseDir, "installer-manifest.json")
 		fs.writeFileSync(
 			manifestPath,
