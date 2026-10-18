@@ -34,6 +34,7 @@ import { AutoApproveDropdown } from "./AutoApproveDropdown"
 import { WebSearchButton } from "./WebSearchButton"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import ContextMenu from "./ContextMenu"
+import { ProjectContext } from "./ProjectContext"
 import { usePromptHistory } from "./hooks/usePromptHistory"
 import { ContextWindowProgress } from "./ContextWindowProgress"
 
@@ -816,9 +817,10 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				if (command) {
 					const leadingWhitespace = match.match(/^\s/)?.[0] || ""
 					const commandPart = `/${commandName}`
-					const className = command.source === "built-in"
-						? "mention-context-textarea-highlight"
-						: "mention-context-textarea-highlight skill-command-textarea-highlight"
+					const className =
+						command.source === "built-in"
+							? "mention-context-textarea-highlight"
+							: "mention-context-textarea-highlight skill-command-textarea-highlight"
 
 					return `${leadingWhitespace}<mark class="${className}">${commandPart}</mark>`
 				}
@@ -843,7 +845,11 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		const handleKeyUp = useCallback(
 			(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-				if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(e.key)) {
+				if (
+					["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(
+						e.key,
+					)
+				) {
 					updateCursorPosition()
 				}
 			},
@@ -973,7 +979,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			vscode.postMessage({ type: "stopTts" })
 		}, [])
 
-		const placeholderBottomText = `\n(${t("chat:addContext")}${shouldDisableImages ? `, ${t("chat:dragFiles")}` : `, ${t("chat:dragFilesImages")}`})`
+		const placeholderBottomText = t("chat:composerHint", { defaultValue: "Enter — send · Shift+Enter — new line" })
 
 		// Common mode selector handler
 		const handleModeChange = useCallback(
@@ -1257,27 +1263,32 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									</StandardTooltip>
 								)}
 								{/* Discrete inline Resume button for paused/resumable tasks */}
-								{onResume && !hasInputContent && !isStreaming && !isStopMode && !isTaskActive && !isStopping && (
-									<StandardTooltip content={resumeButtonTooltip || t("chat:resumeTask.tooltip")}>
-										<button
-											aria-label={resumeButtonText || t("chat:resumeTask.title")}
-											type="button"
-											disabled={false}
-											onClick={onResume}
-											className={cn(
-												"relative inline-flex items-center justify-center gap-1",
-												"h-7 px-2 rounded-md",
-												"bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground",
-												"border-none cursor-pointer text-xs font-medium",
-												"transition-all duration-150",
-												"opacity-100 hover:opacity-100 pointer-events-auto",
-												"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-											)}>
-											<span className="codicon codicon-play text-xs" />
-											<span>{resumeButtonText || t("chat:resumeTask.title")}</span>
-										</button>
-									</StandardTooltip>
-								)}
+								{onResume &&
+									!hasInputContent &&
+									!isStreaming &&
+									!isStopMode &&
+									!isTaskActive &&
+									!isStopping && (
+										<StandardTooltip content={resumeButtonTooltip || t("chat:resumeTask.tooltip")}>
+											<button
+												aria-label={resumeButtonText || t("chat:resumeTask.title")}
+												type="button"
+												disabled={false}
+												onClick={onResume}
+												className={cn(
+													"relative inline-flex items-center justify-center gap-1",
+													"h-7 px-2 rounded-md",
+													"bg-vscode-button-background hover:bg-vscode-button-hoverBackground text-vscode-button-foreground",
+													"border-none cursor-pointer text-xs font-medium",
+													"transition-all duration-150",
+													"opacity-100 hover:opacity-100 pointer-events-auto",
+													"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+												)}>
+												<span className="codicon codicon-play text-xs" />
+												<span>{resumeButtonText || t("chat:resumeTask.title")}</span>
+											</button>
+										</StandardTooltip>
+									)}
 								{/* Send/Stop button - morphs based on streaming/active state, always visible in edit mode */}
 								{(() => {
 									return (
@@ -1289,7 +1300,9 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 														? t("chat:stopping.title", "Stopping task...")
 														: isStopMode
 															? t("chat:stop.title")
-															: t("chat:pressToSend", { keyCombination: sendKeyCombination })
+															: t("chat:pressToSend", {
+																	keyCombination: sendKeyCombination,
+																})
 											}>
 											<button
 												aria-label={
@@ -1299,10 +1312,13 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 															? t("chat:stopping.title", "Stopping task...")
 															: isStopMode
 																? t("chat:stop.title")
-																: t("chat:pressToSend", { keyCombination: sendKeyCombination })
+																: t("chat:pressToSend", {
+																		keyCombination: sendKeyCombination,
+																	})
 												}
 												disabled={isStopping}
 												onClick={isStopMode ? onStop : onSend}
+												data-composer-stop={isStopMode}
 												className={cn(
 													"relative inline-flex items-center justify-center",
 													"w-7 h-7 p-1.5 rounded-md",
@@ -1335,7 +1351,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							{!inputValue && (
 								<div
 									className={cn(
-										"absolute left-2 z-30 flex items-center h-8 font-display text-base leading-normal",
+										"agent-composer-hint absolute left-2 z-30 flex items-center h-8 font-display text-base leading-normal",
 										isEditMode ? "pr-20" : "pr-24",
 									)}
 									style={{
@@ -1351,6 +1367,15 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					</div>
 				</div>
 
+				{!isEditMode && (
+					<ProjectContext
+						value={inputValue}
+						onChange={setInputValue}
+						files={filePaths || []}
+						cwd={cwd}
+						onImages={shouldDisableImages ? undefined : _onSelectImages}
+					/>
+				)}
 				{selectedImages.length > 0 && (
 					<Thumbnails
 						images={selectedImages}

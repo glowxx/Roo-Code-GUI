@@ -60,8 +60,8 @@ export const TranslationProvider: React.FC<{ children: ReactNode }> = ({ childre
 	}, [])
 
 	useEffect(() => {
-		i18n.changeLanguage(extensionState.language || "pl")
-		document.documentElement.lang = extensionState.language || "pl"
+		i18n.changeLanguage(extensionState.language || "en")
+		document.documentElement.lang = extensionState.language || "en"
 	}, [i18n, extensionState.language])
 
 	// Memoize the translation function to prevent unnecessary re-renders

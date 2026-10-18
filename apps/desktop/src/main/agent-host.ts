@@ -323,7 +323,7 @@ export class DesktopAgentHost extends EventEmitter {
 		}
 
 		try {
-			const statusOutput = execSync("git status --porcelain -uall", {
+			const statusOutput = execSync("git -c core.quotepath=false status --porcelain -uall", {
 				cwd: this.currentWorkspace,
 				encoding: "utf-8",
 				timeout: 5000,
@@ -339,7 +339,7 @@ export class DesktopAgentHost extends EventEmitter {
 			// Single batch git diff --numstat HEAD query for additions/deletions
 			const numstatMap = new Map<string, { additions: number; deletions: number }>()
 			try {
-				const numstatOutput = execSync("git diff --numstat HEAD", {
+				const numstatOutput = execSync("git -c core.quotepath=false diff --numstat HEAD", {
 					cwd: this.currentWorkspace,
 					encoding: "utf-8",
 					timeout: 5000,
@@ -1309,6 +1309,40 @@ export class DesktopAgentHost extends EventEmitter {
 			}
 		}
 		return running
+	}
+
+	/** Reassociate an already moved project. No filesystem move or conversation deletion. */
+	public async relocateProject(oldPath: string, newPath: string): Promise<void> {
+		const previous = canonicalizePath(oldPath)
+		const next = canonicalizePath(newPath)
+		if (!previous || !next || !fs.existsSync(next) || !fs.statSync(next).isDirectory()) throw new Error("Wybierz istniejący folder projektu.")
+		if (arePathsEqual(previous, next)) return
+		if (this.getRunningTasksForWorkspace(previous).length || this.getRunningTasksForWorkspace(next).length) throw new Error("Zatrzymaj zadania w obu projektach przed zmianą lokalizacji.")
+		const store = this.provider?.taskHistoryStore
+		if (!store?.getAll || !store?.upsert) throw new Error("Historia nie jest jeszcze gotowa. Spróbuj ponownie za chwilę.")
+		const affected = store.getAll().filter((item: any) => item.workspace && arePathsEqual(item.workspace, previous))
+		const updated: any[] = []
+		try {
+			for (const item of affected) { await store.upsert({ ...item, workspace: next }); updated.push(item) }
+		} catch (error) {
+			for (const item of updated) await store.upsert(item)
+			throw error
+		}
+		const config = loadDesktopConfig()
+		const names = { ...config.projectNames }
+		for (const key of Object.keys(names)) if (arePathsEqual(key, previous)) { const label = names[key]; if (label) names[next] = label; delete names[key] }
+		const recent = (config.recentWorkspaces || []).map(value => arePathsEqual(value, previous) ? next : value)
+		if (!recent.some(value => arePathsEqual(value, next))) recent.push(next)
+		const saved = saveDesktopConfig({ recentWorkspaces: [...new Set(recent)], projectNames: names,
+			lastWorkspacePath: arePathsEqual(config.lastWorkspacePath || "", previous) ? next : config.lastWorkspacePath })
+		if (!saved.recentWorkspaces?.some(value => arePathsEqual(value, next)) || saved.recentWorkspaces.some(value => arePathsEqual(value, previous))) {
+			for (const item of updated) await store.upsert(item)
+			throw new Error("Nie udało się zapisać nowej lokalizacji. Dotychczasowe przypisanie zostało zachowane.")
+		}
+		this.terminalLogsByWorkspace.delete(previous)
+		this.diffFilesByWorkspace.delete(previous)
+		if (arePathsEqual(this.currentWorkspace, previous)) await this.setWorkspace(next)
+		this.emit("taskHistoryChanged")
 	}
 
 	public async removeProject(

@@ -193,7 +193,7 @@ export const AutoApproveSettings = ({
 						onClick={() => setCachedStateField("approvalMode", "manual")}>
 						<div className="flex items-center justify-center gap-1.5">
 							<Sliders className="size-3.5" />
-							<span>Ręcznie</span>
+							<span>{t("settings:autoApprove.modes.manual", "Manual")}</span>
 						</div>
 					</button>
 					<button
@@ -208,7 +208,7 @@ export const AutoApproveSettings = ({
 						onClick={() => setCachedStateField("approvalMode", "auto")}>
 						<div className="flex items-center justify-center gap-1.5">
 							<Zap className="size-3.5 text-[var(--warning)]" />
-							<span>Automatycznie</span>
+							<span>{t("settings:autoApprove.modes.auto", "Automatic")}</span>
 						</div>
 					</button>
 				</div>
@@ -223,12 +223,10 @@ export const AutoApproveSettings = ({
 								</div>
 								<div className="space-y-1">
 									<h4 className="text-sm font-semibold text-vscode-foreground">
-										Samodzielna praca agenta
+										{t("settings:autoApprove.autonomousWorkTitle", "Autonomous Agent Work")}
 									</h4>
 									<p className="text-xs text-vscode-descriptionForeground leading-relaxed">
-										W trybie samodzielnym agent wykonuje bezpieczne operacje bez pytania. Działania,
-										które mogą usunąć dane lub wpłynąć na system, ocenia niezależny{" "}
-										<strong>model oceniający</strong> bezpieczeństwo.
+										{t("settings:autoApprove.autonomousWorkDesc", "In autonomous mode, the agent performs safe operations without asking. Actions that could delete data or affect the system are evaluated by an independent safety evaluation model.")}
 									</p>
 								</div>
 							</div>
@@ -238,21 +236,17 @@ export const AutoApproveSettings = ({
 									<div className="flex items-center gap-2">
 										<ShieldCheck className="size-4 text-[var(--success)]" />
 										<span className="text-xs font-semibold text-vscode-foreground">
-											Stałe zasady bezpieczeństwa
+											{t("settings:autoApprove.safetyRulesTitle", "Constant safety rules")}
 										</span>
 									</div>
 									<Badge
 										variant="outline"
 										className="text-[10px] text-[var(--success)] border-[var(--border-light)] bg-[var(--success-subtle)]">
-										Zawsze aktywne
+										{t("settings:autoApprove.alwaysActive", "Always active")}
 									</Badge>
 								</div>
 								<p className="text-[11px] text-vscode-descriptionForeground leading-relaxed">
-									Pliki systemowe i poufne dane pozostają chronione. Polecenia mogące uszkodzić system
-									oraz niezaufany kod podlegają dodatkowej kontroli.{" "}
-									<strong>Oddzielny model oceniający:</strong> Agent nie może zatwierdzać własnych
-									działań. Gdy niezależny model jest niedostępny, nie odpowiada na czas lub jest tym
-									samym modelem co agent, wymagane jest Twoje potwierdzenie.
+									{t("settings:autoApprove.safetyRulesDesc", "System files and sensitive data remain protected. Commands that could harm the system and untrusted code are subject to additional checks. Separate evaluation model: The agent cannot approve its own actions. When the independent model is unavailable, times out, or is the same model as the agent, your manual confirmation is required.")}
 								</p>
 							</div>
 
@@ -260,10 +254,10 @@ export const AutoApproveSettings = ({
 								<div className="flex items-center justify-between">
 									<div>
 										<label className="text-xs font-semibold text-vscode-foreground block">
-											Model oceniający bezpieczeństwo
+											{t("settings:autoApprove.safetyModelTitle", "Safety evaluation model")}
 										</label>
 										<span className="text-[11px] text-vscode-descriptionForeground">
-											Niezależny model AI sprawdzający bezpieczeństwo działań
+											{t("settings:autoApprove.safetyModelDesc", "Independent AI model verifying action safety")}
 										</span>
 									</div>
 									<Button
@@ -273,14 +267,14 @@ export const AutoApproveSettings = ({
 										onClick={() => setIsLogModalOpen(true)}
 										data-testid="view-decision-log-btn">
 										<FileText className="size-3.5" />
-										<span>Pokaż historię decyzji</span>
+										<span>{t("settings:autoApprove.viewDecisionLog", "View decision log")}</span>
 									</Button>
 								</div>
 
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 									<div>
 										<label className="block text-[11px] font-medium text-vscode-descriptionForeground mb-1">
-											Dostawca
+											{t("settings:autoApprove.provider", "Provider")}
 										</label>
 										<Select
 											value={safetyConfig.provider || "openai"}
@@ -304,26 +298,26 @@ export const AutoApproveSettings = ({
 
 									<div>
 										<label className="block text-[11px] font-medium text-vscode-descriptionForeground mb-1">
-											Identyfikator modelu
+											{t("settings:autoApprove.modelId", "Model ID")}
 										</label>
 										<CommandSafetyModelCombobox
 											provider={safetyConfig.provider || "openai"}
 											value={safetyConfig.modelId || ""}
 											onChange={(modelId) => updateSafetyConfig({ modelId })}
-											placeholder="Wybierz lub wpisz model oceniający…"
+											placeholder={t("settings:autoApprove.modelPlaceholder", "Select or enter evaluation model…")}
 										/>
 									</div>
 								</div>
 
 								<div>
 									<label className="block text-[11px] font-medium text-vscode-descriptionForeground mb-1">
-										Osobny klucz API (opcjonalnie)
+										{t("settings:autoApprove.separateApiKey", "Separate API key (optional)")}
 									</label>
 									<Input
 										type="password"
 										value={safetyConfig.apiKey || ""}
 										onChange={(e) => updateSafetyConfig({ apiKey: e.target.value })}
-										placeholder="Pozostaw puste, aby użyć klucza głównego dostawcy"
+										placeholder={t("settings:autoApprove.apiKeyPlaceholder", "Leave empty to use primary provider key")}
 										className="h-8 text-xs"
 									/>
 								</div>
@@ -332,8 +326,7 @@ export const AutoApproveSettings = ({
 									<div className="p-2.5 rounded-lg bg-[var(--warning-subtle)] border border-[var(--border-light)] text-[var(--warning)] text-xs flex items-center gap-2">
 										<AlertTriangle className="size-4 shrink-0 text-[var(--warning)]" />
 										<span>
-											Nie skonfigurowano modelu oceniającego. Działania wymagające oceny AI będą
-											czekać na Twoje potwierdzenie.
+											{t("settings:autoApprove.modelNotConfiguredWarning", "No safety evaluation model configured. Actions requiring AI evaluation will await your manual confirmation.")}
 										</span>
 									</div>
 								)}
@@ -364,7 +357,7 @@ export const AutoApproveSettings = ({
 							</VSCodeCheckbox>
 							<div className="text-vscode-descriptionForeground text-sm mt-1">
 								<p>{t("settings:autoApprove.description")}</p>
-								<p>
+								<p className="extension-only-setting">
 									<Trans
 										i18nKey="settings:autoApprove.toggleShortcut"
 										components={{

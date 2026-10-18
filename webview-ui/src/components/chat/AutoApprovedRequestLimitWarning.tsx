@@ -30,36 +30,41 @@ export const AutoApprovedRequestLimitWarning = memo(({ message }: AutoApprovedRe
 		: "ask.autoApprovedRequestLimitReached.button"
 
 	return (
-		<>
+		<div className="agent-notice">
 			<div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--vscode-foreground)" }}>
 				<span className="codicon codicon-warning" />
-				<span style={{ fontWeight: "bold" }}>
+				<span style={{ fontWeight: 500 }}>
 					<Trans i18nKey={titleKey} ns="chat" />
 				</span>
 			</div>
 
 			<div
-				className="bg-vscode-panel-border flex flex-col gap-3"
+				className="flex flex-col gap-3"
 				style={{
 					borderRadius: "4px",
 					display: "flex",
-					marginTop: "15px",
-					padding: "14px 16px 22px",
+					marginTop: "8px",
+					padding: "0",
 					justifyContent: "center",
 				}}>
 				<div className="flex justify-between items-center">
 					<Trans i18nKey={descriptionKey} ns="chat" values={{ count }} />
 				</div>
 				<Button
-					style={{ width: "100%", padding: "6px", borderRadius: "4px" }}
+					variant="secondary"
+					style={{ width: "fit-content", padding: "6px 12px", borderRadius: "8px" }}
 					onClick={(e) => {
 						e.preventDefault()
 						setButtonClicked(true)
-						vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked", taskId: message.taskId })
+						vscode.postMessage({
+							type: "askResponse",
+							askResponse: "yesButtonClicked",
+							taskId: message.taskId,
+						})
 					}}>
 					<Trans i18nKey={buttonKey} ns="chat" />
 				</Button>
 			</div>
-		</>
+		</div>
 	)
 })

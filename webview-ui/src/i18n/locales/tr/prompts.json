@@ -53,7 +53,7 @@
 	},
 	"exportMode": {
 		"title": "Modu Dışa Aktar",
-		"description": "Bu modu tüm kurallar dahil olarak bir YAML dosyasına dışa aktararak başkalarıyla kolayca paylaşın.",
+		"description": "Export this mode with rules from the .roo/rules-{{slug}}/ folder combined into a shareable YAML file. The original files remain unchanged.",
 		"export": "Modu Dışa Aktar",
 		"exporting": "Dışa aktarılıyor..."
 	},

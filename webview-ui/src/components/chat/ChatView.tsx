@@ -33,6 +33,8 @@ import { StandardTooltip, Button } from "@src/components/ui"
 import HistoryPreview from "../history/HistoryPreview"
 import Announcement from "./Announcement"
 import ChatRow from "./ChatRow"
+import { AgentActivity } from "./AgentActivity"
+import { buildAgentFeed, type AgentFeedItem } from "./agent-feed"
 import WarningRow from "./WarningRow"
 import { ChatTextArea } from "./ChatTextArea"
 import { cleanModelDisplayName } from "./ModelSelector"
@@ -177,7 +179,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const isModelDiff = Boolean(selectedId && selectedId !== execModel)
 		const isProviderDiff = Boolean(selectedProvider && execProvider && selectedProvider !== execProvider)
 		return isModelDiff || isProviderDiff
-	}, [clineAsk, currentTaskItem?.executionModelId, currentTaskItem?.executionProvider, selectedModel.id, apiConfiguration?.apiProvider])
+	}, [
+		clineAsk,
+		currentTaskItem?.executionModelId,
+		currentTaskItem?.executionProvider,
+		selectedModel.id,
+		apiConfiguration?.apiProvider,
+	])
 
 	const [_didClickCancel, setDidClickCancel] = useState(false)
 	const [isStopping, setIsStopping] = useState(false)
@@ -264,7 +272,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const prevChatKeyRef = useRef<string>(currentChatKey)
 	const isRestoringDraftRef = useRef(false)
-	const inFlightDraftRef = useRef<{ key: string; text: string; images: string[]; webSearchMode?: WebSearchMode } | null>(null)
+	const inFlightDraftRef = useRef<{
+		key: string
+		text: string
+		images: string[]
+		webSearchMode?: WebSearchMode
+	} | null>(null)
 
 	// Restore draft on initial mount
 	useEffect(() => {
@@ -460,7 +473,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setSecondaryButtonText(undefined)
 							break
 						case "tool": {
-							const isEvaluating = approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
+							const isEvaluating =
+								approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
 							const isAutoSuppress =
 								approvalMode === "auto" && messageToHandle.approvalState !== "USER_DECISION_REQUIRED"
 							setSendingDisabled(isPartial || isEvaluating)
@@ -523,7 +537,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							const isExecuting =
 								!!messageToHandle?.text?.includes(COMMAND_OUTPUT_STRING) ||
 								messageToHandle?.approvalState === "AUTO_APPROVED"
-							const isEvaluating = approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
+							const isEvaluating =
+								approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
 							const isAutoSuppress =
 								approvalMode === "auto" && messageToHandle.approvalState !== "USER_DECISION_REQUIRED"
 							setSendingDisabled(isPartial || isEvaluating)
@@ -567,7 +582,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							}
 							break
 						case "use_mcp_server": {
-							const isEvaluating = approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
+							const isEvaluating =
+								approvalMode === "auto" && messageToHandle.approvalState === "EVALUATING"
 							const isAutoSuppress =
 								approvalMode === "auto" && messageToHandle.approvalState !== "USER_DECISION_REQUIRED"
 							setSendingDisabled(isPartial || isEvaluating)
@@ -638,10 +654,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							break
 						}
 						case "resume_task": {
-							if (
-								messageToHandle.isAnswered ||
-								currentTaskItem?.status === "active"
-							) {
+							if (messageToHandle.isAnswered || currentTaskItem?.status === "active") {
 								setClineAsk(undefined)
 								setEnableButtons(false)
 								setPrimaryButtonText(undefined)
@@ -878,9 +891,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		setStopError(false)
 	}, [currentTaskItem?.id])
 
-	useEffect(() => () => {
-		if (stopAckTimeoutRef.current) clearTimeout(stopAckTimeoutRef.current)
-	}, [])
+	useEffect(
+		() => () => {
+			if (stopAckTimeoutRef.current) clearTimeout(stopAckTimeoutRef.current)
+		},
+		[],
+	)
 
 	useEffect(() => {
 		setIsResuming(false)
@@ -937,8 +953,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}
 		if (
 			lastMsg?.ask === "command" &&
-			(lastMsg?.approvalState === "AUTO_APPROVED" ||
-				lastMsg?.text?.includes(COMMAND_OUTPUT_STRING))
+			(lastMsg?.approvalState === "AUTO_APPROVED" || lastMsg?.text?.includes(COMMAND_OUTPUT_STRING))
 		) {
 			return true
 		}
@@ -946,7 +961,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			return true
 		}
 		return false
-	}, [currentTaskItem, isStopping, isStreaming, clineAsk, enableButtons, primaryButtonText, activeAskMessage, modifiedMessages])
+	}, [
+		currentTaskItem,
+		isStopping,
+		isStreaming,
+		clineAsk,
+		enableButtons,
+		primaryButtonText,
+		activeAskMessage,
+		modifiedMessages,
+	])
 
 	const isExecutionActive = useMemo(() => {
 		if (isStreaming || isStopping || isTaskActive) {
@@ -963,8 +987,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}
 		if (
 			lastMessage?.ask === "command" &&
-			(lastMessage?.approvalState === "AUTO_APPROVED" ||
-				lastMessage?.text?.includes(COMMAND_OUTPUT_STRING))
+			(lastMessage?.approvalState === "AUTO_APPROVED" || lastMessage?.text?.includes(COMMAND_OUTPUT_STRING))
 		) {
 			return true
 		}
@@ -1006,10 +1029,19 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const isStatusInterrupted = currentTaskItem?.status === "interrupted"
 		const isActionableResumeAsk =
 			(activeAskMessage?.ask === "resume_task" && !activeAskMessage.isAnswered) ||
-			(clineAsk === "resume_task" && (!lastMessage || lastMessage.ask !== "resume_task" || !lastMessage.isAnswered))
+			(clineAsk === "resume_task" &&
+				(!lastMessage || lastMessage.ask !== "resume_task" || !lastMessage.isAnswered))
 
 		return isStatusInterrupted || isActionableResumeAsk
-	}, [isExecutionActive, isResuming, currentTaskItem?.status, currentTaskItem?.awaitingChildId, activeAskMessage, clineAsk, lastMessage])
+	}, [
+		isExecutionActive,
+		isResuming,
+		currentTaskItem?.status,
+		currentTaskItem?.awaitingChildId,
+		activeAskMessage,
+		clineAsk,
+		lastMessage,
+	])
 
 	const isModelDiff = useMemo(() => {
 		const execModel = currentTaskItem?.executionModelId
@@ -1020,7 +1052,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const isModelChanged = Boolean(selectedId && selectedId !== execModel)
 		const isProviderChanged = Boolean(selectedProvider && execProvider && selectedProvider !== execProvider)
 		return isModelChanged || isProviderChanged
-	}, [currentTaskItem?.executionModelId, currentTaskItem?.executionProvider, selectedModel.id, apiConfiguration?.apiProvider])
+	}, [
+		currentTaskItem?.executionModelId,
+		currentTaskItem?.executionProvider,
+		selectedModel.id,
+		apiConfiguration?.apiProvider,
+	])
 
 	const isModelDiffDuringResume = useMemo(() => {
 		if (!canResume) return false
@@ -1063,7 +1100,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			return `Resume with ${cleanModelDisplayName(currentTaskItem?.executionModelId || "original model")}`
 		}
 		return secondaryButtonText
-	}, [clineAsk, isModelDiffDuringFailure, isModelDiffDuringResume, currentTaskItem?.executionModelId, secondaryButtonText])
+	}, [
+		clineAsk,
+		isModelDiffDuringFailure,
+		isModelDiffDuringResume,
+		currentTaskItem?.executionModelId,
+		secondaryButtonText,
+	])
 
 	const markFollowUpAsAnswered = useCallback(() => {
 		const lastFollowUpMessage = messagesRef.current.findLast((msg: ClineMessage) => msg.ask === "followup")
@@ -1099,6 +1142,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	 */
 	const handleSendMessage = useCallback(
 		(text: string, images: string[]) => {
+			if (!cwd && Boolean((window as any).__ROO_DESKTOP__)) {
+				window.parent.postMessage({ type: "openProjectManager" }, "*")
+				return
+			}
 			text = text.trim()
 
 			if (text === "/compact") {
@@ -1132,9 +1179,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 				const activeWebSearchMode = webSearchModeRef.current
 				const webSearchModeProp =
-					activeWebSearchMode && activeWebSearchMode !== "auto"
-						? { webSearchMode: activeWebSearchMode }
-						: {}
+					activeWebSearchMode && activeWebSearchMode !== "auto" ? { webSearchMode: activeWebSearchMode } : {}
 
 				if (shouldQueue) {
 					try {
@@ -1300,9 +1345,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const text = inputValue.trim()
 		const activeWebSearchMode = webSearchModeRef.current
 		const webSearchModeProp =
-			activeWebSearchMode && activeWebSearchMode !== "auto"
-				? { webSearchMode: activeWebSearchMode }
-				: {}
+			activeWebSearchMode && activeWebSearchMode !== "auto" ? { webSearchMode: activeWebSearchMode } : {}
 		if (text || selectedImages.length > 0) {
 			vscode.postMessage({
 				type: "queueMessage",
@@ -1423,7 +1466,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setInputValue("")
 							setSelectedImages([])
 						} else {
-							vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked", taskId: currentTaskItem?.id })
+							vscode.postMessage({
+								type: "askResponse",
+								askResponse: "yesButtonClicked",
+								taskId: currentTaskItem?.id,
+							})
 						}
 					}
 					break
@@ -1443,7 +1490,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setInputValue("")
 							setSelectedImages([])
 						} else {
-							vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked", taskId: currentTaskItem?.id })
+							vscode.postMessage({
+								type: "askResponse",
+								askResponse: "yesButtonClicked",
+								taskId: currentTaskItem?.id,
+							})
 						}
 					} else {
 						startNewTask()
@@ -1454,7 +1505,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					startNewTask()
 					break
 				case "command_output":
-					vscode.postMessage({ type: "terminalOperation", terminalOperation: "continue", taskId: currentTaskItem?.id })
+					vscode.postMessage({
+						type: "terminalOperation",
+						terminalOperation: "continue",
+						taskId: currentTaskItem?.id,
+					})
 					break
 			}
 
@@ -1464,7 +1519,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setPrimaryButtonText(undefined)
 			setSecondaryButtonText(undefined)
 		},
-		[clineAsk, startNewTask, currentTaskItem?.parentTaskId, currentTaskItem?.id, primaryButtonText, t, isModelDiffDuringFailure, isModelDiffDuringResume, apiConfiguration],
+		[
+			clineAsk,
+			startNewTask,
+			currentTaskItem?.parentTaskId,
+			currentTaskItem?.id,
+			primaryButtonText,
+			t,
+			isModelDiffDuringFailure,
+			isModelDiffDuringResume,
+			apiConfiguration,
+		],
 	)
 
 	const handleSecondaryButtonClick = useCallback(
@@ -1526,7 +1591,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						setInputValue("")
 						setSelectedImages([])
 					} else {
-						vscode.postMessage({ type: "askResponse", askResponse: "noButtonClicked", taskId: currentTaskItem?.id })
+						vscode.postMessage({
+							type: "askResponse",
+							askResponse: "noButtonClicked",
+							taskId: currentTaskItem?.id,
+						})
 					}
 					break
 				case "command":
@@ -1551,7 +1620,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						setSelectedImages([])
 					} else {
 						// Responds to the API with a "This operation failed" and lets it try again
-						vscode.postMessage({ type: "askResponse", askResponse: "noButtonClicked", taskId: currentTaskItem?.id })
+						vscode.postMessage({
+							type: "askResponse",
+							askResponse: "noButtonClicked",
+							taskId: currentTaskItem?.id,
+						})
 					}
 					break
 				case "tool":
@@ -1570,18 +1643,37 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						setSelectedImages([])
 					} else {
 						// Responds to the API with a "This operation failed" and lets it try again
-						vscode.postMessage({ type: "askResponse", askResponse: "noButtonClicked", taskId: currentTaskItem?.id })
+						vscode.postMessage({
+							type: "askResponse",
+							askResponse: "noButtonClicked",
+							taskId: currentTaskItem?.id,
+						})
 					}
 					break
 				case "command_output":
-					vscode.postMessage({ type: "terminalOperation", terminalOperation: "abort", taskId: currentTaskItem?.id })
+					vscode.postMessage({
+						type: "terminalOperation",
+						terminalOperation: "abort",
+						taskId: currentTaskItem?.id,
+					})
 					break
 			}
 			setSendingDisabled(true)
 			setClineAsk(undefined)
 			setEnableButtons(false)
 		},
-		[clineAsk, startNewTask, isStreaming, setDidClickCancel, secondaryButtonText, t, currentTaskItem?.id, handleStopTask, isModelDiffDuringFailure, isModelDiffDuringResume],
+		[
+			clineAsk,
+			startNewTask,
+			isStreaming,
+			setDidClickCancel,
+			secondaryButtonText,
+			t,
+			currentTaskItem?.id,
+			handleStopTask,
+			isModelDiffDuringFailure,
+			isModelDiffDuringResume,
+		],
 	)
 
 	const selectImages = useCallback(() => vscode.postMessage({ type: "selectImages" }), [])
@@ -1880,10 +1972,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const groupedMessages = useMemo(() => {
 		const filtered: ClineMessage[] = visibleMessages
+		const isPendingAsk = (msg: ClineMessage) => msg.ts === activeAskMessage?.ts && !msg.isAnswered
 
 		// Helper to check if a message is a read_file ask that should be batched
 		const isReadFileAsk = (msg: ClineMessage): boolean => {
-			if (msg.type !== "ask" || msg.ask !== "tool") return false
+			if (msg.type !== "ask" || msg.ask !== "tool" || isPendingAsk(msg)) return false
 			try {
 				const tool = JSON.parse(msg.text || "{}")
 				return tool.tool === "readFile" && !tool.batchFiles // Don't re-batch already batched
@@ -1894,7 +1987,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 		// Helper to check if a message is a list_files ask that should be batched
 		const isListFilesAsk = (msg: ClineMessage): boolean => {
-			if (msg.type !== "ask" || msg.ask !== "tool") return false
+			if (msg.type !== "ask" || msg.ask !== "tool" || isPendingAsk(msg)) return false
 			try {
 				const tool = JSON.parse(msg.text || "{}")
 				return (
@@ -1916,7 +2009,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 		// Helper to check if a message is a file-edit ask that should be batched
 		const isEditFileAsk = (msg: ClineMessage): boolean => {
-			if (msg.type !== "ask" || msg.ask !== "tool") return false
+			if (msg.type !== "ask" || msg.ask !== "tool" || isPendingAsk(msg)) return false
 			try {
 				const tool = JSON.parse(msg.text || "{}")
 				return editFileTools.has(tool.tool) && !tool.batchDiffs // Don't re-batch already batched
@@ -2025,17 +2118,37 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			} as ClineMessage)
 		}
 		return result
-	}, [isCondensing, visibleMessages])
+	}, [isCondensing, visibleMessages, activeAskMessage])
 
-	const checkpointIndices = useMemo(() => {
-		const indices: number[] = []
-		for (let i = 0; i < groupedMessages.length; i++) {
-			if (groupedMessages[i]?.say === "checkpoint_saved") {
-				indices.push(i)
+	const [expandedActivities, setExpandedActivities] = useState<Record<number, boolean>>({})
+	const [focusedActivityMessage, setFocusedActivityMessage] = useState<number>()
+	useEffect(() => {
+		setExpandedActivities({})
+		setFocusedActivityMessage(undefined)
+	}, [task?.ts])
+	const feed = useMemo(
+		() =>
+			buildAgentFeed(
+				groupedMessages,
+				enableButtons && primaryButtonText ? activeAskMessage?.ts : undefined,
+				clineAsk === "api_req_failed",
+			),
+		[groupedMessages, activeAskMessage?.ts, enableButtons, primaryButtonText, clineAsk],
+	)
+
+	const checkpointTargets = useMemo(() => {
+		const targets: { index: number; ts: number }[] = []
+		for (let i = 0; i < feed.length; i++) {
+			const item = feed[i]
+			if (item.kind === "activity") {
+				for (const message of item.messages) {
+					if (message.say === "checkpoint_saved") targets.push({ index: i, ts: message.ts })
+				}
 			}
 		}
-		return indices
-	}, [groupedMessages])
+		return targets
+	}, [feed])
+	const checkpointIndices = useMemo(() => checkpointTargets.map((target) => target.index), [checkpointTargets])
 
 	const hasLatestCheckpoint = checkpointIndices.length > 0
 	const checkpointJumpCursorRef = useRef<number | null>(null)
@@ -2201,6 +2314,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		const previousCursor = checkpointJumpCursorRef.current
 		const nextCursor = previousCursor === null ? checkpointIndices.length - 1 : Math.max(0, previousCursor - 1)
 		const nextCheckpointIndex = checkpointIndices[nextCursor]
+		const checkpointItem = feed[nextCheckpointIndex]
+		setExpandedActivities((previous) => ({ ...previous, [checkpointItem.ts]: true }))
+		setFocusedActivityMessage(checkpointTargets[nextCursor].ts)
 		checkpointJumpCursorRef.current = nextCursor
 
 		enterUserBrowsingHistory("keyboard-nav-up")
@@ -2209,11 +2325,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			align: "center",
 			behavior: "smooth",
 		})
-	}, [checkpointIndices, enterUserBrowsingHistory])
+	}, [checkpointIndices, checkpointTargets, enterUserBrowsingHistory, feed])
 
-	const itemContent = useCallback(
-		(index: number, messageOrGroup: ClineMessage) => {
+	const renderFeedMessage = useCallback(
+		(messageOrGroup: ClineMessage) => {
 			const hasCheckpoint = modifiedMessages.some((message) => message.say === "checkpoint_saved")
+			const isLast = messageOrGroup.ts === groupedMessages.at(-1)?.ts
 
 			// regular message
 			return (
@@ -2222,8 +2339,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					message={messageOrGroup}
 					isExpanded={expandedRows[messageOrGroup.ts] || false}
 					onToggleExpand={toggleRowExpansion} // This was already stabilized
-					lastModifiedMessage={index === groupedMessages.length - 1 ? modifiedMessages.at(-1) : undefined}
-					isLast={index === groupedMessages.length - 1} // Original direct access
+					lastModifiedMessage={isLast ? modifiedMessages.at(-1) : undefined}
+					isLast={isLast}
 					onHeightChange={handleRowHeightChange}
 					onSetEditingMessage={setEditingMessage}
 					isStreaming={isStreaming}
@@ -2256,7 +2373,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			expandedRows,
 			toggleRowExpansion,
 			modifiedMessages,
-			groupedMessages.length,
+			groupedMessages,
 			handleRowHeightChange,
 			setEditingMessage,
 			isStreaming,
@@ -2268,6 +2385,34 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			enableButtons,
 			primaryButtonText,
 			handleScrollToLatestCheckpoint,
+		],
+	)
+
+	const itemContent = useCallback(
+		(index: number, item: AgentFeedItem) => {
+			if (item.kind === "message") return renderFeedMessage(item.message)
+			return (
+				<AgentActivity
+					messages={item.messages}
+					active={index === feed.length - 1 && isExecutionActive && !isStopping}
+					open={!!expandedActivities[item.ts]}
+					onToggle={() =>
+						setExpandedActivities((previous) => ({ ...previous, [item.ts]: !previous[item.ts] }))
+					}
+					onHeightChange={handleRowHeightChange}
+					renderMessage={renderFeedMessage}
+					focusMessageTs={focusedActivityMessage}
+				/>
+			)
+		},
+		[
+			renderFeedMessage,
+			feed.length,
+			isExecutionActive,
+			isStopping,
+			expandedActivities,
+			handleRowHeightChange,
+			focusedActivityMessage,
 		],
 	)
 
@@ -2378,7 +2523,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	return (
 		<div
 			data-testid="chat-view"
-			className={isHidden ? "hidden" : "fixed top-0 left-0 right-0 bottom-0 flex flex-col overflow-hidden"}>
+			className={
+				isHidden
+					? "hidden"
+					: "agent-work-view fixed top-0 left-0 right-0 bottom-0 flex flex-col overflow-hidden"
+			}>
 			{(showAnnouncement || showAnnouncementModal) && (
 				<Announcement
 					hideAnnouncement={() => {
@@ -2413,7 +2562,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						onStop={handleStopTask}
 						onNewChat={startNewTask}
 					/>
-					{stopError && <div role="alert" className="px-4 text-vscode-errorForeground">{t("chat:stop.failed")}</div>}
+					{stopError && (
+						<div role="alert" className="px-4 text-vscode-errorForeground">
+							{t("chat:stop.failed")}
+						</div>
+					)}
 
 					{checkpointWarning && (
 						<div className="w-full canvas-narrative">
@@ -2431,6 +2584,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					<div className="agent-home-inner">
 						<div>
 							<RooHero />
+							{!cwd && (
+								<div className="agent-project-empty">
+									<p>{t("chat:emptyProject.description", "Select a project folder. The agent will work with its files, and conversations will be saved in the sidebar.")}</p>
+									<button type="button" onClick={() => window.parent.postMessage({ type: "openProjectManager" }, "*")}>
+										{t("chat:emptyProject.openButton", "Open project")}
+									</button>
+								</div>
+							)}
 							{taskHistory.length < 6 && (
 								<div data-testid="roo-tips">
 									<AgentStarters onSelect={(prompt) => { setInputValue(prompt); textAreaRef.current?.focus() }} />
@@ -2453,7 +2614,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							key={task.ts}
 							className="scrollable grow overflow-y-scroll mb-1"
 							increaseViewportBy={{ top: 800, bottom: 400 }}
-							data={groupedMessages}
+							data={feed}
+							computeItemKey={(_, item) => item.ts}
 							itemContent={itemContent}
 							components={virtuosoComponents}
 							followOutput={followOutputCallback}
@@ -2466,7 +2628,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					{areButtonsVisible && (
 						<div className="w-full canvas-narrative">
 							<div
-								className={`flex h-9 items-center mb-1 ${
+								className={`agent-decision-actions flex h-9 items-center mb-1 ${
 									showScrollToBottom ? "opacity-100" : enableButtons ? "opacity-100" : "opacity-50"
 								}`}>
 								{showScrollToBottom ? (
@@ -2504,23 +2666,39 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 																? t("chat:save.tooltip")
 																: effectivePrimaryButtonText === t("chat:approve.title")
 																	? t("chat:approve.tooltip")
-																	: effectivePrimaryButtonText === t("chat:runCommand.title")
+																	: effectivePrimaryButtonText ===
+																		  t("chat:runCommand.title")
 																		? t("chat:runCommand.tooltip")
-																		: effectivePrimaryButtonText === t("chat:startNewTask.title")
+																		: effectivePrimaryButtonText ===
+																			  t("chat:startNewTask.title")
 																			? t("chat:startNewTask.tooltip")
 																			: effectivePrimaryButtonText ===
-																					  t("chat:proceedAnyways.title")
-																					? t("chat:proceedAnyways.tooltip")
-																					: effectivePrimaryButtonText ===
-																						  t("chat:proceedWhileRunning.title")
-																						? t("chat:proceedWhileRunning.tooltip")
-																						: undefined
+																				  t("chat:proceedAnyways.title")
+																				? t("chat:proceedAnyways.tooltip")
+																				: effectivePrimaryButtonText ===
+																					  t(
+																							"chat:proceedWhileRunning.title",
+																					  )
+																					? t(
+																							"chat:proceedWhileRunning.tooltip",
+																						)
+																					: undefined
 												}>
 												<Button
 													variant="primary"
-													disabled={!enableButtons && !isModelDiffDuringFailure && !isModelDiffDuringResume}
-													className={effectiveSecondaryButtonText ? "flex-1 mr-[6px]" : "flex-[2] mr-0"}
-													onClick={() => handlePrimaryButtonClick(inputValue, selectedImages)}>
+													disabled={
+														!enableButtons &&
+														!isModelDiffDuringFailure &&
+														!isModelDiffDuringResume
+													}
+													className={
+														effectiveSecondaryButtonText
+															? "flex-1 mr-[6px]"
+															: "flex-[2] mr-0"
+													}
+													onClick={() =>
+														handlePrimaryButtonClick(inputValue, selectedImages)
+													}>
 													{effectivePrimaryButtonText}
 												</Button>
 											</StandardTooltip>
@@ -2534,17 +2712,27 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 															? t("chat:startNewTask.tooltip")
 															: effectiveSecondaryButtonText === t("chat:reject.title")
 																? t("chat:reject.tooltip")
-																: effectiveSecondaryButtonText === t("chat:killCommand.title")
-																		? t("chat:killCommand.tooltip")
-																		: effectiveSecondaryButtonText === t("chat:cancel.title")
-																			? t("chat:cancel.tooltip")
-																			: undefined
+																: effectiveSecondaryButtonText ===
+																	  t("chat:killCommand.title")
+																	? t("chat:killCommand.tooltip")
+																	: effectiveSecondaryButtonText ===
+																		  t("chat:cancel.title")
+																		? t("chat:cancel.tooltip")
+																		: undefined
 												}>
 												<Button
 													variant="secondary"
-													disabled={!enableButtons && !isModelDiffDuringFailure && !isModelDiffDuringResume}
-													className={effectivePrimaryButtonText ? "flex-1 ml-[6px]" : "w-full"}
-													onClick={() => handleSecondaryButtonClick(inputValue, selectedImages)}>
+													disabled={
+														!enableButtons &&
+														!isModelDiffDuringFailure &&
+														!isModelDiffDuringResume
+													}
+													className={
+														effectivePrimaryButtonText ? "flex-1 ml-[6px]" : "w-full"
+													}
+													onClick={() =>
+														handleSecondaryButtonClick(inputValue, selectedImages)
+													}>
 													{effectiveSecondaryButtonText}
 												</Button>
 											</StandardTooltip>
@@ -2565,7 +2753,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							typeof idOrIndex === "string"
 								? messageQueue.find((m) => m.id === idOrIndex)
 								: (messageQueue[idOrIndex] ?? (index !== undefined ? messageQueue[index] : undefined))
-						const messageId = msg ? msg.id : (typeof idOrIndex === "string" ? idOrIndex : undefined)
+						const messageId = msg ? msg.id : typeof idOrIndex === "string" ? idOrIndex : undefined
 						if (messageId) {
 							vscode.postMessage({
 								type: "removeQueuedMessage",
@@ -2578,7 +2766,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						if (messageQueue[index]) {
 							vscode.postMessage({
 								type: "editQueuedMessage",
-								payload: { id: messageQueue[index].id, text: newText, images: messageQueue[index].images },
+								payload: {
+									id: messageQueue[index].id,
+									text: newText,
+									images: messageQueue[index].images,
+								},
 								taskId: currentTaskItem?.id,
 							})
 						}

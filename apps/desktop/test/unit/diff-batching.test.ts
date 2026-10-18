@@ -43,10 +43,10 @@ describe("Diff Batching & Lazy Loading (TDD)", () => {
 		const mockedExec = vi.mocked(child_process.execSync)
 		mockedExec.mockImplementation(((cmd: any) => {
 			const command = String(cmd)
-			if (command.includes("git status --porcelain")) {
+			if (command.includes(" status --porcelain")) {
 				return " M file1.ts\n M file2.ts\n?? file3.ts\n"
 			}
-			if (command.includes("git diff --numstat")) {
+			if (command.includes(" diff --numstat")) {
 				return "10\t2\tfile1.ts\n5\t1\tfile2.ts\n"
 			}
 			return ""

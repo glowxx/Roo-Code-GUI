@@ -78,7 +78,12 @@ try {
 	await agent.$eval(".model-selector-search input", (el) => el.focus())
 	await page.keyboard.type("no-such-model-qa")
 	await agent.waitForSelector(".model-selector-empty")
-	assert.equal(await agent.$$eval("[data-model-option]", (els) => els.length), 0)
+	assert.equal(
+		await agent.$$eval("[data-model-option]", (els) => els.length),
+		1,
+		"Unmatched search retains the custom model option",
+	)
+	assert.equal(await agent.$eval("[data-model-option]", (el) => el.dataset.modelId), "no-such-model-qa")
 	await agent.$eval('[aria-label="Wyczyść wyszukiwanie"]', (el) => el.click())
 	await agent.waitForSelector("[data-model-option]")
 	const filter = await agent.$('.model-selector-filters button:not([aria-pressed="true"])')

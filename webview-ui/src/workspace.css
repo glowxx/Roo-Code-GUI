@@ -1,7 +1,9 @@
 @import "../../apps/desktop/src/renderer/design-tokens.css";
 @import "./ui-surfaces.css";
+@import "./agent-work.css";
+@import "./product-ui.css";
 
-:root {
+:root:not([data-roo-desktop-webview]) {
 	--bg-canvas: var(--vscode-editor-background, #202123);
 	--bg-header: var(--vscode-editor-background, #191a1c);
 	--bg-surface: var(--vscode-sideBar-background, var(--vscode-editor-background, #28292c));

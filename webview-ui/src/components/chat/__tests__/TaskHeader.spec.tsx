@@ -115,6 +115,8 @@ describe("TaskHeader", () => {
 
 	it("shows separate provider input and output totals without cost", () => {
 		renderTaskHeader()
+		expect(screen.queryByTestId("task-token-usage")).not.toBeInTheDocument()
+		fireEvent.click(screen.getByText("Test task"))
 		expect(screen.getByTestId("task-token-usage")).toHaveTextContent("chat:task.inputTokens 100")
 		expect(screen.getByTestId("task-token-usage")).toHaveTextContent("chat:task.outputTokens 50")
 		expect(screen.queryByText(/\\$/)).not.toBeInTheDocument()
@@ -122,6 +124,7 @@ describe("TaskHeader", () => {
 
 	it("shows unavailable usage instead of an invented zero", () => {
 		renderTaskHeader({ tokensIn: 0, tokensOut: 0, requestsWithUsage: 0, usageIncomplete: true })
+		fireEvent.click(screen.getByText("Test task"))
 		expect(screen.getByTestId("task-token-usage")).toHaveTextContent("chat:task.inputTokens —")
 		expect(screen.getByTestId("task-token-usage")).toHaveTextContent("(chat:task.partial)")
 	})

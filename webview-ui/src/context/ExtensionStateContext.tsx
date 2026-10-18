@@ -377,6 +377,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					setDidHydrateState(true)
 					if (newState.theme) {
 						document.documentElement.setAttribute("data-theme", newState.theme)
+						document.body.setAttribute("data-theme", newState.theme)
 						const isLight = newState.theme === "clean-light"
 						document.body.classList.toggle("vscode-light", isLight)
 						document.body.classList.toggle("vscode-dark", !isLight)
@@ -577,6 +578,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		theme: (state.theme as ThemeType) ?? "linear-dark",
 		setTheme: (value: ThemeType) => {
 			document.documentElement.setAttribute("data-theme", value)
+			document.body.setAttribute("data-theme", value)
 			const isLight = value === "clean-light"
 			document.body.classList.toggle("vscode-light", isLight)
 			document.body.classList.toggle("vscode-dark", !isLight)

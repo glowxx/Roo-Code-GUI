@@ -81,6 +81,7 @@ const TaskHeader = ({
 			? openAiModelInfos?.[currentTaskItem.executionModelId] || selectedModelInfo
 			: selectedModelInfo
 	const [isTaskExpanded, setIsTaskExpanded] = useState(false)
+	const [isPlanExpanded, setIsPlanExpanded] = useState(false)
 
 	const displayPrompt = latestUserPrompt ?? task
 	const textContainerRef = useRef<HTMLDivElement>(null)
@@ -106,7 +107,7 @@ const TaskHeader = ({
 	const isCompactDisabled = Boolean(
 		buttonsDisabled || isCondensing || (clineMessages ? clineMessages.length < 4 : false),
 	)
-	const isSpinning = Boolean(isCondensing || buttonsDisabled)
+	const isSpinning = Boolean(isCondensing)
 
 	const handleCompact = (e?: React.MouseEvent) => {
 		e?.stopPropagation()
@@ -147,7 +148,7 @@ const TaskHeader = ({
 	}
 
 	return (
-		<div className="conversation-canvas group pt-1 pb-0">
+		<div className="conversation-canvas agent-task-header group pt-1 pb-0">
 			{isSubtask && (
 				<div className="mb-2" onClick={(e) => e.stopPropagation()}>
 					<Button
@@ -162,10 +163,8 @@ const TaskHeader = ({
 			)}
 			<div
 				className={cn(
-					"px-3 py-1.5 flex flex-col gap-1 relative z-1 cursor-pointer",
-					"bg-vscode-input-background hover:bg-vscode-input-background/90",
-					"text-vscode-foreground/80 hover:text-vscode-foreground",
-					"shadow-lg shadow-vscode-sideBar-background/50 rounded-xl",
+					"agent-task-summary px-1 py-2 flex flex-col gap-1 relative z-1 cursor-pointer",
+					"text-vscode-descriptionForeground hover:text-vscode-foreground",
 					hasTodos && "border-b-0",
 				)}
 				onClick={(e) => {
@@ -206,6 +205,7 @@ const TaskHeader = ({
 							)}
 						</div>
 						<div className="flex items-center shrink-0 ml-2 gap-1" onClick={(e) => e.stopPropagation()}>
+							{!isTaskExpanded && compactButton}
 							{(isTaskActive || isStopping) && onStop && (
 								<StandardTooltip
 									content={
@@ -215,7 +215,7 @@ const TaskHeader = ({
 										onClick={onStop}
 										disabled={isStopping}
 										data-testid="header-stop-btn"
-										className="shrink-0 min-h-[20px] min-w-[20px] p-[2px] cursor-pointer opacity-85 hover:opacity-100 hover:bg-vscode-toolbar-hoverBackground bg-transparent border-none rounded-md transition-colors text-red-400 hover:text-red-300"
+										className="shrink-0 min-h-[28px] min-w-[28px] p-[2px] cursor-pointer hover:bg-vscode-toolbar-hoverBackground bg-transparent border-none rounded-md transition-colors text-vscode-descriptionForeground hover:text-vscode-foreground"
 										aria-label={
 											isStopping
 												? t("chat:stopping.title", "Stopping task...")
@@ -252,29 +252,6 @@ const TaskHeader = ({
 						</div>
 					</div>
 				</div>
-				{!isTaskExpanded && (
-					<div
-						className="flex items-center gap-2 text-xs text-vscode-descriptionForeground"
-						onClick={(e) => e.stopPropagation()}>
-						{compactButton}
-						<span data-testid="task-token-usage" className="inline-flex items-center gap-1.5">
-							<span title={requestsWithUsage ? String(tokensIn) : undefined}>
-								{t("chat:task.inputTokens", "Input")}{" "}
-								{requestsWithUsage ? formatLargeNumber(tokensIn) : "—"}
-							</span>
-							<span aria-hidden="true">·</span>
-							<span title={requestsWithUsage ? String(tokensOut) : undefined}>
-								{t("chat:task.outputTokens", "Output")}{" "}
-								{requestsWithUsage ? formatLargeNumber(tokensOut) : "—"}
-							</span>
-							{usageIncomplete && (
-								<span title={t("chat:task.partialUsage", "Some requests have no provider usage data")}>
-									({t("chat:task.partial", "partial")})
-								</span>
-							)}
-						</span>
-					</div>
-				)}
 				{/* Expanded state: Show task text and images */}
 				{isTaskExpanded && (
 					<>
@@ -319,7 +296,9 @@ const TaskHeader = ({
 											{t("chat:task.tokens", "Tokens")}
 										</th>
 										<td className="font-light align-top">
-											<div className="flex items-center gap-1 flex-wrap">
+											<div
+												data-testid="task-token-usage"
+												className="flex items-center gap-1 flex-wrap">
 												<span>
 													{t("chat:task.inputTokens", "Input")}{" "}
 													{requestsWithUsage ? formatLargeNumber(tokensIn) : "—"}
@@ -376,7 +355,27 @@ const TaskHeader = ({
 					</>
 				)}
 				{/* Todo list - always shown at bottom when todos exist */}
-				{hasTodos && <TodoListDisplay todos={todos ?? (task as any)?.tool?.todos ?? []} />}
+				{hasTodos && (
+					<div data-todo-list className="agent-plan" onClick={(event) => event.stopPropagation()}>
+						<button
+							type="button"
+							className="agent-plan-trigger"
+							aria-expanded={isPlanExpanded}
+							onClick={() => setIsPlanExpanded((value) => !value)}>
+							<span>{t("chat:taskPlan.title", "Work plan")}</span>
+							<span className="agent-plan-current">
+								{todos?.find((todo) => todo.status === "in_progress")?.content ||
+									t("chat:taskPlan.progress", {
+										completed: todos?.filter((todo) => todo.status === "completed").length,
+										total: todos?.length,
+										defaultValue: `${todos?.filter((todo) => todo.status === "completed").length} of ${todos?.length} steps`,
+									})}
+							</span>
+							<ChevronDown size={13} className={isPlanExpanded ? "rotate-180" : ""} />
+						</button>
+						{isPlanExpanded && <TodoListDisplay todos={todos ?? (task as any)?.tool?.todos ?? []} />}
+					</div>
+				)}
 			</div>
 		</div>
 	)

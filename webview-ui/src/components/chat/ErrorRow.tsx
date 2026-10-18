@@ -250,7 +250,7 @@ export const ErrorRow = memo(
 		// Standard error display
 		return (
 			<>
-				<div className="group pr-2">
+				<div className="agent-problem group pr-2">
 					{errorTitle && (
 						<div className={headerClassName || "flex items-center justify-between gap-2 break-words"}>
 							<MessageCircleWarning className="w-4 text-vscode-errorForeground" />

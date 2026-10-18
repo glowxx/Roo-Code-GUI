@@ -180,7 +180,10 @@
 	"interruption": {
 		"responseInterruptedByUser": "Phản hồi bị gián đoạn bởi người dùng",
 		"responseInterruptedByApiError": "Phản hồi bị gián đoạn bởi lỗi API",
-		"streamTerminatedByProvider": "Nhà cung cấp đã kết thúc yêu cầu"
+		"streamTerminatedByProvider": "Nhà cung cấp đã kết thúc yêu cầu",
+		"streamStoppedNoProgress": "Roo stopped the request: received heartbeat/keep-alive frames but no content",
+		"streamStoppedTimeout": "Roo stopped the request due to stream timeout",
+		"connectionStalledRetrying": "Connection temporarily stalled — retrying automatically..."
 	},
 	"storage": {
 		"prompt_custom_path": "Nhập đường dẫn lưu trữ tùy chỉnh cho lịch sử hội thoại, để trống để sử dụng vị trí mặc định",

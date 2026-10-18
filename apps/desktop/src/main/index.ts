@@ -328,6 +328,14 @@ export async function startDesktopApp(options: DesktopRunOptions = {}) {
 				if (saveBoundsTimeout) clearTimeout(saveBoundsTimeout)
 				saveBounds()
 			})
+			win.webContents.on("will-prevent-unload", (event: { preventDefault(): void }) => {
+				const choice = dialog.showMessageBoxSync(win, {
+					type: "question", title: "Niezapisane zmiany", message: "W edytorze są niezapisane zmiany.",
+					detail: "Wróć do aplikacji, aby zapisać plik, albo zamknij okno i odrzuć zmiany w edytorze.",
+					buttons: ["Wróć do edycji", "Zamknij bez zapisywania"], defaultId: 0, cancelId: 0,
+				})
+				if (choice === 1) event.preventDefault()
+			})
 
 			// Forward agentHost terminal events to Electron renderer
 			agentHost.on("terminalSessionStarted", (session) => {
@@ -417,6 +425,10 @@ export async function startDesktopApp(options: DesktopRunOptions = {}) {
 			}
 
 			ipcMain.handle("desktop:select-folder", handleSelectFolder)
+			ipcMain.handle("desktop:pick-folder", async () => {
+				const result = await dialog.showOpenDialog(win, { properties: ["openDirectory", "createDirectory"], defaultPath: agentHost.getWorkspace() || undefined })
+				return result.canceled ? null : result.filePaths[0] || null
+			})
 			ipcMain.handle("desktop:select-workspace", handleSelectFolder)
 
 			ipcMain.handle("desktop:create-quick-project", async () => {

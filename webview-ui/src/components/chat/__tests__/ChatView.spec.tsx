@@ -471,7 +471,7 @@ describe("ChatView - Focus Grabbing Tests", () => {
 	beforeEach(() => vi.clearAllMocks())
 
 	it("does not grab focus when follow-up question presented", async () => {
-		const { getByTestId } = renderChatView()
+		const { queryByTestId, getByTestId } = renderChatView()
 
 		// First hydrate state with initial task
 		mockPostMessage({
@@ -528,7 +528,7 @@ describe("ChatView - Focus Grabbing Tests", () => {
 
 describe("ChatView - Version Indicator Tests", () => {
 	it("does not display version indicator in ChatView", () => {
-		const { queryByTestId } = renderChatView()
+		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
 			version: "1.0.0",
@@ -543,7 +543,7 @@ describe("ChatView - Welcome Content Display Tests", () => {
 	beforeEach(() => vi.clearAllMocks())
 
 	it("does not show removed cloud upsell for returning users", () => {
-		const { queryByTestId } = renderChatView()
+		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
 			taskHistory: [
@@ -558,8 +558,8 @@ describe("ChatView - Welcome Content Display Tests", () => {
 		expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
 	})
 
-	it("shows RooTips when user has only run 3 tasks in their history", () => {
-		const { queryByTestId } = renderChatView()
+	it("shows the quiet workspace home for users with 3 previous tasks", () => {
+		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
 			taskHistory: [
@@ -575,7 +575,7 @@ describe("ChatView - Welcome Content Display Tests", () => {
 	})
 
 	it("does not show removed cloud upsell when user has run 6 or more tasks", async () => {
-		const { queryByTestId } = renderChatView()
+		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
 			taskHistory: [
@@ -598,7 +598,7 @@ describe("ChatView - Welcome Content Display Tests", () => {
 	})
 
 	it("does not show welcome content when there is an active task", async () => {
-		const { queryByTestId } = renderChatView()
+		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
 			taskHistory: [
@@ -624,7 +624,7 @@ describe("ChatView - Welcome Content Display Tests", () => {
 		})
 	})
 
-	it("shows RooTips for newer users", () => {
+	it("shows workspace starters for newer users", () => {
 		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
@@ -638,10 +638,10 @@ describe("ChatView - Welcome Content Display Tests", () => {
 		})
 
 		expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
-		expect(getByTestId("roo-tips")).toBeInTheDocument()
+		expect(queryByTestId("roo-tips")).toBeInTheDocument()
 	})
 
-	it("shows RooTips when user has fewer than 6 tasks", () => {
+	it("shows workspace starters when history is short", () => {
 		const { queryByTestId, getByTestId } = renderChatView()
 
 		mockPostMessage({
@@ -654,7 +654,7 @@ describe("ChatView - Welcome Content Display Tests", () => {
 		})
 
 		expect(queryByTestId("dismissible-upsell")).not.toBeInTheDocument()
-		expect(getByTestId("roo-tips")).toBeInTheDocument()
+		expect(queryByTestId("roo-tips")).toBeInTheDocument()
 	})
 })
 
@@ -1111,7 +1111,11 @@ describe("ChatView - Context Condensing Indicator Tests", () => {
 		})
 
 		// Check that groupedMessages now includes a condensing message
-		// With Virtuoso mocked, items render directly and we can find the ChatRow with partial condense_context message
+		// Technical context management stays folded until explicitly requested.
+		await waitFor(() => expect(container.querySelector('[data-testid="agent-activity"] button')).toBeTruthy())
+		fireEvent.click(container.querySelector('[data-testid="agent-activity"] button')!)
+
+		// With Virtuoso mocked, inspect the original condensing event after expansion.
 		await waitFor(
 			() => {
 				const rows = container.querySelectorAll('[data-testid="chat-row"]')
@@ -1427,7 +1431,11 @@ describe("ChatView - Task Completion & Resumption Button Bar Tests", () => {
 					type: "say",
 					say: "command_safety_warning",
 					ts: Date.now(),
-					text: JSON.stringify({ isSafe: false, riskLevel: "high", reason: "Safety verification temporarily unavailable" }),
+					text: JSON.stringify({
+						isSafe: false,
+						riskLevel: "high",
+						reason: "Safety verification temporarily unavailable",
+					}),
 				},
 			],
 		})
@@ -1470,7 +1478,11 @@ describe("ChatView - Task Completion & Resumption Button Bar Tests", () => {
 					type: "say",
 					say: "command_safety_warning",
 					ts: Date.now(),
-					text: JSON.stringify({ isSafe: false, riskLevel: "high", reason: "Safety verification temporarily unavailable" }),
+					text: JSON.stringify({
+						isSafe: false,
+						riskLevel: "high",
+						reason: "Safety verification temporarily unavailable",
+					}),
 				},
 			],
 		})
@@ -1935,4 +1947,3 @@ describe("ChatView - Task Completion & Resumption Button Bar Tests", () => {
 		})
 	})
 })
-

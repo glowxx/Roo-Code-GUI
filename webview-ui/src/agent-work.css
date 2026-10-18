@@ -1,0 +1,318 @@
+/* The conversation is the primary surface; the execution log is an opt-in detail. */
+.agent-work-view [data-composer-stop="true"] {
+	background: var(--text-primary);
+	color: var(--bg-canvas);
+}
+.agent-work-view [data-composer-stop="true"] svg {
+	fill: currentColor;
+	color: inherit;
+}
+.agent-work-view .agent-composer-hint {
+	font: 11px/1.4 var(--font-sans);
+	color: var(--text-muted);
+	max-width: calc(100% - 72px);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	display: block;
+	height: auto;
+	padding-left: 8px;
+}
+.agent-activity-details[hidden] {
+	display: none !important;
+}
+.agent-work-view {
+	--agent-conversation-width: 800px;
+	--agent-canvas-narrative: var(--agent-conversation-width);
+	--agent-canvas-technical: var(--agent-conversation-width);
+}
+.agent-work-view .conversation-row--operation {
+	padding-top: 22px;
+}
+.agent-work-view .conversation-row--turn {
+	padding-top: 28px;
+}
+.agent-work-view .conversation-lane {
+	min-width: 0;
+}
+.agent-message {
+	position: relative;
+	color: var(--text-primary);
+}
+.agent-message-body {
+	font-size: 14px;
+	line-height: 1.75;
+	overflow-wrap: anywhere;
+}
+.agent-message-body > :first-child {
+	margin-top: 0;
+}
+.agent-message-body p {
+	margin: 0 0 14px;
+}
+.agent-message-body h1,
+.agent-message-body h2,
+.agent-message-body h3 {
+	font-size: 16px;
+	font-weight: 550;
+	line-height: 1.5;
+	margin: 20px 0 10px;
+}
+.agent-message-body strong {
+	font-weight: 550;
+}
+.agent-question [data-ui-button] {
+	border-radius: 8px;
+	border-color: var(--border-subtle);
+	background: transparent;
+	font-weight: 400;
+}
+.agent-question [data-ui-button]:hover {
+	background: var(--bg-hover);
+}
+.agent-subtask-result > div:first-child {
+	color: var(--text-muted);
+	font-size: 11px;
+	margin-bottom: 10px;
+}
+.agent-subtask-result > div:first-child span {
+	font-weight: 500 !important;
+}
+.agent-decision-actions {
+	justify-content: flex-end;
+	gap: 8px;
+}
+.agent-decision-actions [data-ui-button] {
+	flex: 0 1 auto;
+	min-width: 100px;
+	margin: 0;
+	padding-inline: 16px;
+}
+.agent-message-actions {
+	position: absolute;
+	right: 0;
+	top: -22px;
+	opacity: 0;
+}
+.agent-message:hover .agent-message-actions,
+.agent-message:focus-within .agent-message-actions {
+	opacity: 1;
+}
+.agent-completion-heading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 0 10px;
+	font-size: 11px;
+	color: var(--text-muted);
+}
+.agent-completion-heading > span {
+	color: var(--text-secondary) !important;
+	font-weight: 500 !important;
+}
+.agent-completion-heading button {
+	opacity: 0.5;
+}
+.agent-completion-heading button:hover,
+.agent-completion-heading button:focus-visible {
+	opacity: 1;
+}
+.agent-activity {
+	padding-top: 12px;
+	padding-bottom: 2px;
+}
+.agent-activity-trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	padding: 5px 0;
+	border: 0;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: left;
+}
+.agent-activity-trigger:hover,
+.agent-activity-trigger[aria-expanded="true"] {
+	color: var(--text-secondary);
+}
+.agent-activity-trigger svg {
+	flex-shrink: 0;
+	transition: transform var(--motion-fast);
+	opacity: 0.7;
+}
+.agent-working-dot {
+	width: 5px;
+	height: 5px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: currentColor;
+}
+.agent-activity-details {
+	margin: 8px 0 4px;
+	padding: 2px 0 10px 16px;
+	border-left: 1px solid var(--border-subtle);
+	max-height: 520px;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+.agent-activity-details .conversation-canvas {
+	width: 100%;
+	padding-left: 0;
+	padding-right: 8px;
+}
+.agent-activity-details .conversation-row {
+	padding-top: 12px;
+}
+.agent-activity-details .conversation-row:first-child {
+	padding-top: 6px;
+}
+.agent-activity-details .font-bold {
+	font-weight: 500;
+}
+.agent-activity-details .conversation-lane {
+	font-size: 12px;
+	color: var(--text-secondary);
+}
+.agent-activity-details [style*="font-weight: bold"],
+.agent-activity-details [style*="font-weight: 700"] {
+	font-weight: 500 !important;
+}
+.agent-activity-details .text-primary,
+.agent-activity-details .text-amber-400,
+.agent-activity-details .text-emerald-400 {
+	color: var(--text-secondary);
+}
+.agent-work-view .agent-task-header {
+	padding-top: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--border-subtle);
+}
+.agent-task-summary {
+	background: transparent;
+	box-shadow: none;
+	border: 0;
+	border-radius: 0;
+	font-size: 12px;
+}
+.agent-task-summary > .flex:first-child {
+	min-height: 28px;
+}
+.agent-task-summary [data-testid="header-new-chat-btn"] {
+	width: 28px;
+	height: 28px;
+}
+.agent-plan {
+	margin-top: 5px;
+}
+.agent-plan-trigger {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	width: 100%;
+	padding: 5px 0;
+	border: 0;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 11px;
+	text-align: left;
+}
+.agent-plan-trigger:hover {
+	color: var(--text-secondary);
+}
+.agent-plan-trigger > span:first-child {
+	flex-shrink: 0;
+}
+.agent-plan-current {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.agent-plan [data-todo-list] {
+	box-shadow: none;
+}
+.agent-work-view .agent-file-changes > div > button {
+	background: transparent;
+	border: 0;
+	border-radius: 7px;
+	box-shadow: none;
+	padding: 8px 2px;
+	color: var(--text-secondary);
+}
+.agent-work-view .agent-file-changes > div > button:hover {
+	background: var(--bg-hover);
+}
+.agent-file-changes [data-testid="total-added"],
+.agent-file-changes [data-testid="total-removed"] {
+	color: var(--text-muted);
+	font-weight: 400;
+}
+.agent-notice,
+.agent-problem {
+	font-size: 12px;
+	line-height: 1.6;
+}
+.agent-notice p,
+.agent-problem p {
+	font-weight: 400;
+}
+.agent-notice-details {
+	margin-top: 8px;
+	font-size: 11px;
+	color: var(--text-muted);
+}
+.agent-notice-details summary {
+	cursor: pointer;
+	width: fit-content;
+}
+.agent-notice-details pre {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-size: 11px;
+	font-family: var(--font-mono);
+	color: var(--text-secondary);
+}
+.agent-problem > div:first-child {
+	color: var(--text-primary);
+}
+.agent-problem > div:first-child > span {
+	color: var(--text-primary);
+	font-weight: 500;
+}
+.agent-problem > div:first-child > svg {
+	color: var(--text-secondary);
+	width: 14px;
+}
+.agent-problem > .border-l {
+	border: 0;
+	margin-left: 0;
+	padding-left: 0;
+}
+.agent-work-view .composer-controls .agent-toolbar-control[data-active="true"],
+.agent-work-view .composer-controls .agent-toolbar-control[aria-pressed="true"] {
+	background: var(--bg-hover);
+	color: var(--text-primary);
+}
+.agent-work-view .agent-composer .chat-text-area:focus-within {
+	border-color: var(--border-light);
+}
+@media (max-width: 560px) {
+	.agent-message-body {
+		font-size: 13px;
+	}
+	.agent-activity-details {
+		padding-left: 10px;
+	}
+	.agent-plan-current {
+		max-width: 60vw;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.agent-activity-trigger svg {
+		transition: none;
+	}
+}

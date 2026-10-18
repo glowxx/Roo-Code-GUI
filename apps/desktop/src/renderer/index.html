@@ -8,6 +8,7 @@
 	<link rel="stylesheet" href="styles.css">
 	<link rel="stylesheet" href="design-tokens.css">
 	<link rel="stylesheet" href="workspace.css">
+	<link rel="stylesheet" href="product.css">
 </head>
 <body class="dark-theme standalone-desktop" data-theme="linear-dark" data-desktop-shell="true">
 	<div id="desktop-app">
@@ -21,6 +22,7 @@
 					</svg>
 				</button>
 
+				<button id="project-switcher" class="project-switcher" aria-label="Select or change project"><strong>Select project</strong><small>Open project folder</small></button>
 				<div class="brand">
 					<img src="icon.png" class="brand-logo" alt="Roo Code" width="22" height="22" />
 					<span class="brand-title">Roo Code</span>
@@ -40,7 +42,7 @@
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<path d="M8 9h8m-8 4h6m4-5v8a2 2 0 0 1-2 2H6l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"></path>
 						</svg>
-						<span id="tab-label-native-chat">Czat</span>
+						<span id="tab-label-native-chat">Chat</span>
 					</button>
 					<button class="nav-tab" data-tab="diffs">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -49,7 +51,7 @@
 							<path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
 							<line x1="6" y1="9" x2="6" y2="21"></line>
 						</svg>
-						<span id="tab-label-diffs">Zmiany</span>
+						<span id="tab-label-diffs">Diffs</span>
 						<span class="badge" id="diffs-count">0</span>
 					</button>
 					<button class="nav-tab" data-tab="terminal">
@@ -65,7 +67,7 @@
 							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
 							<polyline points="14 2 14 8 20 8"></polyline>
 						</svg>
-						<span id="tab-label-files">Pliki</span>
+						<span id="tab-label-files">Files</span>
 					</button>
 				</nav>
 			</div>
@@ -73,32 +75,32 @@
 			<!-- Right Status & Controls: Engine connection indicator, Settings action & Window controls -->
 			<div class="header-right">
 				<!-- Core Engine Connection Indicator -->
-				<div class="engine-connection-badge status-connecting" id="engine-connection-badge" title="Stan połączenia z agentem">
+				<div class="engine-connection-badge status-connecting" id="engine-connection-badge" title="Connection status">
 					<span class="connection-dot"></span>
-					<span class="connection-text" id="engine-connection-text">Łączenie…</span>
+					<span class="connection-text" id="engine-connection-text">Connecting…</span>
 				</div>
 
-				<button class="header-action-btn" id="open-settings-btn" title="Ustawienia">
+				<button class="header-action-btn" id="open-settings-btn" title="Settings">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<circle cx="12" cy="12" r="3"></circle>
 						<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
 					</svg>
-					<span id="tab-label-settings">Ustawienia</span>
+					<span id="tab-label-settings">Settings</span>
 				</button>
 
 				<!-- Desktop System Window Controls (Minimize, Maximize, Close) -->
 				<div class="window-controls">
-					<button class="window-control-btn" id="window-minimize-btn" title="Minimalizuj">
+					<button class="window-control-btn" id="window-minimize-btn" title="Minimize">
 						<svg width="10" height="10" viewBox="0 0 10 10">
 							<line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1.2" />
 						</svg>
 					</button>
-					<button class="window-control-btn" id="window-maximize-btn" title="Maksymalizuj">
+					<button class="window-control-btn" id="window-maximize-btn" title="Maximize">
 						<svg width="10" height="10" viewBox="0 0 10 10">
 							<rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2" />
 						</svg>
 					</button>
-					<button class="window-control-btn window-close-btn" id="window-close-btn" title="Zamknij">
+					<button class="window-control-btn window-close-btn" id="window-close-btn" title="Close">
 						<svg width="10" height="10" viewBox="0 0 10 10">
 							<line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.2" />
 							<line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.2" />
@@ -120,17 +122,18 @@
 							<rect x="14" y="14" width="7" height="7"/>
 							<rect x="3" y="14" width="7" height="7"/>
 						</svg>
-						<span class="sidebar-header-title" id="sidebar-header-title">Przestrzeń robocza</span>
+						<span class="sidebar-header-title" id="sidebar-header-title">Workspaces</span>
 					</div>
 				</div>
 
+				<div class="workspace-primary-actions"><button id="workspace-new-chat" type="button"><span>＋</span> New chat <kbd>Ctrl+N</kbd></button><button id="workspace-command-button" type="button"><span>⌕</span> Go to… <kbd>Ctrl+K</kbd></button></div><label class="workspace-search"><input id="workspace-project-search" placeholder="Search projects and chats…" aria-label="Search projects and chats"></label>
 				<div class="sidebar-scroll-content" id="sidebar-scroll-content">
 					<!-- Agent Mode Sidebar View -->
 					<div id="agent-sidebar-view" class="sidebar-view-mode">
 						<div class="sidebar-section-header">
-							<span class="section-label" id="sidebar-projects-label">Projekty</span>
+							<span class="section-label" id="sidebar-projects-label">Projects</span>
 							<div class="sidebar-section-actions">
-								<button class="sidebar-section-btn" id="sidebar-add-project-btn" type="button" aria-label="Dodaj projekt" title="Dodaj projekt" tabindex="0">
+								<button class="sidebar-section-btn" id="sidebar-add-project-btn" type="button" aria-label="Add project" title="Add project" tabindex="0">
 									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 										<line x1="12" y1="5" x2="12" y2="19"></line>
 										<line x1="5" y1="12" x2="19" y2="12"></line>
@@ -140,7 +143,7 @@
 							</div>
 						</div>
 						<div class="sidebar-projects-list" id="sidebar-projects-list">
-							<div class="sidebar-empty-state" id="sidebar-empty-state">Wczytuję projekty…</div>
+							<div class="sidebar-empty-state" id="sidebar-empty-state">Loading projects…</div>
 						</div>
 					</div>
 
@@ -152,26 +155,27 @@
 									<line x1="12" y1="5" x2="12" y2="19"></line>
 									<line x1="5" y1="12" x2="19" y2="12"></line>
 								</svg>
-								<span id="label-new-chat">Nowa rozmowa</span>
+								<span id="label-new-chat">New chat</span>
 							</button>
 							<div class="chat-search-wrap">
 								<svg class="chat-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<circle cx="11" cy="11" r="8"></circle>
 									<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
 								</svg>
-								<input type="text" id="chat-search-input" class="chat-search-input" placeholder="Szukaj rozmów…" />
+								<input type="text" id="chat-search-input" class="chat-search-input" placeholder="Search chats…" />
 								<button id="chat-search-clear-btn" class="chat-search-clear-btn hidden" type="button">&times;</button>
 							</div>
 						</div>
 						<div class="chat-sessions-list" id="chat-sessions-list">
-							<div class="chat-sidebar-empty">Nie masz jeszcze żadnych rozmów</div>
+							<div class="chat-sidebar-empty">No chats yet</div>
 						</div>
 					</div>
 				</div>
 
 				<div class="sidebar-footer">
+					<button type="button" id="project-manager-button">Manage projects</button><button type="button" id="workspace-settings-button">Settings <kbd>Ctrl+,</kbd></button>
 					<div class="sidebar-footer-hint">
-						<kbd>Ctrl+B</kbd> <span id="sidebar-hint-text">panel boczny</span>
+						<kbd>Ctrl+B</kbd> <span id="sidebar-hint-text">toggle sidebar</span>
 					</div>
 				</div>
 			</aside>
@@ -184,8 +188,8 @@
 					<!-- Loading State Overlay -->
 					<div class="webview-placeholder-state" id="webview-loading-state">
 						<div class="loading-spinner"></div>
-						<h3 class="placeholder-title" id="webview-loading-title">Przygotowuję środowisko pracy…</h3>
-						<p class="placeholder-desc" id="webview-loading-desc">Łączę się z agentem…</p>
+						<h3 class="placeholder-title" id="webview-loading-title">Initializing Roo Code engine...</h3>
+						<p class="placeholder-desc" id="webview-loading-desc">Connecting to server and preparing agent view...</p>
 					</div>
 
 					<!-- Error State Fallback -->
@@ -197,8 +201,8 @@
 								<line x1="12" y1="17" x2="12.01" y2="17"/>
 							</svg>
 						</div>
-						<h3 class="placeholder-title" id="webview-error-title">Nie udało się otworzyć widoku agenta</h3>
-						<p class="placeholder-desc" id="webview-error-desc">Nie można połączyć się z agentem. Spróbuj ponownie.</p>
+						<h3 class="placeholder-title" id="webview-error-title">Failed to load agent view</h3>
+						<p class="placeholder-desc" id="webview-error-desc">Server is not responding or connection to core application failed.</p>
 						<div class="placeholder-actions">
 							<button class="btn btn-primary" id="webview-retry-btn">
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -206,7 +210,7 @@
 									<polyline points="1 20 1 14 7 14"></polyline>
 									<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
 								</svg>
-								<span id="webview-retry-text">Spróbuj ponownie</span>
+								<span id="webview-retry-text">Retry</span>
 							</button>
 						</div>
 					</div>
@@ -220,16 +224,16 @@
 				<div class="diffs-view" id="diffs-view">
 					<aside class="diffs-sidebar" id="diffs-list-pane">
 						<div class="sidebar-header">
-							<span class="sidebar-title" id="diffs-sidebar-title">Zmienione pliki</span>
-							<span class="file-counter" id="diff-file-counter">0 plików</span>
+							<span class="sidebar-title" id="diffs-sidebar-title">Modified Files</span>
+							<span class="file-counter" id="diff-file-counter">0 files</span>
 						</div>
 						<div class="diffs-list" id="diffs-file-list">
-							<div class="empty-state">Nie ma jeszcze zmian w plikach.</div>
+							<div class="empty-state">No file changes recorded yet.</div>
 						</div>
 					</aside>
 					<div class="diff-viewer-panel">
 						<div class="diff-viewer-header" id="diff-viewer-header">
-							<span class="diff-filename">Wybierz plik, aby przejrzeć zmiany</span>
+							<span class="diff-filename">Select a file to review changes</span>
 						</div>
 						<div class="diff-content" id="diff-content">
 							<div class="diff-placeholder">
@@ -239,7 +243,7 @@
 									<path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
 									<line x1="6" y1="9" x2="6" y2="21"></line>
 								</svg>
-								<p id="diffs-placeholder-text">Tutaj przejrzysz zmiany wprowadzone przez agenta w Twoim projekcie.</p>
+								<p id="diffs-placeholder-text">Review changes made by the agent in your project here.</p>
 							</div>
 						</div>
 					</div>
@@ -251,18 +255,18 @@
 				<div class="terminal-view" id="terminal-view">
 					<aside class="terminal-sidebar">
 						<div class="sidebar-header">
-							<span class="sidebar-title" id="terminal-sidebar-title">Sesje poleceń</span>
-							<span class="session-counter" id="terminal-session-counter">0 sesji</span>
+							<span class="sidebar-title" id="terminal-sidebar-title">Command Sessions</span>
+							<span class="session-counter" id="terminal-session-counter">0 sessions</span>
 						</div>
 						<div class="terminal-sessions-list" id="terminal-sessions-list">
-							<div class="empty-state" id="terminal-sessions-empty">Nie ma jeszcze sesji terminala.</div>
+							<div class="empty-state" id="terminal-sessions-empty">No terminal sessions recorded yet.</div>
 						</div>
 					</aside>
 					<div class="terminal-main-panel">
 						<div class="terminal-toolbar">
 							<div class="terminal-title">
 								<span class="terminal-prompt">$</span>
-								<span id="terminal-title-text" class="terminal-active-cmd">Polecenia agenta</span>
+								<span id="terminal-title-text" class="terminal-active-cmd">Agent commands</span>
 								<span class="terminal-session-status-badge" id="terminal-session-status-badge" style="display: none;"></span>
 							</div>
 							<div class="terminal-actions">
@@ -271,7 +275,7 @@
 										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
 										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
 									</svg>
-									<span id="terminal-copy-text">Kopiuj</span>
+									<span id="terminal-copy-text">Copy</span>
 								</button>
 								<button class="icon-btn" id="clear-terminal-btn" title="Clear terminal logs">
 									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -281,12 +285,12 @@
 										<line x1="10" y1="11" x2="10" y2="17"/>
 										<line x1="14" y1="11" x2="14" y2="17"/>
 									</svg>
-									<span id="terminal-clear-text">Wyczyść</span>
+									<span id="terminal-clear-text">Clear</span>
 								</button>
 							</div>
 						</div>
 						<div class="terminal-output" id="terminal-output">
-							<div class="terminal-empty" id="terminal-empty-text">Tutaj pojawią się polecenia agenta i ich wyniki.</div>
+							<div class="terminal-empty" id="terminal-empty-text">Agent commands and results will appear here.</div>
 						</div>
 					</div>
 				</div>
@@ -297,28 +301,28 @@
 				<div class="files-view">
 					<aside class="files-sidebar">
 						<div class="sidebar-header">
-							<span class="sidebar-title" id="files-sidebar-title">Pliki projektu</span>
+							<span class="sidebar-title" id="files-sidebar-title">Project Files</span><button type="button" id="files-refresh-btn" class="product-icon-button" aria-label="Refresh files">↻</button>
 						</div>
-						<input type="text" id="files-search" class="files-search-input" placeholder="Szukaj plików…">
+						<input type="text" id="files-search" class="files-search-input" placeholder="Search files…">
 						<div class="files-tree" id="files-tree">
-							<div class="empty-state" id="files-tree-empty">Wczytuję pliki…</div>
+							<div class="empty-state" id="files-tree-empty">Loading file tree...</div>
 						</div>
 					</aside>
 					<div class="file-preview-panel">
 						<div class="preview-header">
 							<div class="preview-header-left">
 								<span class="preview-file-icon" id="preview-file-icon">📄</span>
-								<span id="preview-filename">Wybierz plik do podglądu</span>
+								<span id="preview-filename">Select a file from the tree to preview</span>
 								<span class="preview-badge" id="preview-file-badge" style="display: none;"></span>
 								<span class="preview-size" id="preview-file-size"></span>
 							</div>
-							<div class="preview-header-actions" id="preview-header-actions" style="display: none;">
+							<div class="preview-header-actions" id="preview-header-actions" style="display: none;"><button type="button" class="preview-action-btn" id="preview-add-context-btn">Add to chat</button><button type="button" class="preview-action-btn" id="preview-edit-btn">Edit</button>
 								<button class="preview-action-btn" id="preview-copy-btn" title="Copy content or path">
 									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
 										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
 									</svg>
-									<span id="preview-copy-text">Kopiuj</span>
+									<span id="preview-copy-text">Copy</span>
 								</button>
 								<button class="preview-action-btn" id="preview-toggle-wrap-btn" title="Toggle line wrap">
 									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -327,10 +331,10 @@
 										<path d="M18 9l3 3-3 3"></path>
 										<line x1="3" y1="18" x2="21" y2="18"></line>
 									</svg>
-									<span id="preview-wrap-text">Zawijaj</span>
+									<span id="preview-wrap-text">Wrap</span>
 								</button>
 								<button class="preview-action-btn" id="preview-toggle-view-btn" style="display: none;" title="Toggle preview / source">
-									<span id="preview-source-text">Kod źródłowy</span>
+									<span id="preview-source-text">Source Code</span>
 								</button>
 								<button class="preview-action-btn" id="preview-open-external-btn" title="Show in File Explorer">
 									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -338,7 +342,7 @@
 										<polyline points="15 3 21 3 21 9"></polyline>
 										<line x1="10" y1="14" x2="21" y2="3"></line>
 									</svg>
-									<span id="preview-in-explorer-text">Pokaż w Eksploratorze</span>
+									<span id="preview-in-explorer-text">In Explorer</span>
 								</button>
 							</div>
 						</div>
@@ -351,7 +355,7 @@
 									<line x1="16" y1="17" x2="8" y2="17"></line>
 									<polyline points="10 9 9 9 8 9"></polyline>
 								</svg>
-								<p id="preview-placeholder-text">Wybierz plik z panelu po lewej, aby zobaczyć jego zawartość.</p>
+								<p id="preview-placeholder-text">Select any file from the project tree to view its code, image, or details.</p>
 							</div>
 						</div>
 					</div>
@@ -363,12 +367,12 @@
 		<!-- Bottom Status Bar (VS Code / Linear tier) -->
 		<footer class="app-footer">
 			<div class="footer-left">
-				<span class="footer-item" id="footer-workspace-path" title="Ścieżka projektu">Projekt: …</span>
+				<span class="footer-item" id="footer-workspace-path" title="Project path">Project: …</span>
 			</div>
 			<div class="footer-right">
 				<span class="footer-item status-indicator">
 					<span class="indicator-dot"></span>
-					<span id="connection-status">Łączę się z agentem…</span>
+					<span id="connection-status">Connecting to engine...</span>
 				</span>
 				<span class="footer-item footer-version">v1.0.0 Desktop</span>
 			</div>
@@ -382,11 +386,11 @@
 				<div class="modal-title-row">
 					<div class="modal-icon-badge">⚡</div>
 					<div>
-						<h3 class="modal-title">Połączenie z dostawcą AI</h3>
-						<p class="modal-subtitle">Wybierz dostawcę, podaj klucz API i model.</p>
+						<h3 class="modal-title">AI Provider Connection</h3>
+						<p class="modal-subtitle">Configure AI model connection, API key, and permissions.</p>
 					</div>
 				</div>
-				<button class="modal-close-btn" id="close-api-modal-btn" title="Zamknij">
+				<button class="modal-close-btn" id="close-api-modal-btn" title="Close">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<line x1="18" y1="6" x2="6" y2="18"></line>
 						<line x1="6" y1="6" x2="18" y2="18"></line>
@@ -505,6 +509,7 @@
 
 	<script src="highlight.bundle.js"></script>
 	<script src="bridge.bundle.js"></script>
+	<script src="product-workspace.js"></script>
 	<script src="app.js"></script>
 </body>
 </html>

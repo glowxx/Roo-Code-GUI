@@ -309,12 +309,30 @@
 		"maxLimits": {
 			"description": "Automatycznie składaj zapytania do tych limitów przed poproszeniem o zgodę na kontynuowanie."
 		},
-		"requiresSafetyModel": "Wymaga skonfigurowania modelu weryfikacji bezpieczeństwa w Ustawieniach"
+		"requiresSafetyModel": "Wymaga skonfigurowania modelu weryfikacji bezpieczeństwa w Ustawieniach",
+		"modes": {
+			"manual": "Ręcznie",
+			"auto": "Automatycznie"
+		},
+		"autonomousWorkTitle": "Samodzielna praca agenta",
+		"autonomousWorkDesc": "W trybie samodzielnym agent wykonuje bezpieczne operacje bez pytania. Działania, które mogą usunąć dane lub wpłynąć na system, ocenia niezależny model oceniający bezpieczeństwo.",
+		"safetyRulesTitle": "Stałe zasady bezpieczeństwa",
+		"alwaysActive": "Zawsze aktywne",
+		"safetyRulesDesc": "Pliki systemowe i poufne dane pozostają chronione. Polecenia mogące uszkodzić system oraz niezaufany kod podlegają dodatkowej kontroli. Oddzielny model oceniający: Agent nie może zatwierdzać własnych działań. Gdy niezależny model jest niedostępny, nie odpowiada na czas lub jest tym samym modelem co agent, wymagane jest Twoje potwierdzenie.",
+		"safetyModelTitle": "Model oceniający bezpieczeństwo",
+		"safetyModelDesc": "Niezależny model AI sprawdzający bezpieczeństwo działań",
+		"viewDecisionLog": "Pokaż historię decyzji",
+		"provider": "Dostawca",
+		"modelId": "Identyfikator modelu",
+		"modelPlaceholder": "Wybierz lub wpisz model oceniający…",
+		"separateApiKey": "Osobny klucz API (opcjonalnie)",
+		"apiKeyPlaceholder": "Pozostaw puste, aby użyć klucza głównego dostawcy",
+		"modelNotConfiguredWarning": "Nie skonfigurowano modelu oceniającego. Działania wymagające oceny AI będą czekać na Twoje potwierdzenie."
 	},
 	"commandSafety": {
 		"title": "Weryfikator Bezpieczeństwa Poleceń (Command Safety Guardrail)",
 		"enabled": "Włącz weryfikator bezpieczeństwa poleceń (Command Safety Guardrail)",
-		"enabledLabel": "Włącz weryfikator bezpieczeństwa (Enabled)",
+		"enabledLabel": "Włącz weryfikację poleceń",
 		"enabledDescription": "Automatyczna weryfikacja bezpieczeństwa poleceń terminalowych za pomocą dedykowanego modelu LLM przed ich wykonaniem.",
 		"providerLabel": "Dostawca modelu bezpieczeństwa (Safety Model Provider)",
 		"providerSelectPlaceholder": "Wybierz dostawcę",
@@ -410,7 +428,7 @@
 		"getOpenRouterApiKey": "Uzyskaj klucz API OpenRouter",
 		"vercelAiGatewayApiKey": "Klucz API Vercel AI Gateway",
 		"getVercelAiGatewayApiKey": "Uzyskaj klucz API Vercel AI Gateway",
-		"apiKeyStorageNotice": "Klucze API są bezpiecznie przechowywane w Tajnym Magazynie VSCode",
+		"apiKeyStorageNotice": "Klucz API zostanie zapisany w konfiguracji aplikacji.",
 		"openAiCodexRateLimits": {
 			"title": "Limity użycia Codex{{planLabel}}",
 			"loading": "Wczytywanie limitów…",
@@ -769,12 +787,12 @@
 	},
 	"terminal": {
 		"basic": {
-			"label": "Ustawienia terminala: Podstawowe",
+			"label": "Wyjście poleceń",
 			"description": "Podstawowe ustawienia terminala"
 		},
 		"advanced": {
-			"label": "Ustawienia terminala: Zaawansowane",
-			"description": "Te ustawienia mają zastosowanie tylko gdy 'Użyj terminala wbudowanego' jest wyłączone. Dotyczą tylko terminala VS Code i mogą wymagać ponownego uruchomienia IDE."
+			"label": "Powłoka i zgodność",
+			"description": "Ustawienia integracji powłoki mają znaczenie po wyłączeniu terminala wbudowanego. Zmieniaj je, jeśli polecenia nie uruchamiają się prawidłowo."
 		},
 		"outputLineLimit": {
 			"label": "Limit wyjścia terminala",
@@ -795,11 +813,11 @@
 		},
 		"shellIntegrationTimeout": {
 			"label": "Limit czasu integracji powłoki terminala",
-			"description": "Jak długo czekać na integrację powłoki VS Code przed wykonaniem poleceń. Zwiększ, jeśli twoja powłoka wolno się uruchamia lub widzisz błędy 'Integracja Powłoki Niedostępna'. <0>Dowiedz się więcej</0>"
+			"description": "Czas oczekiwania na integrację powłoki przed wykonaniem polecenia. Zwiększ go, jeśli powłoka uruchamia się zbyt wolno. <0>Dowiedz się więcej</0>"
 		},
 		"shellIntegrationDisabled": {
 			"label": "Użyj terminala wbudowanego (zalecane)",
-			"description": "Uruchamiaj polecenia w terminalu wbudowanym (czat), aby ominąć profile/integrację powłoki dla szybszych, bardziej niezawodnych uruchomień. Gdy wyłączony, Roo używa terminala VS Code z twoim profilem powłoki, monitami i wtyczkami. <0>Dowiedz się więcej</0>"
+			"description": "Uruchamiaj polecenia w terminalu zarządzanym przez agenta. Wyłącz tę opcję, aby korzystać z integracji powłoki i jej profilu. <0>Dowiedz się więcej</0>"
 		},
 		"commandDelay": {
 			"label": "Opóźnienie polecenia terminala",
@@ -1111,6 +1129,55 @@
 		"maxResults": {
 			"label": "Liczba wyników",
 			"description": "Liczba wyników wyszukiwania do pobrania (od 1 do 20)."
+		}
+	},
+	"decisionLog": {
+		"badgeAllowed": "ZATWIERDZONO",
+		"badgeReplan": "ZMIEŃ PLAN",
+		"badgeBlocked": "ZABLOKOWANO",
+		"badgeManual": "PYTANIE DO UŻYTKOWNIKA",
+		"title": "Historia decyzji agenta",
+		"refresh": "Odśwież",
+		"description": "Decyzje niezależnego modelu dotyczące bezpieczeństwa działań agenta.",
+		"searchPlaceholder": "Szukaj działań, uzasadnień lub modeli…",
+		"filterAll": "Wszystkie",
+		"filterApproved": "Zatwierdzone",
+		"filterReplan": "Zmiana planu",
+		"filterBlocked": "Zablokowane",
+		"filterManual": "Ręcznie",
+		"emptyTitle": "Nie ma jeszcze żadnych decyzji.",
+		"emptyDesc": "Tutaj pojawią się zatwierdzenia i zalecenia zmiany planu.",
+		"reasonLabel": "Uzasadnienie: ",
+		"guidanceLabel": "Wskazówki dla agenta: "
+	},
+	"theme": {
+		"title": "Motyw i kolory",
+		"description": "Wybierz wygląd całej aplikacji. Podgląd zobaczysz od razu; zatwierdź wybór przyciskiem „Zapisz”.",
+		"swatch": {
+			"background": "Tło",
+			"surface": "Powierzchnia",
+			"accent": "Akcent"
+		},
+		"defaultBadge": "Domyślny",
+		"linearDark": {
+			"name": "Grafitowy",
+			"description": "Neutralny grafit i łagodny kontrast"
+		},
+		"oledBlack": {
+			"name": "Czerń OLED",
+			"description": "Głęboka czerń i wyraźny kontrast"
+		},
+		"midnightNavy": {
+			"name": "Granatowy",
+			"description": "Ciemne powierzchnie z odcieniami granatu"
+		},
+		"cyberpunk": {
+			"name": "Cyberpunk",
+			"description": "Ciemne tło z akcentami w kolorze cyjanu"
+		},
+		"cleanLight": {
+			"name": "Jasny",
+			"description": "Jasne powierzchnie i delikatne szarości"
 		}
 	}
 }

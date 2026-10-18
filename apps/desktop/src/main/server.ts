@@ -11,6 +11,7 @@ import { execSync, spawn } from "child_process"
 import { DesktopAgentHost } from "./agent-host.js"
 import { loadDesktopConfig, saveDesktopConfig, canonicalizePath, arePathsEqual, renameProject } from "./config.js"
 import { createQuickProject } from "./quick-project.js"
+import { resolveProjectFolder, readEditableFile, saveEditableFile } from "./project-files.js"
 import type { DesktopClientMessage, DesktopServerMessage, SidebarData, WorkspaceInfo } from "../shared/types.js"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -146,15 +147,12 @@ export function validatePathWithinRoot(
 			return relative.length > 0 && !relative.startsWith("..") && !path.isAbsolute(relative)
 		}
 
-		// Verify containment against both realRoot and resolvedRoot
-		// to properly support subst virtual drives and physical drive mappings
-		const isInside =
-			checkInside(realRoot, realTarget) ||
-			checkInside(resolvedRoot, realTarget) ||
-			checkInside(realRoot, absoluteTarget) ||
-			checkInside(resolvedRoot, absoluteTarget)
+		// The real canonical target on disk MUST resolve within the allowed root (either realRoot or resolvedRoot).
+		// Never allow an external target just because the symlink itself is inside the root.
+		const isRealInside = checkInside(realRoot, realTarget) || checkInside(resolvedRoot, realTarget)
+		const isAbsoluteInside = checkInside(realRoot, absoluteTarget) || checkInside(resolvedRoot, absoluteTarget)
 
-		if (!isInside) {
+		if (!isRealInside || !isAbsoluteInside) {
 			return { safe: false, error: "Access outside allowed directory forbidden" }
 		}
 
@@ -540,7 +538,14 @@ export function createDesktopServer(options: DesktopServerOptions): {
 					try {
 						const data = JSON.parse(body || "{}")
 						const requestedPath = data.path
-						if (requestedPath && typeof requestedPath === "string" && fs.existsSync(requestedPath)) {
+						if (requestedPath === "") {
+							await agentHost.setWorkspace("")
+							saveDesktopConfig({ lastWorkspacePath: "" })
+							const empty = { path: "", name: "", files: [], directories: [] }
+							broadcast({ type: "workspaceInfo", workspace: empty }); broadcastSidebarData()
+							res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(empty)); return
+						}
+						if (requestedPath && typeof requestedPath === "string" && path.isAbsolute(requestedPath) && fs.existsSync(requestedPath)) {
 							const normalized = path.normalize(path.resolve(requestedPath))
 							if (fs.statSync(normalized).isDirectory()) {
 								await agentHost.setWorkspace(normalized)
@@ -901,6 +906,21 @@ export function createDesktopServer(options: DesktopServerOptions): {
 			return
 		}
 
+		if (pathname === "/api/project/relocate" && req.method === "POST") {
+			let body = ""
+			req.on("data", chunk => { body += chunk })
+			req.on("end", async () => {
+				try {
+					const data = JSON.parse(body)
+					if (typeof data.oldPath !== "string" || !path.isAbsolute(data.oldPath)) throw new Error("Brak poprzedniej lokalizacji.")
+					await agentHost.relocateProject(data.oldPath, resolveProjectFolder(data.path))
+					broadcastSidebarData()
+					res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ success: true }))
+				} catch (error) { res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) })) }
+			})
+			return
+		}
+
 		if (pathname === "/api/project/remove") {
 			if (req.method === "POST") {
 				let body = ""
@@ -948,6 +968,42 @@ export function createDesktopServer(options: DesktopServerOptions): {
 			}
 			res.writeHead(200, { "Content-Type": "application/json" })
 			res.end(JSON.stringify({ files: scan.files, directories: scan.directories }))
+			return
+		}
+
+		if (pathname === "/api/editor") {
+			const requested = parsedUrl.searchParams.get("path") || ""
+			const validated = validatePathWithinRoot(requested, agentHost.getWorkspace())
+			if (!validated.safe || !validated.resolvedPath) { res.writeHead(403); res.end(JSON.stringify({ error: "Plik musi należeć do otwartego projektu." })); return }
+			const target = validated.resolvedPath
+			const respond = (status: number, value: unknown) => { res.writeHead(status, { "Content-Type": "application/json" }); res.end(JSON.stringify(value)) }
+			if (req.method === "GET") {
+				try { respond(200, readEditableFile(target)) } catch (error) { respond(400, { error: error instanceof Error ? error.message : String(error) }) }
+			} else if (req.method === "PUT") {
+				const chunks: Buffer[] = []
+				let totalLength = 0
+				let tooLarge = false
+				req.on("data", (chunk: Buffer) => {
+					totalLength += chunk.length
+					if (totalLength > 7 * 1024 * 1024) {
+						tooLarge = true
+					} else {
+						chunks.push(chunk)
+					}
+				})
+				req.on("end", () => {
+					try {
+						if (tooLarge) throw new Error("Plik jest za duży.")
+						const body = Buffer.concat(chunks).toString("utf8")
+						const data = JSON.parse(body)
+						const currentTarget = validatePathWithinRoot(requested, agentHost.getWorkspace())
+						if (!currentTarget.safe || currentTarget.resolvedPath !== target) throw new Error("Projekt został zmieniony. Otwórz plik ponownie.")
+						const result = saveEditableFile(target, data.content, data.revision)
+						if (!result.conflict) agentHost.refreshDiffsFromGit()
+						respond(result.conflict ? 409 : 200, result)
+					} catch (error) { respond(400, { error: error instanceof Error ? error.message : String(error) }) }
+				})
+			} else respond(405, { error: "Niedozwolona metoda." })
 			return
 		}
 
@@ -1683,12 +1739,12 @@ window.addEventListener("keydown", function(e) {
 			document.documentElement.className = cls;
 			document.documentElement.setAttribute("data-theme", theme);
 			document.body.setAttribute("data-theme", theme);
-			try { localStorage.setItem("roo-theme", theme); } catch(err) {}
 		}
 	});
 })();
 </script>
 `
+					html = html.replace("<html", '<html data-roo-desktop-webview="true"')
 					html = html.replace("<head>", `<head>${polyfillAndTheme}`)
 					html = html.replace("<body>", `<body class="vscode-dark" data-vscode-theme-kind="vscode-dark">`)
 					res.writeHead(200, { "Content-Type": contentType })

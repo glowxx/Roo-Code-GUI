@@ -49,8 +49,8 @@ describe("Project Management & Sidebar Creation Flow (TDD)", () => {
 			expect(match).not.toBeNull()
 
 			const btnTag = match![0]
-			expect(btnTag).toContain('aria-label="Dodaj projekt"')
-			expect(btnTag).toContain('title="Dodaj projekt"')
+			expect(btnTag).toMatch(/aria-label="(Add project|Dodaj projekt)"/)
+			expect(btnTag).toMatch(/title="(Add project|Dodaj projekt)"/)
 			expect(btnTag).toContain('tabindex="0"')
 
 			// Must contain SVG plus icon

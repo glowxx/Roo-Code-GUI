@@ -89,8 +89,8 @@ describe("Renderer Startup Script Integrity & Syntax Regression Guard (P0)", () 
 
 		// Initial connection indicators must NOT falsely assert Connected before handshake
 		expect(html).toContain('class="engine-connection-badge status-connecting"')
-		expect(html).toContain('id="engine-connection-text">Łączenie…</span>')
-		expect(html).toContain('id="connection-status">Łączę się z agentem…</span>')
+		expect(html).toMatch(/id="engine-connection-text">(Connecting…|Łączenie…)<\/span>/)
+		expect(html).toMatch(/id="connection-status">(Connecting to engine\.\.\.|Łączę się z agentem…)<\/span>/)
 	})
 
 	it("6. Execution smoke check in simulated browser environment", () => {
@@ -105,7 +105,7 @@ describe("Renderer Startup Script Integrity & Syntax Regression Guard (P0)", () 
 			dataset: {},
 			setAttribute: () => {},
 			getAttribute: () => null,
-			querySelector: () => null,
+			querySelector: () => createEl(),
 			querySelectorAll: () => [],
 		})
 
@@ -161,6 +161,7 @@ describe("Renderer Startup Script Integrity & Syntax Regression Guard (P0)", () 
 			clearTimeout: () => {},
 			setInterval: () => 1,
 			clearInterval: () => {},
+			queueMicrotask: (fn: any) => setTimeout(fn, 0),
 			fetch: async () => ({ ok: true, json: async () => ({}) }),
 		}
 
@@ -172,6 +173,7 @@ describe("Renderer Startup Script Integrity & Syntax Regression Guard (P0)", () 
 		const context = vm.createContext(mockDom)
 
 		expect(() => {
+			vm.runInContext(fs.readFileSync(path.join(desktopRendererDir, "product-workspace.js"), "utf-8"), context, { filename: "product-workspace.js" })
 			vm.runInContext(appJsCode, context, { filename: "app.js" })
 		}).not.toThrow()
 	})

@@ -87,6 +87,7 @@ export const ContextManagementSettings = ({
 	...props
 }: ContextManagementSettingsProps) => {
 	const { t } = useAppTranslation()
+	const isDesktop = typeof window !== "undefined" && Boolean((window as any).__ROO_DESKTOP__)
 	const [selectedThresholdProfile, setSelectedThresholdProfile] = React.useState<string>("default")
 
 	// Helper function to get the CONDENSE prompt value
@@ -145,26 +146,28 @@ export const ContextManagementSettings = ({
 			</SectionHeader>
 
 			<Section>
-				<SearchableSetting
-					settingId="context-open-tabs"
-					section="contextManagement"
-					label={t("settings:contextManagement.openTabs.label")}>
-					<span className="block font-medium mb-1">{t("settings:contextManagement.openTabs.label")}</span>
-					<div className="flex items-center gap-2">
-						<Slider
-							min={0}
-							max={500}
-							step={1}
-							value={[maxOpenTabsContext ?? 20]}
-							onValueChange={([value]) => setCachedStateField("maxOpenTabsContext", value)}
-							data-testid="open-tabs-limit-slider"
-						/>
-						<span className="w-10">{maxOpenTabsContext ?? 20}</span>
-					</div>
-					<div className="text-vscode-descriptionForeground text-sm mt-1">
-						{t("settings:contextManagement.openTabs.description")}
-					</div>
-				</SearchableSetting>
+				{!isDesktop && (
+					<SearchableSetting
+						settingId="context-open-tabs"
+						section="contextManagement"
+						label={t("settings:contextManagement.openTabs.label")}>
+						<span className="block font-medium mb-1">{t("settings:contextManagement.openTabs.label")}</span>
+						<div className="flex items-center gap-2">
+							<Slider
+								min={0}
+								max={500}
+								step={1}
+								value={[maxOpenTabsContext ?? 20]}
+								onValueChange={([value]) => setCachedStateField("maxOpenTabsContext", value)}
+								data-testid="open-tabs-limit-slider"
+							/>
+							<span className="w-10">{maxOpenTabsContext ?? 20}</span>
+						</div>
+						<div className="text-vscode-descriptionForeground text-sm mt-1">
+							{t("settings:contextManagement.openTabs.description")}
+						</div>
+					</SearchableSetting>
+				)}
 
 				<SearchableSetting
 					settingId="context-workspace-files"

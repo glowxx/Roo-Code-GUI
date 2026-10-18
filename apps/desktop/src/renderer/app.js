@@ -19,6 +19,8 @@
 	let isSvgSourceView = false
 	let currentDesktopTab = "chat"
 	let latestExtensionState = null
+	// A saved UI preference wins over older state broadcasts still in flight.
+	let preferredTheme = null
 
 	// Platform-neutral DesktopBridge (Tauri 2 / Electron / Web)
 	const desktopBridge = (typeof window !== "undefined" && window.DesktopBridgeModule?.getDesktopBridge)
@@ -187,6 +189,7 @@
 	let isSidebarCollapsed = localStorage.getItem("roo-sidebar-collapsed") === "true"
 	let activeTaskId = null
 	let currentSelectionEpoch = 0
+	let isDesktopAppInitialized = false
 	const projectExpansions = new Set()
 	const projectChatExpansions = new Set()
 	const MAX_VISIBLE_CHATS = 6
@@ -215,7 +218,8 @@
 
 			// Navigation tabs
 			tabAgent: "Agent",
-			tabDiffs: "Zmiany",
+			tabNativeChat: "Chat",
+			tabDiffs: "Diffs",
 			tabTerminal: "Terminal",
 			tabFiles: "Files",
 			tabSettings: "Settings",
@@ -260,7 +264,7 @@
 			terminalTitle: "Terminal & Agent Command Logs",
 			terminalClear: "Clear",
 			terminalCopy: "Copy",
-			terminalCopied: "Skopiowano",
+			terminalCopied: "Copied!",
 			terminalEmpty: "Roo Code terminal command executions and logs will appear here.",
 			terminalSessionsTitle: "Command Sessions",
 			terminalSessionsCount: (count) => `${count} session${count === 1 ? "" : "s"}`,
@@ -275,12 +279,54 @@
 			addProject: "Add project",
 			newProject: "New Project",
 			newProjectDesc: "Open an existing folder on your disk",
-			quickProject: "Szybki projekt",
+			quickProject: "Quick Project",
 			quickProjectDesc: "Create instantly in your Roo Code projects folder",
 			quickProjectCreating: "Creating Quick Project...",
 			quickProjectError: "Failed to create Quick Project",
 			viewMoreChats: (count) => `View more (${count})`,
 			viewLessChats: "View less",
+			selectProjectAria: "Select or change project",
+			selectProject: "Select project",
+			openProjectFolderSmall: "Open project folder",
+			newConversation: "New chat",
+			goTo: "Go to…",
+			searchProjectsAndChats: "Search projects and chats…",
+			manageProjects: "Manage projects",
+			sidebarProjectsEmpty: "Loading projects…",
+			noChatsYet: "No chats yet",
+			relocateProject: "Change location…",
+			renameConversation: "Conversation title",
+			renameConversationDesc: "A short name makes it easier to find in history.",
+			conversationTitleLabel: "Title",
+			saveTitle: "Save title",
+			close: "Close",
+			projects: "Projects",
+			relocateProjectTitle: "Relocate project",
+			relocateProjectDesc: "Specify the folder where the project has been moved. Chats will retain their assignment. Files will not be moved.",
+			projectsDesc: "Open a folder from disk or switch back to one of your projects.",
+			projectFolderLabel: "Project folder",
+			chooseFolder: "Browse…",
+			createEmptyProject: "Create empty project",
+			saveLocation: "Save location",
+			openProject: "Open project",
+			unsavedChanges: "Unsaved changes",
+			unsavedChangesDesc: "You have unsaved changes in the editor. What would you like to do?",
+			returnToEditing: "Return to editing",
+			discardChanges: "Discard changes",
+			saveChanges: "Save changes",
+			saved: "Saved",
+			saveShortcut: "Save",
+			closeEditor: "Close editor",
+			editFile: "Edit file",
+			noResults: "No results. Try another name.",
+			addToConversation: "Add to chat",
+			edit: "Edit",
+			imagePreview: "Image preview",
+			showInExplorer: "Show in Explorer",
+			projectFooterPrefix: "Project: ",
+			connectionPreparing: "Connecting to engine...",
+			apiModalTitle: "AI Provider Connection",
+			apiModalSubtitle: "Configure AI model connection, API key, and permissions.",
 			noConversations: "No conversations",
 			newChat: "New Chat",
 			toggleSidebar: "Toggle Sidebar (Ctrl+B)",
@@ -319,6 +365,31 @@
 			removeProjectConfirmRunning: (name, count) => `This project "${name}" has ${count} active task(s) running in the background.\n\nRemoving it from Roo Code requires stopping those tasks first.\n\nYour physical project folder and source files on disk will remain untouched.`,
 			stopTasksAndRemove: "Stop tasks and remove",
 			confirmRemoveProject: "Remove from Roo",
+			renameConversationEmpty: "Enter a conversation title.",
+			renameConversationError: "Failed to save conversation title.",
+			pickFolderError: "Could not open folder picker. Enter path manually.",
+			projectPathRequired: "Enter a path or select a folder.",
+			openProjectError: "Failed to open project. Check if folder exists and is accessible.",
+			relocateSuccess: "Saved new project location",
+			projectOpened: "Project opened",
+			manageProjectNamed: (name) => `Manage project ${name}`,
+			closeCurrentProject: "Close current project",
+			fileAddedToChat: "Added file to message",
+			editorSaveFailed: "Failed to save full version. Check editor details.",
+			editorProjectChanged: "Project has changed. Reopen file.",
+			editorConflict: "File was changed on disk. Copy your changes, close the editor, and reopen the file.",
+			fileSaved: "File saved",
+			paletteDesc: "Search for an action, project, or file.",
+			paletteSearchPlaceholder: "Search actions, projects, and files…",
+			conversationsCategory: "Chats",
+			projectsCategory: "Projects",
+			viewsCategory: "Views",
+			configCategory: "Settings",
+			filesCategory: "Files",
+			reviewDiffs: "Review changes",
+			terminal: "Terminal",
+			settings: "Settings",
+			openFolderToStart: "Open a folder to start working",
 		},
 		pl: {
 			cancel: "Anuluj",
@@ -406,6 +477,54 @@
 			quickProjectError: "Nie udało się utworzyć szybkiego projektu",
 			viewMoreChats: (count) => `Pokaż więcej (${count})`,
 			viewLessChats: "Pokaż mniej",
+			selectProjectAria: "Wybierz lub zmień projekt",
+			selectProject: "Wybierz projekt",
+			openProjectFolderSmall: "Otwórz folder projektu",
+			newConversation: "Nowa rozmowa",
+			goTo: "Przejdź do…",
+			searchProjectsAndChats: "Szukaj projektów i rozmów…",
+			manageProjects: "Zarządzaj projektami",
+			sidebarProjectsEmpty: "Wczytuję projekty…",
+			noChatsYet: "Nie masz jeszcze żadnych rozmów",
+			relocateProject: "Zmień lokalizację…",
+			renameConversation: "Nazwa rozmowy",
+			renameConversationDesc: "Krótka nazwa ułatwi jej odnalezienie w historii.",
+			conversationTitleLabel: "Tytuł",
+			saveTitle: "Zapisz nazwę",
+			close: "Zamknij",
+			projects: "Projekty",
+			relocateProjectTitle: "Zmień lokalizację projektu",
+			relocateProjectDesc: "Wskaż folder, do którego projekt został przeniesiony. Rozmowy zachowają przypisanie. Pliki nie będą przenoszone.",
+			projectsDesc: "Otwórz folder z dysku albo wróć do jednego ze swoich projektów.",
+			projectFolderLabel: "Folder projektu",
+			chooseFolder: "Wybierz…",
+			createEmptyProject: "Utwórz pusty projekt",
+			saveLocation: "Zapisz lokalizację",
+			openProject: "Otwórz projekt",
+			unsavedChanges: "Niezapisane zmiany",
+			unsavedChangesDesc: "W edytorze znajdują się niezapisane zmiany. Co chcesz zrobić?",
+			returnToEditing: "Wróć do edycji",
+			discardChanges: "Odrzuć zmiany",
+			saveChanges: "Zapisz zmiany",
+			saved: "Zapisano",
+			saveShortcut: "Zapisz",
+			closeEditor: "Zamknij edytor",
+			editFile: "Edytuj plik",
+			noResults: "Brak wyników. Spróbuj innej nazwy.",
+			addToConversation: "Dodaj do rozmowy",
+			edit: "Edytuj",
+			imagePreview: "Podgląd obrazu",
+			showInExplorer: "Pokaż w Eksploratorze",
+			projectFooterPrefix: "Projekt: ",
+			connectionPreparing: "Łączę się z agentem…",
+			apiModalTitle: "Połączenie z dostawcą AI",
+			apiModalSubtitle: "Wybierz dostawcę, podaj klucz API i model.",
+			searchChatsPlaceholder: "Szukaj rozmów…",
+			refreshFiles: "Odśwież pliki",
+			projectPathTitle: "Ścieżka projektu",
+			windowMinimize: "Minimalizuj",
+			windowMaximize: "Maksymalizuj",
+			windowClose: "Zamknij",
 			noConversations: "Brak rozmów",
 			newChat: "Nowa rozmowa",
 			toggleSidebar: "Zwiń/Rozwiń panel (Ctrl+B)",
@@ -444,10 +563,35 @@
 			removeProjectConfirmRunning: (name, count) => `Projekt "${name}" posiada ${count} aktywnych zadań działających w tle.\n\nUsunięcie go z Roo Code wymaga zatrzymania tych zadań.\n\nFizyczny folder projektu i pliki źródłowe na dysku pozostaną nietknięte.`,
 			stopTasksAndRemove: "Zatrzymaj zadania i usuń projekt",
 			confirmRemoveProject: "Usuń z Roo",
+			renameConversationEmpty: "Wpisz tytuł rozmowy.",
+			renameConversationError: "Nie udało się zapisać nazwy.",
+			pickFolderError: "Nie udało się otworzyć wyboru folderu. Wpisz ścieżkę ręcznie.",
+			projectPathRequired: "Wpisz ścieżkę lub wybierz folder.",
+			openProjectError: "Nie udało się otworzyć projektu. Sprawdź, czy folder istnieje i jest dostępny.",
+			relocateSuccess: "Zapisano nową lokalizację projektu",
+			projectOpened: "Projekt otwarty",
+			manageProjectNamed: (name) => `Zarządzaj projektem ${name}`,
+			closeCurrentProject: "Zamknij bieżący projekt",
+			fileAddedToChat: "Dodano plik do wiadomości",
+			editorSaveFailed: "Nie udało się zapisać całej wersji. Sprawdź informację przy edytorze.",
+			editorProjectChanged: "Projekt został zmieniony. Otwórz plik ponownie.",
+			editorConflict: "Plik został zmieniony na dysku. Skopiuj swoje zmiany, zamknij edytor i otwórz plik ponownie. Twoja wersja pozostaje w edytorze.",
+			fileSaved: "Zapisano plik",
+			paletteDesc: "Wyszukaj działanie, projekt lub plik.",
+			paletteSearchPlaceholder: "Szukaj działań, projektów i plików…",
+			conversationsCategory: "Rozmowy",
+			projectsCategory: "Projekty",
+			viewsCategory: "Widoki",
+			configCategory: "Konfiguracja",
+			filesCategory: "Pliki",
+			reviewDiffs: "Przejrzyj zmiany",
+			terminal: "Terminal",
+			settings: "Ustawienia",
+			openFolderToStart: "Otwórz folder, aby rozpocząć pracę",
 		},
 	}
 
-	let currentLanguage = localStorage.getItem("roo-language") || "pl"
+	let currentLanguage = localStorage.getItem("roo-language") || "en"
 
 	function tDesktop(key, ...args) {
 		const lang = currentLanguage === "pl" ? "pl" : "en"
@@ -476,6 +620,8 @@
 
 		// 2. Tab labels
 		if (tabLabelChat) tabLabelChat.textContent = tDesktop("tabAgent")
+		const tabLabelNativeChat = document.getElementById("tab-label-native-chat")
+		if (tabLabelNativeChat) tabLabelNativeChat.textContent = tDesktop("tabNativeChat")
 		if (tabLabelDiffs) tabLabelDiffs.textContent = tDesktop("tabDiffs")
 		if (tabLabelTerminal) tabLabelTerminal.textContent = tDesktop("tabTerminal")
 		if (tabLabelFiles) tabLabelFiles.textContent = tDesktop("tabFiles")
@@ -507,7 +653,7 @@
 		}
 		if (previewCopyText) previewCopyText.textContent = tDesktop("copy")
 		if (previewWrapText) previewWrapText.textContent = tDesktop("wrap")
-		if (previewSourceText) previewSourceText.textContent = isSvgSourceView ? "Podgląd obrazu" : tDesktop("sourceCode")
+		if (previewSourceText) previewSourceText.textContent = isSvgSourceView ? tDesktop("imagePreview") : tDesktop("sourceCode")
 		if (previewInExplorerText) previewInExplorerText.textContent = tDesktop("inExplorer")
 		if (previewPlaceholderText) previewPlaceholderText.textContent = tDesktop("previewPlaceholder")
 
@@ -538,6 +684,80 @@
 		}
 		if (sidebarHintTextEl) sidebarHintTextEl.textContent = tDesktop("toggleSidebarHint")
 		if (sidebarToggleBtn) sidebarToggleBtn.title = tDesktop("toggleSidebar")
+
+		// 8. Product Workspace shell elements
+		const projectSwitcherEl = document.getElementById("project-switcher")
+		if (projectSwitcherEl) {
+			projectSwitcherEl.setAttribute("aria-label", tDesktop("selectProjectAria"))
+			const strong = projectSwitcherEl.querySelector("strong")
+			const small = projectSwitcherEl.querySelector("small")
+			if (strong && (strong.textContent === "Wybierz projekt" || strong.textContent === "Select project")) {
+				strong.textContent = tDesktop("selectProject")
+			}
+			if (small && (small.textContent === "Otwórz folder projektu" || small.textContent === "Open project folder")) {
+				small.textContent = tDesktop("openProjectFolderSmall")
+			}
+		}
+
+		const workspaceNewChatBtn = document.getElementById("workspace-new-chat")
+		if (workspaceNewChatBtn) {
+			workspaceNewChatBtn.innerHTML = `<span>＋</span> ${escapeHtml(tDesktop("newConversation"))} <kbd>Ctrl+N</kbd>`
+		}
+
+		const workspaceCommandBtn = document.getElementById("workspace-command-button")
+		if (workspaceCommandBtn) {
+			workspaceCommandBtn.innerHTML = `<span>⌕</span> ${escapeHtml(tDesktop("goTo"))} <kbd>Ctrl+K</kbd>`
+		}
+
+		const workspaceSearchInput = document.getElementById("workspace-project-search")
+		if (workspaceSearchInput) {
+			workspaceSearchInput.placeholder = tDesktop("searchProjectsAndChats")
+			workspaceSearchInput.setAttribute("aria-label", tDesktop("searchProjectsAndChats"))
+		}
+
+		const projectManagerBtn = document.getElementById("project-manager-button")
+		if (projectManagerBtn) projectManagerBtn.textContent = tDesktop("manageProjects")
+
+		const workspaceSettingsBtn = document.getElementById("workspace-settings-button")
+		if (workspaceSettingsBtn) {
+			workspaceSettingsBtn.innerHTML = `${escapeHtml(tDesktop("tabSettings"))} <kbd>Ctrl+,</kbd>`
+		}
+
+		const labelNewChat = document.getElementById("label-new-chat")
+		if (labelNewChat) labelNewChat.textContent = tDesktop("newConversation")
+
+		const chatSearchInput = document.getElementById("chat-search-input")
+		if (chatSearchInput) chatSearchInput.placeholder = tDesktop("searchChatsPlaceholder")
+
+		const chatSidebarEmpty = document.querySelector(".chat-sidebar-empty")
+		if (chatSidebarEmpty) chatSidebarEmpty.textContent = tDesktop("noChatsYet")
+
+		const previewAddContextBtn = document.getElementById("preview-add-context-btn")
+		if (previewAddContextBtn) previewAddContextBtn.textContent = tDesktop("addToConversation")
+
+		const previewEditBtn = document.getElementById("preview-edit-btn")
+		if (previewEditBtn) previewEditBtn.textContent = tDesktop("edit")
+
+		const filesRefreshBtn = document.getElementById("files-refresh-btn")
+		if (filesRefreshBtn) filesRefreshBtn.setAttribute("aria-label", tDesktop("refreshFiles"))
+
+		const footerWorkspacePath = document.getElementById("footer-workspace-path")
+		if (footerWorkspacePath && !currentWorkspace?.path) {
+			footerWorkspacePath.textContent = `${tDesktop("projectFooterPrefix")}…`
+			footerWorkspacePath.title = tDesktop("projectPathTitle")
+		}
+
+		const minimizeBtn = document.getElementById("window-minimize-btn")
+		if (minimizeBtn) minimizeBtn.title = tDesktop("windowMinimize")
+
+		const maximizeBtn = document.getElementById("window-maximize-btn")
+		if (maximizeBtn) maximizeBtn.title = tDesktop("windowMaximize")
+
+		const closeBtn = document.getElementById("window-close-btn")
+		if (closeBtn) closeBtn.title = tDesktop("windowClose")
+
+		if (isDesktopAppInitialized && typeof renderSidebar === "function") renderSidebar()
+		if (isDesktopAppInitialized && window.ProductWorkspace?.update) window.ProductWorkspace.update()
 	}
 
 	// Apply initial desktop translations immediately
@@ -638,6 +858,7 @@
 		}
 
 		const switchDur = performance.now() - t0
+		queueMicrotask(()=>productWorkspace?.update())
 		console.debug(`[TabPerf] Switched from ${prevTab || "none"} to ${targetTab} in ${switchDur.toFixed(2)}ms`)
 	}
 
@@ -797,67 +1018,17 @@
 			}
 		} catch (err) {
 			console.error("Failed to create Quick Project:", err)
-			window.alert((tDesktop("quickProjectError") || "Failed to create Quick Project") + ": " + (err.message || err))
+			productWorkspace.notify(tDesktop("quickProjectError") + ": " + (err.message || err))
 		}
 	}
 
-	async function openFolderDialog() {
-		if (desktopBridge?.shell?.selectFolder) {
-			try {
-				const newPath = await desktopBridge.shell.selectFolder()
-				if (newPath) {
-					const normNew = pathNormalize(newPath)
-					const curWsNorm = pathNormalize(sidebarData.currentWorkspace || currentWorkspace?.path || "")
-					if (normNew === curWsNorm) {
-						projectExpansions.add(newPath)
-						renderSidebar()
-						return
-					}
-					await selectWorkspaceFolder(newPath)
-					fetchSidebarData()
-				}
-			} catch (err) {
-				console.error("Failed to select folder via DesktopBridge:", err)
-			}
-			return
-		}
-		if (window.__desktopAPI?.selectFolder) {
-			try {
-				const newPath = await window.__desktopAPI.selectFolder()
-				if (newPath) {
-					const normNew = pathNormalize(newPath)
-					const curWsNorm = pathNormalize(sidebarData.currentWorkspace || currentWorkspace?.path || "")
-					if (normNew === curWsNorm) {
-						projectExpansions.add(newPath)
-						renderSidebar()
-						return
-					}
-					await selectWorkspaceFolder(newPath)
-					fetchSidebarData()
-				}
-			} catch (err) {
-				console.error("Failed to select folder via Electron dialog:", err)
-			}
-		} else {
-			const newPath = prompt("Enter full path of folder to open:", currentWorkspace?.path || "")
-			if (newPath && newPath.trim()) {
-				const trimmed = newPath.trim()
-				const normNew = pathNormalize(trimmed)
-				const curWsNorm = pathNormalize(sidebarData.currentWorkspace || currentWorkspace?.path || "")
-				if (normNew === curWsNorm) {
-					projectExpansions.add(trimmed)
-					renderSidebar()
-					return
-				}
-				await selectWorkspaceFolder(trimmed)
-				fetchSidebarData()
-			}
-		}
-	}
+	async function openFolderDialog() { return productWorkspace?.projects() }
 
 	async function startNewChat(workspacePath) {
+		if (!workspacePath && !currentWorkspace?.path) { await productWorkspace.projects(); return }
+		if (!await productWorkspace.guardEditor()) return
 		if (workspacePath && (!currentWorkspace?.path || pathNormalize(workspacePath) !== pathNormalize(currentWorkspace.path))) {
-			await selectWorkspaceFolder(workspacePath)
+			if (!await selectWorkspaceFolder(workspacePath)) return
 		}
 		activeTaskId = null
 		if (latestExtensionState) {
@@ -971,6 +1142,7 @@
 
 	async function switchChat(taskId, wsPath) {
 		if (!taskId) return
+		if (!await productWorkspace.guardEditor()) return
 		const webviewTaskId = latestExtensionState?.currentTaskId
 		if (taskId === activeTaskId && webviewTaskId === taskId) return
 		const thisEpoch = ++currentSelectionEpoch
@@ -1017,27 +1189,25 @@
 		}
 	}
 
+	let selectingProject = false
 	async function selectWorkspaceFolder(wsPath) {
-		if (!wsPath) return
-		activeTaskId = null
-		projectExpansions.add(wsPath)
-		forwardToWebview({ type: "action", action: "switchWorkspace", workspacePath: wsPath })
-		forwardToWebview({ type: "action", action: "clearTask" })
+		if (typeof wsPath !== "string" || selectingProject) return false
+		if (!await productWorkspace.guardEditor()) return false
+		selectingProject = true
 		try {
-			const resp = await fetch("/api/workspace", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ path: wsPath }),
-			})
-			if (resp.ok) {
-				const data = await resp.json()
-				renderWorkspaceInfo(data)
-			} else {
-				sendToServer({ type: "selectFolder", path: wsPath })
-			}
-		} catch (err) {
-			sendToServer({ type: "selectFolder", path: wsPath })
-		}
+			const resp = await fetch("/api/workspace", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({path:wsPath})})
+			if (!resp.ok) return false
+			const data = await resp.json()
+			activeTaskId = null
+			currentWorkspace = data
+			if (wsPath) projectExpansions.add(data.path)
+			forwardToWebview({type:"action",action:"switchWorkspace",workspacePath:data.path})
+			forwardToWebview({type:"action",action:"clearTask"})
+			renderWorkspaceInfo(data)
+			await fetchSidebarData()
+			return true
+		} catch (error) { console.error("Nie udało się otworzyć projektu",error);return false }
+		finally { selectingProject = false }
 	}
 
 	function formatChatTitle(task, title, maxLength = 80) {
@@ -1096,7 +1266,7 @@
 			confirmationModalSubtitle.title =
 				(typeof subtitle === "string" ? subtitle.replace(/\s+/g, " ").trim() : "") || cleanSubtitle
 		}
-		if (confirmationModalIcon) confirmationModalIcon.textContent = icon || "⚠️"
+		if (confirmationModalIcon) confirmationModalIcon.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3v1"/></svg>'
 		if (confirmationModalBody) confirmationModalBody.textContent = message || ""
 		if (confirmationModalConfirmBtn) {
 			confirmationModalConfirmBtn.textContent = confirmText || tDesktop("confirm") || "Confirm"
@@ -1256,7 +1426,8 @@
 		})
 	}
 
-	function selectChatSession(sessionId) {
+	async function selectChatSession(sessionId) {
+		if (!await productWorkspace.guardEditor()) return
 		activeChatSessionId = sessionId
 		renderChatSidebar()
 		forwardToWebview({
@@ -1266,6 +1437,7 @@
 	}
 
 	async function createNewChatSession() {
+		if (!await productWorkspace.guardEditor()) return
 		try {
 			const res = await fetch("/api/chat-sessions/create", {
 				method: "POST",
@@ -1288,16 +1460,15 @@
 	function renameChatSession(sessionId) {
 		const session = chatSessionsList.find((s) => s.id === sessionId)
 		const currentTitle = session ? session.title : ""
-		const newTitle = prompt("Podaj nowy tytuł rozmowy:", currentTitle)
-		if (newTitle !== null && newTitle.trim()) {
-			fetch("/api/chat-sessions/rename", {
+		productWorkspace.renameConversation(currentTitle, async newTitle => {
+			const response = await fetch("/api/chat-sessions/rename", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ id: sessionId, title: newTitle.trim() }),
-			}).then(() => {
-				fetchChatSessions()
+				body: JSON.stringify({ id: sessionId, title: newTitle }),
 			})
-		}
+			if (!response.ok) throw new Error("Nie udało się zmienić nazwy rozmowy.")
+			await fetchChatSessions()
+		})
 	}
 
 	function deleteChatSession(sessionId) {
@@ -1599,6 +1770,7 @@
 		}
 
 		const items = [
+			{ label: tDesktop("relocateProject"), action: () => productWorkspace.projects(ws, true) },
 			{
 				label: tDesktop("renameProject"),
 				icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16 4a2 2 0 0 1 3 3L8 18l-4 1 1-4z"/></svg>`,
@@ -1687,8 +1859,13 @@
 		})
 	}
 
-	function handleRemoveProject(ws) {
+	async function handleRemoveProject(ws) {
 		const wsNorm = pathNormalize(ws)
+		const isCurrentActive =
+			pathNormalize(sidebarData.currentWorkspace || "") === wsNorm ||
+			pathNormalize(currentWorkspace?.path || "") === wsNorm
+		if (isCurrentActive && productWorkspace?.guardEditor && !(await productWorkspace.guardEditor())) return
+
 		let chats = []
 		for (const [chatWs, chatList] of Object.entries(sidebarData.chats)) {
 			if (pathNormalize(chatWs) === wsNorm) {
@@ -2243,6 +2420,7 @@
 
 	function renderSidebar() {
 		if (!sidebarProjectsListEl) return
+		;(typeof queueMicrotask === "function" ? queueMicrotask : setTimeout)(applySidebarSearch)
 		if (isDraggingProject) return
 
 		const curWsNorm = pathNormalize(sidebarData.currentWorkspace || currentWorkspace?.path || "")
@@ -2345,7 +2523,7 @@
 
 		// Attach event delegations for dynamically generated items
 		sidebarProjectsListEl.querySelectorAll(".sidebar-chat-item").forEach((el) => {
-			const onActivate = (e) => {
+			const onActivate = async (e) => {
 				if (e.target.closest("[data-action='chat-menu']")) return
 				const taskId = el.getAttribute("data-task-id")
 				const ws = el.getAttribute("data-workspace")
@@ -2444,20 +2622,24 @@
 		})
 
 		sidebarProjectsListEl.querySelectorAll("[data-action='switch-workspace']").forEach((el) => {
-			el.addEventListener("click", () => {
+			el.addEventListener("click", async () => {
 				const ws = el.getAttribute("data-workspace")
 				if (ws && pathNormalize(ws) !== curWsNorm) {
+					if (productWorkspace?.guardEditor && !(await productWorkspace.guardEditor())) return
 					selectWorkspaceFolder(ws)
 				}
 			})
 		})
 
 		sidebarProjectsListEl.querySelectorAll("[data-action='new-chat-in-ws']").forEach((btn) => {
-			btn.addEventListener("click", (e) => {
+			btn.addEventListener("click", async (e) => {
 				e.preventDefault()
 				e.stopPropagation()
 				const ws = btn.getAttribute("data-workspace")
-				if (ws) startNewChat(ws)
+				if (ws) {
+					if (productWorkspace?.guardEditor && !(await productWorkspace.guardEditor())) return
+					startNewChat(ws)
+				}
 			})
 		})
 
@@ -2852,6 +3034,20 @@
 		if (isFromMainWebview || isFromSettingsWebview) {
 			const data = event.data
 			if (data) {
+				if (isFromSettingsWebview && data.type === "updateSettings" && data.updatedSettings?.theme) {
+					preferredTheme = data.updatedSettings.theme
+					applyDesktopTheme(data.updatedSettings.theme, true)
+					if (latestExtensionState) latestExtensionState = {...latestExtensionState, theme:data.updatedSettings.theme}
+				}
+				if (isFromMainWebview && data.type === "desktopShortcut") {
+					if (data.key === "k") productWorkspace.palette()
+					if (data.key === "o") productWorkspace.projects()
+					if (data.key === "n") createConversation(currentWorkspace?.path)
+					if (data.key === ",") openSettingsModal()
+					if (data.key === "b") toggleSidebar()
+					return
+				}
+				if (isFromMainWebview && data.type === "openProjectManager") { productWorkspace.projects(); return }
 				if (isFromSettingsWebview && data.type === "webviewDidLaunch") {
 					const theme = localStorage.getItem("roo-theme") || "linear-dark"
 					settingsWebviewFrame.contentWindow?.postMessage({ type: "themeChange", theme }, "*")
@@ -2881,6 +3077,7 @@
 					}
 				}
 				if (data.type === "state" && data.state) {
+					if (preferredTheme) data.state = {...data.state, theme:preferredTheme}
 					latestExtensionState = { ...(latestExtensionState || {}), ...data.state }
 					if (data.state.theme) {
 						applyDesktopTheme(data.state.theme, true)
@@ -2904,7 +3101,7 @@
 				}
 				if (data.type === "switchTab" && data.tab) {
 					if (isFromSettingsWebview && (data.tab === "chat" || data.tab === "nativeChat")) {
-						closeSettingsModal()
+						closeSettingsModal(true)
 						return
 					}
 					if (data.tab === "settings") {
@@ -2930,7 +3127,7 @@
 				if (data.type === "action" && data.action) {
 					if (data.action === "chatButtonClicked" || (data.action === "switchTab" && data.tab === "chat")) {
 						if (isFromSettingsWebview) {
-							closeSettingsModal()
+							closeSettingsModal(true)
 							return
 						}
 						switchDesktopTab("chat", "sync")
@@ -3113,7 +3310,7 @@
 						if (save) save.disabled = false
 					}
 				} else if (!msg.success) {
-					window.alert(msg.error || tDesktop("projectNameInvalid"))
+					productWorkspace.notify(msg.error || tDesktop("projectNameInvalid"))
 				}
 				break
 
@@ -3133,7 +3330,9 @@
 					renderDiffs()
 				}
 				if (msg.message?.type === "state" && msg.message.state) {
+					if (preferredTheme) msg.message = {...msg.message, state:{...msg.message.state, theme:preferredTheme}}
 					latestExtensionState = { ...(latestExtensionState || {}), ...msg.message.state }
+					if (msg.message.state.theme) localStorage.setItem("roo-theme", msg.message.state.theme)
 					if (settingsWebviewFrame?.contentWindow && settingsWebviewFrame.getAttribute("src")) {
 						settingsWebviewFrame.contentWindow.postMessage({ type: "state", state: latestExtensionState }, "*")
 					}
@@ -3395,11 +3594,18 @@
 
 	function renderWorkspaceInfo(ws) {
 		if (!ws) return
-		if (ws.path && ws.path !== lastRenderedWorkspacePath) {
+		productWorkspace?.update()
+		if (ws.path !== lastRenderedWorkspacePath) {
 			lastRenderedWorkspacePath = ws.path
 			expandedFolders.clear()
 			hasUserToggledFolders = false
 			selectedPreviewFile = null
+			currentPreviewMsg = null
+			if (previewFilenameEl) previewFilenameEl.textContent = "Wybierz plik"
+			if (previewHeaderActionsEl) previewHeaderActionsEl.style.display = "none"
+			if (previewFileBadgeEl) previewFileBadgeEl.style.display = "none"
+			if (previewFileSizeEl) previewFileSizeEl.textContent = ""
+			if (previewContentAreaEl) previewContentAreaEl.innerHTML = '<div class="preview-placeholder"><div class="empty-title">Pliki projektu</div><p class="empty-subtitle">Wybierz plik, aby zobaczyć jego zawartość, edytować go lub dodać do rozmowy.</p></div>'
 			try {
 				sessionStorage.removeItem("roo-expanded-folders")
 			} catch (e) {}
@@ -3409,7 +3615,7 @@
 			workspaceNameEl.title = ws.path
 		}
 		if (footerWorkspaceEl) {
-			footerWorkspaceEl.textContent = "Projekt: " + ws.path
+			footerWorkspaceEl.textContent = ws.path ? "Projekt: " + ws.path : "Nie wybrano projektu"
 		}
 
 		if (ws.branch) {
@@ -3703,8 +3909,8 @@
 		if (file.contentUnavailable) {
 			diffContentEl.innerHTML = `
 				<div class="diff-content-unavailable">
-					<h4>File content not available</h4>
-					<p>${escapeHtml(file.reason || "Unable to display file content.")}</p>
+					<h4>Nie można wyświetlić pliku</h4>
+					<p>${escapeHtml(file.reason || "Zawartość pliku jest niedostępna.")}</p>
 				</div>
 			`
 			return
@@ -3726,11 +3932,11 @@
 				for (const line of lines) {
 					if (line.startsWith("<<<<<<< SEARCH")) {
 						mode = "search"
-						html += `<div class="diff-line hunk-header"><span class="diff-gutter"></span><span class="diff-prefix"></span><span class="diff-text">Original (Search Block)</span></div>`
+						html += `<div class="diff-line hunk-header"><span class="diff-gutter"></span><span class="diff-prefix"></span><span class="diff-text">Przed zmianą</span></div>`
 						continue
 					} else if (line.startsWith("=======")) {
 						mode = "replace"
-						html += `<div class="diff-line hunk-header"><span class="diff-gutter"></span><span class="diff-prefix"></span><span class="diff-text">Replacement</span></div>`
+						html += `<div class="diff-line hunk-header"><span class="diff-gutter"></span><span class="diff-prefix"></span><span class="diff-text">Po zmianie</span></div>`
 						continue
 					} else if (line.startsWith(">>>>>>>")) {
 						mode = "outside"
@@ -4477,7 +4683,7 @@
 				const iconInfo = getFileIconInfo(node.path)
 				const paddingLeft = 8 + depth * 14 + 19
 				html += `
-					<div class="file-node ${isSelected}" data-path="${escapeHtml(node.path)}" title="${escapeHtml(node.path)}" style="padding-left: ${paddingLeft}px;">
+					<div class="file-node ${isSelected}" tabindex="0" role="button" data-path="${escapeHtml(node.path)}" title="${escapeHtml(node.path)}" style="padding-left: ${paddingLeft}px;">
 						${iconInfo.icon}
 						<span class="file-name">${escapeHtml(node.name)}</span>
 					</div>
@@ -4587,7 +4793,8 @@
 		filesTreeEl.innerHTML = renderTreeNodes(treeRoot.children, 0, isSearchActive)
 	}
 
-	filesTreeEl?.addEventListener("click", (e) => {
+	filesTreeEl?.addEventListener("click", async (e) => {
+		if (e.target.closest(".file-node") && !await productWorkspace.guardEditor(false)) return
 		// 1. Check folder header click
 		const folderHeader = e.target.closest(".folder-header")
 		if (folderHeader) {
@@ -4633,6 +4840,7 @@
 		previewFileBadgeEl.style.display = "inline-block"
 		previewFileSizeEl.textContent = msg.size !== undefined ? `• ${formatBytes(msg.size)}` : ""
 		previewHeaderActionsEl.style.display = "flex"
+		document.getElementById("preview-edit-btn").hidden = !["text","markdown","json","svg"].includes(msg.fileType)
 
 		// Reset view toggles
 		previewToggleViewBtn.style.display = msg.fileType === "svg" ? "inline-flex" : "none"
@@ -5141,7 +5349,8 @@
 		}
 	}
 
-	function closeSettingsModal() {
+	function closeSettingsModal(confirmed = false) {
+		if (confirmed !== true && settingsWebviewFrame?.contentWindow && !settingsModalBackdrop?.classList.contains("hidden")) { settingsWebviewFrame.contentWindow.postMessage({type:"productCloseSettings"},"*"); return }
 		if (!settingsModalBackdrop) return
 		settingsModalBackdrop.classList.add("hidden")
 		const savedTheme = localStorage.getItem("roo-theme") || "linear-dark"
@@ -5436,7 +5645,44 @@
 	updateApiPill(currentApiConfig)
 
 
+	function applySidebarSearch() {
+		const query = (document.getElementById("workspace-project-search")?.value || "").trim().toLocaleLowerCase()
+		chatSearchFilter = query
+		renderChatSidebar()
+		sidebarProjectsListEl?.classList.toggle("is-searching", !!query)
+		for (const project of sidebarProjectsListEl?.querySelectorAll(".sidebar-project-item") || []) {
+			const heading = (project.querySelector(".project-header")?.textContent || "") + " " + (project.dataset.workspace || "")
+			const projectMatches = heading.toLocaleLowerCase().includes(query)
+			let matchingChats = 0
+			for (const chat of project.querySelectorAll(".sidebar-chat-item")) { const match = !query || projectMatches || chat.textContent.toLocaleLowerCase().includes(query); chat.hidden = !match; if(match) matchingChats++ }
+			project.hidden = !!query && !projectMatches && !matchingChats
+		}
+	}
+	function createConversation(workspace) { return currentDesktopTab === "native-chat" ? createNewChatSession() : startNewChat(workspace) }
+	const productWorkspace = window.ProductWorkspace.install({
+		workspace:()=>currentWorkspace, sidebar:()=>sidebarData, projectPaths:getAuthoritativeWorkspacesList, projectName:getProjectDisplayName,
+		projectMenu:openProjectContextMenu, selectProject:selectWorkspaceFolder, refresh:fetchSidebarData,
+		quickProject:handleCreateQuickProject, newChat:createConversation, isNativeChat:()=>currentDesktopTab === "native-chat", tab:switchDesktopTab,
+		settings:()=>openSettingsModal("providers"), forward:forwardToWebview,
+		selectedFile:()=>selectedPreviewFile, searchSidebar:applySidebarSearch,
+		preview:file=>{selectedPreviewFile=file;sendToServer({type:"readFile",filePath:file})},
+		refreshFiles:loadWorkspaceFiles,
+		t: tDesktop,
+		lang: () => currentLanguage,
+	})
+	productWorkspace.update()
+	filesTreeEl?.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){const row=event.target.closest(".file-node");if(row){event.preventDefault();row.click()}}})
+	document.addEventListener("keydown",async event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="n"){event.preventDefault();if(await productWorkspace.guardEditor()) await createConversation(currentWorkspace?.path)}})
+	// Protect project switches and window tools while editing.
+	for (const tab of document.querySelectorAll(".nav-tab")) tab.addEventListener("click", async event=>{
+		if(!productWorkspace.isEditing())return
+		event.stopImmediatePropagation();event.preventDefault()
+		if(await productWorkspace.guardEditor())switchDesktopTab(tab.dataset.tab)
+	},true)
+
 	// Initialize
+	isDesktopAppInitialized = true
+	renderSidebar()
 	connectWebSocket()
 	loadWorkspaceFiles()
 	fetchSidebarData()

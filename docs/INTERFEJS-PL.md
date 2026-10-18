@@ -5,6 +5,7 @@ Przebudowa obejmuje okno Electron i osadzony interfejs React. Wspólny plik `app
 ## Zmiany
 
 - Neutralna grafitowa paleta, spokojniejsza nawigacja, czytelniejszy panel projektów i rozmów.
+- Główny widok jako rozmowa: wypowiedzi agenta i wyniki na pierwszym planie, zbiorcze szczegóły operacji zwinięte domyślnie.
 - Nowy ekran startowy z podpowiedziami, które uzupełniają pole wiadomości; wysyłanie nadal wymaga działania użytkownika.
 - Większy edytor wiadomości; kontrolki modelu i narzędzi zawijają się na węższych oknach.
 - Spójne formularze, menu, przyciski, podglądy i ustawienia w pięciu zachowanych motywach.
@@ -47,7 +48,7 @@ Audyt sprawdza kompletność 1819 kluczy zasobów polskich w interfejsie i silni
 
 `scripts/launch-design-preview.mjs` uruchamia aplikację na porcie 5993 z osobnymi danymi w `.design-qa/`. Opcja `--packaged` wybiera plik z `release/win-unpacked`. `scripts/test-design-runtime.mjs` sprawdza za pomocą protokołu testowego Electron ekran startowy, podpowiedzi, pliki, widoki zmian i terminala, czat, motywy oraz węższy układ. Zapisuje wyniki i zrzuty w `.design-qa/`.
 
-Opcja `--portable` uruchamia gotowy plik `Roo-Code-PL-Portable-1.0.0-x64.exe`. W tej wersji potwierdzono również przejście testów uruchomieniowych. Łącznie przeszło 199 testów desktopowych i 29 wybranych testów UI; kompilacja produkcyjna obejmuje kontrolę typów interfejsu.
+Opcja `--portable` uruchamia gotowy plik `Roo-Code-PL-Portable-1.0.0-x64.exe`. Aktualna weryfikacja obejmuje 199 testów desktopowych, 195 wybranych testów UI i 5 testów wskazówek komunikacji agenta. Kompilacja produkcyjna obejmuje kontrolę typów interfejsu.
 
 Testy interfejsu nie wysyłają płatnych zapytań do zewnętrznych modeli. Rozmowy z wybranym dostawcą wymagają skonfigurowania jego klucza API, tak jak przed przebudową.
 
@@ -72,3 +73,15 @@ Lista jest podzielona wyłącznie na rodziny GPT, Claude, Gemini, Qwen, Grok, Ll
 Sortowanie porównuje osobno liczby w generacji (np. 5.10 i 5.9), potem wariant modelu i identyfikator. Zwykły model pojawia się przed jego wariantem `:batch`; sufiksy `:batch`, `:free` itd. są widoczne przy nazwie. Wybrany model otrzymuje podpis, znacznik i subtelny kolor akcentu. Dostawca API, główna możliwość i kontekst mają stałe miejsca w drugim wierszu.
 
 `node scripts/test-model-selector-runtime.mjs` sprawdza panel w działającej aplikacji: wybór klawiaturą, zapis aktywnego i ostatnio używanego modelu, wyszukiwanie, filtry, grupy i zwijanie, oba motywy i okno 900 px. Zapisuje zrzuty oraz `.design-qa/model-picker-results.json`. Dodatkowo 53 testy jednostkowe selektora i blokady konfiguracji sprawdzają zachowanie wyboru, rozumowania, deduplikacji, historii, klasyfikacji rodzin i sortowania modeli.
+
+## Rozmowa zamiast dziennika operacji
+
+Główny widok agenta zachowuje tekst rozmowy, pytania i rezultat zadania. Kolejne odczyty plików, komendy, output terminala, rozumowanie, checkpointy oraz metadane API łączy w zbiorcze „Szczegóły pracy”, domyślnie zwinięte. Bieżący stan jest jedną neutralną linią opisującą zaobserwowaną operację; interfejs nie dopisuje własnych ustaleń ani nie uznaje testów za zaliczone na podstawie samego uruchomienia komendy.
+
+Instrukcje agenta proszą o zwięzłe, naturalne aktualizacje przy istotnych ustaleniach, rozpoczęciu poprawek, weryfikacji i przeszkodach. Nie żądają relacjonowania każdej operacji. Faktyczne brzmienie aktualizacji zależy od odpowiedzi wybranego modelu; nie powstają dodatkowe zapytania do modelu streszczającego log.
+
+Otwarte prośby o zgodę, pytania i nierozwiązane błędy pozostają widoczne. Komenda lub zakres operacji potrzebny do podjęcia decyzji nie jest ukrywany. Szczegóły diagnostyczne można rozwinąć, a reguły zatwierdzania i ograniczenia bezpieczeństwa nie zmieniają się. Strumień aktywnego terminala jest nadal odbierany przy zwiniętym logu. Skoki do checkpointów otwierają właściwą grupę i zachowują wszystkie checkpointy z oryginalnej historii.
+
+Nagłówek pokazuje krótki opis zadania; zużycie tokenów i dodatkowe działania są dostępne po rozwinięciu. Plan ma kompaktowy wiersz i rozwijaną pełną listę. Wiadomości nie powtarzają etykiet autora, kolorowych obramowań ani odrębnych alertów dla każdego kroku. Neutralne style obejmują także pytania, podsumowanie, wyniki podzadań i limity żądań.
+
+`node scripts/test-agent-conversation-runtime.mjs` oraz wariant `--light` sprawdzają rzeczywisty komponent widoku agenta z lokalną próbką historii: zwijanie klawiaturą, zachowanie zdarzeń terminala, widoczną komendę wymagającą zgody, przycisk zatwierdzania, odpowiedzi na pytania, diagnostykę błędu, zakończenie i układ 900 px. Próbka nie jest zapisywana; działania wychodzące są przechwytywane, więc test nie uruchamia komend ani płatnych zapytań. Zrzuty `conversation-*.png` i raporty trafiają do `.design-qa/`.

@@ -161,7 +161,14 @@
 		"description": "Choose the AI model for this session.",
 		"searchPlaceholder": "Search AI models...",
 		"noResults": "No matching models found",
-		"configureMore": "Configure API & providers in Settings..."
+		"configureMore": "Configure API & providers in Settings...",
+		"selected": "Selected",
+		"context": "Context",
+		"provider": "Provider:",
+		"selectModel": "Select a model",
+		"apiProvider": "API Provider:",
+		"filterModels": "Filter models",
+		"choose": "Select"
 	},
 	"enhancePromptDescription": "The 'Enhance Prompt' button helps improve your prompt by providing additional context, clarification, or rephrasing. Try typing a prompt in here and clicking the button again to see how it works.",
 	"addImages": "Add images to message",
@@ -236,7 +243,8 @@
 			"inProgress": "Truncating context...",
 			"messagesRemoved": "{{count}} message removed",
 			"messagesRemoved_other": "{{count}} messages removed",
-			"description": "Older messages were removed from the conversation to stay within the context window limit. This is a fast but less context-preserving approach compared to condensation."
+			"description": "Older messages were removed from the conversation to stay within the context window limit. This is a fast but less context-preserving approach compared to condensation.",
+			"messagesRemoved_one": "{{count}} message removed"
 		}
 	},
 	"skill": {
@@ -260,7 +268,11 @@
 		"wantsToCreate": "Roo wants to create a new file",
 		"wantsToInsert": "Roo wants to insert content into this file",
 		"wantsToInsertWithLineNumber": "Roo wants to insert content into this file at line {{lineNumber}}",
-		"wantsToInsertAtEnd": "Roo wants to append content to the end of this file"
+		"wantsToInsertAtEnd": "Roo wants to append content to the end of this file",
+		"wantsToSearchReplace": "Roo wants to search and replace in this file",
+		"didSearchReplace": "Roo performed search and replace in this file",
+		"previewFiles": "Preview files",
+		"readFileAria": "Read file"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Roo wants to view the top level files in this directory",
@@ -275,14 +287,17 @@
 		"wantsToSearch": "Roo wants to search this directory for <code>{{regex}}</code>",
 		"didSearch": "Roo searched this directory for <code>{{regex}}</code>",
 		"wantsToSearchOutsideWorkspace": "Roo wants to search this directory (outside workspace) for <code>{{regex}}</code>",
-		"didSearchOutsideWorkspace": "Roo searched this directory (outside workspace) for <code>{{regex}}</code>"
+		"didSearchOutsideWorkspace": "Roo searched this directory (outside workspace) for <code>{{regex}}</code>",
+		"fileListAria": "File list",
+		"folderTreeAria": "Folder tree"
 	},
 	"codebaseSearch": {
 		"wantsToSearch": "Roo wants to search the codebase for <code>{{query}}</code>",
 		"wantsToSearchWithPath": "Roo wants to search the codebase for <code>{{query}}</code> in <code>{{path}}</code>",
 		"didSearch_one": "Found 1 result",
 		"didSearch_other": "Found {{count}} results",
-		"resultTooltip": "Similarity score: {{score}} (click to open file)"
+		"resultTooltip": "Similarity score: {{score}} (click to open file)",
+		"displayError": "Failed to display search results."
 	},
 	"commandOutput": "Command Output",
 	"commandExecution": {
@@ -330,7 +345,8 @@
 		"resultContent": "Subtask completed",
 		"defaultResult": "Please continue to the next task.",
 		"completionInstructions": "You can review the results and suggest any corrections or next steps. If everything looks good, confirm to return the result to the parent task.",
-		"goToSubtask": "View task"
+		"goToSubtask": "View task",
+		"completionContent": "Subtask completed"
 	},
 	"questions": {
 		"hasQuestion": "Roo has a question"
@@ -377,7 +393,9 @@
 		"triggerLabel_zero": "0 auto-approve",
 		"triggerLabel_one": "1 auto-approved",
 		"triggerLabel_other": "{{count}} auto-approved",
-		"triggerLabelAll": "BRRR"
+		"triggerLabelAll": "BRRR",
+		"toggle": "Toggle auto-approval",
+		"triggerLabelNone": "Manual approval"
 	},
 	"announcement": {
 		"title": "Roo Code {{version}} Released",
@@ -524,5 +542,118 @@
 		"medium": "Medium",
 		"high": "High",
 		"xhigh": "XHigh"
+	},
+	"instructions": {
+		"wantsToFetch": "Roo wants to fetch detailed instructions to help with the current task"
+	},
+	"workspace": {
+		"heading": "What are we working on today?",
+		"description": "Describe your goal. The agent will analyze your project and help you turn ideas into working code.",
+		"explore": "Explore project structure",
+		"explorePrompt": "Analyze the structure of this project. Explain how it works and where key parts of the code are located.",
+		"plan": "Plan the next change",
+		"planPrompt": "Help me plan a change in this project. First review the code, then let's agree on scope and next steps.",
+		"fix": "Find bugs and propose fixes",
+		"fixPrompt": "Inspect the project for bugs. Identify specific issues and propose fixes and verification steps.",
+		"mention": "add file to context",
+		"commands": "select command"
+	},
+	"guardrail": {
+		"evaluating": "Evaluating safety guardrail...",
+		"warning": "Safety guardrail warning",
+		"passed": "Safety guardrail passed",
+		"blocked": "Blocked by safety guardrail"
+	},
+	"analyzer": {
+		"analyzing": "Analyzing command output...",
+		"safe": "No issues detected in output"
+	},
+	"mentions": {
+		"addFile": "Add file to context",
+		"selectCommand": "Select command"
+	},
+	"reasoningEffort": {
+		"title": "Reasoning effort",
+		"off": "Off",
+		"minimal": "Minimal",
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"xhigh": "Extra High"
+	},
+	"nativeChat": {
+		"title": "AI Chat",
+		"newChat": "New chat",
+		"emptyPrompt": "What shall we talk about?",
+		"regenerate": "Regenerate",
+		"reasoning": "Thinking process",
+		"cancel": "Cancel",
+		"total": "Total:",
+		"conversationModel": "Conversation model",
+		"separateContext": "Separate context"
+	},
+	"agentActivity": {
+		"details": "Work details",
+		"rateLimitWait": "Waiting for model availability",
+		"retryDelayed": "Waiting to retry request",
+		"working": "Working on task",
+		"terminal": "Working in terminal",
+		"mcpTools": "Using project tools",
+		"condenseContext": "Organizing conversation context",
+		"editingFiles": "Applying changes to project",
+		"readingFiles": "Browsing project files"
+	},
+	"projectContext": {
+		"loadError": "Could not load files. Open project and try again.",
+		"addFilesContextAria": "Add files and context",
+		"addContext": "Add context",
+		"filesInContext": "Files in context",
+		"selectedCount": "{{count}} selected",
+		"selectFilesForAgent": "Select files for agent",
+		"searchContextAria": "Search files for context",
+		"searchPlaceholder": "Search by name or path…",
+		"openProjectFirst": "Open a project folder first.",
+		"loadingFiles": "Loading files…",
+		"noMatchingFiles": "No files matching your search.",
+		"noFilesYet": "No files in this project yet.",
+		"rootFolder": "Root folder",
+		"addImage": "Add image…",
+		"done": "Done",
+		"removeFileAria": "Remove {{file}} from context"
+	},
+	"webOperations": {
+		"searchWebAria": "Search the web",
+		"fetchUrlAria": "Fetch web page",
+		"searchWebTitle": "Web search",
+		"fetchUrlTitle": "Fetch page"
+	},
+	"errors": {
+		"apiResponseFailedTitle": "Failed to get response",
+		"apiResponseFailedMessage": "Connection to model failed. You can retry; error details are available below.",
+		"workIssueTitle": "Issue encountered during execution",
+		"fileNotFoundAtLocation": "Could not find file at specified path.",
+		"operationFailedDetailsBelow": "Failed to complete operation. Details are available below."
+	},
+	"commandSafety": {
+		"actionNeedsChangeTitle": "Action requires changes",
+		"decisionRequiredTitle": "Your decision is required",
+		"evalModelNotConfigured": "Safety evaluation model is not configured or lacks an API key. Confirm operation or configure safety settings.",
+		"evalTemporarilyUnavailable": "Safety evaluation is temporarily unavailable. Agent will retry; you may also decide manually.",
+		"evalInfraFailed": "Failed to evaluate safety for this operation. Manual confirmation required.",
+		"evalRejected": "Safety evaluation rejected this operation. Check details before proceeding.",
+		"evalManualRequired": "This operation requires manual confirmation. Review scope before approving.",
+		"safetySettingsAction": "Safety settings"
+	},
+	"composerHint": "Enter — send · Shift+Enter — new line",
+	"emptyProject": {
+		"description": "Select a project folder. The agent will work with its files, and conversations will be saved in the sidebar.",
+		"openButton": "Open project"
+	},
+	"taskPlan": {
+		"title": "Work plan",
+		"progress": "{{completed}} of {{total}} steps"
+	},
+	"warningRow": {
+		"technicalDetails": "Technical details"
 	}
 }

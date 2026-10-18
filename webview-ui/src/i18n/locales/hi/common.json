@@ -110,5 +110,32 @@
 	"costs": {
 		"own": "स्वयं",
 		"subtasks": "उपकार्य"
+	},
+	"loading": {
+		"initializing": "Initializing Roo Code view...",
+		"slowResponse": "Waiting for engine response is taking longer than usual...",
+		"sendReadySignal": "Send ready signal",
+		"refresh": "Refresh"
+	},
+	"crashBoundary": {
+		"title": "An error occurred while initializing the view",
+		"description": "The application encountered an unexpected problem during view hydration or rendering. We don't leave you with a blank screen — you can safely reload the view or reset state.",
+		"errorMessage": "Error message",
+		"unknownError": "Unknown error occurred while mounting component.",
+		"reloadView": "Reload view",
+		"clearAndReload": "Clear state & refresh",
+		"showDetails": "Show technical details ▼",
+		"hideDetails": "Hide technical details ▲"
+	},
+	"footer": {
+		"unsavedChanges": "Unsaved changes",
+		"allChangesSaved": "All changes saved",
+		"discard": "Discard",
+		"save": "Save Settings",
+		"settings": {
+			"export": "Export Settings",
+			"import": "Import Settings",
+			"reset": "Reset Settings"
+		}
 	}
 }

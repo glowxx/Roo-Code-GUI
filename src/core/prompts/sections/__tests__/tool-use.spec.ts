@@ -1,6 +1,12 @@
 import { getSharedToolUseSection } from "../tool-use"
 
 describe("getSharedToolUseSection", () => {
+	it("requests meaningful factual updates while leaving technical narration in the activity log", () => {
+		const section = getSharedToolUseSection()
+		expect(section).toContain("brief, natural updates in their language")
+		expect(section).toContain("Do not narrate every tool call")
+		expect(section).toContain("starting a test is not evidence that it passed")
+	})
 	it("should include native tool-calling instructions", () => {
 		const section = getSharedToolUseSection()
 

@@ -31,8 +31,8 @@ console.log("Dynamically loaded translations:", Object.keys(translations))
 // Initialize i18next for React
 // This will be initialized with the VSCode language in TranslationProvider
 i18next.use(initReactI18next).init({
-	lng: "pl",
-	fallbackLng: "pl",
+	lng: "en",
+	fallbackLng: "en",
 	resources: translations,
 	defaultNS: "common",
 	debug: false,

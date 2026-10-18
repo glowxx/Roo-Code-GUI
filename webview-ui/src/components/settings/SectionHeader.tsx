@@ -11,7 +11,7 @@ export const SectionHeader = ({ description, children, className, ...props }: Se
 	return (
 		<div
 			className={cn(
-				"sticky top-0 z-20 bg-card/85 backdrop-blur-md border-b border-border -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl transition-colors",
+				"settings-section-heading mb-4 pb-2 border-b border-border",
 				className,
 			)}
 			{...props}>

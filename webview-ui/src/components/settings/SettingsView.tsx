@@ -588,7 +588,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		})
 	}, [])
 
-	const isSettingValid = !errorMessage
+	const isApiConfigurationChanged = !deepEqual(apiConfiguration, cleanOriginalState.apiConfiguration ?? {})
+	const isSettingValid = !errorMessage || !isApiConfigurationChanged
 
 	const handleSubmit = () => {
 		if (isSettingValid) {
@@ -662,7 +663,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				},
 			})
 
-			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
+			if (!errorMessage)
+				vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
 			vscode.postMessage({ type: "debugSetting", bool: cachedState.debug })
 
 			if (cachedState.autoApprovalEnabled !== cleanOriginalState.autoApprovalEnabled) {
@@ -868,6 +870,28 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		[handleCategoryChange, clearSearch],
 	)
 
+	useEffect(() => {
+		const closeRequest = (event: MessageEvent) => {
+			if (event.data?.type === "productCloseSettings") checkUnsaveChanges(onDone)
+		}
+		const escape = (event: KeyboardEvent) => {
+			if (
+				event.key === "Escape" &&
+				!isDiscardDialogShow &&
+				!document.querySelector('[role="dialog"][data-state="open"], [role="listbox"], [role="alertdialog"]')
+			) {
+				event.preventDefault()
+				checkUnsaveChanges(onDone)
+			}
+		}
+		window.addEventListener("message", closeRequest)
+		window.addEventListener("keydown", escape)
+		return () => {
+			window.removeEventListener("message", closeRequest)
+			window.removeEventListener("keydown", escape)
+		}
+	}, [checkUnsaveChanges, onDone, isDiscardDialogShow])
+
 	return (
 		<Tab className="settings-workspace h-full flex flex-col bg-vscode-editor-background text-vscode-foreground select-none overflow-hidden">
 			{/* Top Header */}
@@ -974,7 +998,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								</h2>
 								<p className="text-xs text-vscode-descriptionForeground mt-1 mb-0">
 									{results.length > 0
-										? `${results.length} results found`
+										? `Znalezione ustawienia: ${results.length}`
 										: t("settings:search.noResults")}
 								</p>
 							</div>
@@ -1030,6 +1054,24 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 									{/* Category 1: Providers & Models */}
 									{renderCategory === "providers" && (
 										<div className="space-y-6">
+											<div className="settings-start-guide">
+												<p>
+													Skonfiguruj dostawcę i model do pracy. Uprawnienia oraz zachowanie
+													aplikacji ustawisz osobno.
+												</p>
+												<div>
+													<button
+														type="button"
+														onClick={() => handleCategoryChange("permissions")}>
+														Uprawnienia agenta
+													</button>
+													<button
+														type="button"
+														onClick={() => handleCategoryChange("appearance")}>
+														Język i wygląd
+													</button>
+												</div>
+											</div>
 											<div
 												id="section-providers"
 												className="bg-card border border-border rounded-xl p-5 shadow-xs">

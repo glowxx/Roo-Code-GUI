@@ -41,7 +41,9 @@
 		"experimental": "实验性",
 		"language": "语言",
 		"about": "关于 Roo Code",
-		"skills": "Skills"
+		"skills": "Skills",
+		"limits": "Limits",
+		"webAccess": "Web Access"
 	},
 	"about": {
 		"bugReport": {
@@ -277,7 +279,8 @@
 		},
 		"maxLimits": {
 			"description": "在请求批准继续之前，自动发出请求，最多不超过这些限制。"
-		}
+		},
+		"requiresSafetyModel": "Requires safety verification model to be configured in Settings"
 	},
 	"providers": {
 		"providerDocumentation": "{{provider}} 文档",
@@ -857,7 +860,11 @@
 			"import": "导入",
 			"export": "导出",
 			"reset": "重置"
-		}
+		},
+		"unsavedChanges": "Unsaved changes",
+		"allChangesSaved": "All changes saved",
+		"discard": "Discard",
+		"save": "Save Settings"
 	},
 	"thinkingBudget": {
 		"maxTokens": "最大Token数",
@@ -993,6 +1000,117 @@
 			"nameInvalid": "名称必须为1-64个小写字母、数字或连字符",
 			"descriptionRequired": "描述为必填项",
 			"descriptionTooLong": "描述不得超过1024个字符"
+		}
+	},
+	"categories": {
+		"providers": "Providers & Models",
+		"limits": "Limits",
+		"modes_prompts": "Modes & Prompts",
+		"context": "Context Management",
+		"permissions": "Permissions & Auto-Approve",
+		"tools": "Tools & Terminal",
+		"appearance": "Appearance & Environment"
+	},
+	"categoryDescriptions": {
+		"providers": "Configure AI model connections, API profiles, and provider credentials.",
+		"limits": "View account usage reported by the configured provider.",
+		"modes_prompts": "Customize assistant modes, system instructions, slash commands, and skills.",
+		"context": "Control context window size, history condensation, token limits, and checkpoints.",
+		"permissions": "Define security rules and permissions for auto-approving actions.",
+		"tools": "Configure terminal shell integration, MCP servers, and Git worktrees.",
+		"appearance": "Customize UI preferences, notifications, language, and experimental features."
+	},
+	"commandSafety": {
+		"title": "Command Safety Guardrail",
+		"enabled": "Enable Command Safety Guardrail",
+		"enabledLabel": "Enable Command Safety Guardrail",
+		"enabledDescription": "Automatic terminal command safety verification using a dedicated LLM model before execution.",
+		"providerLabel": "Safety Model Provider",
+		"providerSelectPlaceholder": "Select provider",
+		"modelIdLabel": "Safety Model ID",
+		"modelIdPlaceholder": "e.g. gpt-4o-mini, claude-3-5-haiku-20241022",
+		"apiKeyLabel": "API Key (Optional)",
+		"apiKeyPlaceholder": "API Key (optional)",
+		"apiKeyInheritedPlaceholder": "(Inherited from primary profile)",
+		"apiKeyInheritedBadge": "Inherited from {{provider}} config (Ready)",
+		"apiKeyWarning": "No API key for {{provider}}. Enter a key here or in Provider settings.",
+		"apiKeyDescription": "Optional dedicated API key. If empty, the key from the selected provider's main configuration will be used.",
+		"promptTemplateLabel": "Verification Prompt Template",
+		"promptTemplateDescription": "Verification prompt instructions. Use {{command}} as the variable for the command.",
+		"resetToDefault": "Reset to Default"
+	},
+	"commandSafetyCombobox": {
+		"recommendedHeader": "Recommended audit models (Fast & cost-effective)",
+		"otherHeader": "Other models",
+		"recommendedBadge": "Recommended",
+		"useCustomId": "Use custom ID:",
+		"noModels": "No models available",
+		"placeholder": "e.g. gpt-4o-mini, claude-3-5-haiku-20241022"
+	},
+	"limits": {
+		"title": "Provider usage",
+		"description": "Usage for the saved API profile. Values come from the provider account endpoint.",
+		"provider": "Provider",
+		"refresh": "Refresh",
+		"refreshing": "Refreshing",
+		"refreshError": "Refresh failed. Showing the last available values.",
+		"justNow": "Just now",
+		"updatedAgo": "{{time}} ago",
+		"lessThanMinute": "<1m",
+		"resetDue": "Reset time reached",
+		"minutes": "{{value}}m",
+		"hoursMinutes": "{{hours}}h {{minutes}}m",
+		"daysHours": "{{days}}d {{hours}}h",
+		"windowHours": "{{value}}-hour usage",
+		"windowDays": "{{value}}-day usage",
+		"windowMinutes": "{{value}}-minute usage",
+		"resetsIn": "Resets in {{time}}",
+		"used": "used",
+		"abovePace": "Above pace · {{value}}% expected",
+		"withinPace": "Within pace · {{value}}% expected",
+		"remainingUnavailable": "Remaining unavailable",
+		"usageUnavailable": "Usage details are not available yet.",
+		"loading": "Loading usage…",
+		"unsupported": "Account usage is unavailable for this provider.",
+		"missingAuth": "Add an API key to the saved profile to view usage.",
+		"authError": "Authentication failed. Check the API key in the saved profile.",
+		"error": "Unable to fetch limits.",
+		"plan": "Plan",
+		"spent": "Spent",
+		"cap": "Cap",
+		"remaining": "Remaining",
+		"reset": "Resets",
+		"freeTokens": "Free tokens",
+		"usedToday": "Used today",
+		"dailyLimit": "Daily limit",
+		"wallet": "Wallet",
+		"balance": "Balance",
+		"held": "Held",
+		"rateLimitUnavailable": "Remaining requests and RPM/TPM are not provided by this endpoint.",
+		"updated": "Updated"
+	},
+	"webAccess": {
+		"title": "Web Access",
+		"enable": {
+			"label": "Enable Web Search & Fetch",
+			"description": "Allow Roo to search the web and fetch web pages independently of the model provider."
+		},
+		"provider": {
+			"label": "Search Provider",
+			"description": "Select the search backend to use for web queries."
+		},
+		"apiKey": {
+			"label": "API Key",
+			"placeholder": "Enter API key...",
+			"description": "Stored securely in VS Code SecretStorage and never shared in chat."
+		},
+		"searxngUrl": {
+			"label": "SearXNG URL",
+			"description": "The base URL of your SearXNG instance with JSON format enabled."
+		},
+		"maxResults": {
+			"label": "Max Results",
+			"description": "Number of search results to return (1-20)."
 		}
 	}
 }

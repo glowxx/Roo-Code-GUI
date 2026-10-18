@@ -59,13 +59,25 @@ export const checkIsDesktopHost = (): boolean => {
 	if (typeof window === "undefined") return false
 	return Boolean(
 		(window as any).__ROO_DESKTOP__ ||
-		(window.parent && (window.parent as any).__desktopAPI) ||
-		(window as any).__desktopAPI ||
-		(window.parent && window.parent !== window)
+			(window.parent && (window.parent as any).__desktopAPI) ||
+			(window as any).__desktopAPI ||
+			(window.parent && window.parent !== window),
 	)
 }
 
 const App = () => {
+	useEffect(() => {
+		if (!checkIsDesktopHost() || checkIsSettingsModalFrame()) return
+		const shortcut = (event: KeyboardEvent) => {
+			const key = event.key.toLowerCase()
+			if ((event.ctrlKey || event.metaKey) && !event.shiftKey && ["k", "o", "n", ",", "b"].includes(key)) {
+				event.preventDefault()
+				window.parent.postMessage({ type: "desktopShortcut", key }, "*")
+			}
+		}
+		window.addEventListener("keydown", shortcut)
+		return () => window.removeEventListener("keydown", shortcut)
+	}, [])
 	const { t } = useAppTranslation()
 	const { didHydrateState, showWelcome, shouldShowAnnouncement, renderContext, theme } = useExtensionState()
 
@@ -385,10 +397,7 @@ const App = () => {
 				showAnnouncement={showAnnouncement}
 				hideAnnouncement={() => setShowAnnouncement(false)}
 			/>
-			<NativeChatView
-				isHidden={tab !== "nativeChat"}
-				onSwitchToAgent={() => switchTab("chat")}
-			/>
+			<NativeChatView isHidden={tab !== "nativeChat"} onSwitchToAgent={() => switchTab("chat")} />
 			{deleteMessageDialogState.hasCheckpoint ? (
 				<MemoizedCheckpointRestoreDialog
 					open={deleteMessageDialogState.isOpen}

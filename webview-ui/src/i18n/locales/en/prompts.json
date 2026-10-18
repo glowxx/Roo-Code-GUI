@@ -54,7 +54,8 @@
 	"exportMode": {
 		"title": "Export Mode",
 		"description": "Export this mode with rules from the .roo/rules-{{slug}}/ folder combined into a shareable YAML file. The original files remain unchanged.",
-		"exporting": "Exporting..."
+		"exporting": "Exporting...",
+		"export": "Export Mode"
 	},
 	"importMode": {
 		"selectLevel": "Choose where to import this mode:",

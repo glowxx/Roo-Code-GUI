@@ -69,7 +69,7 @@
 		"tooltip": "Zatwierdź tę akcję"
 	},
 	"runCommand": {
-		"title": "Polecenie",
+		"title": "Uruchom",
 		"tooltip": "Wykonaj to polecenie"
 	},
 	"proceedWhileRunning": {
@@ -142,7 +142,14 @@
 		"description": "Wybierz model AI do bieżącej sesji.",
 		"searchPlaceholder": "Szukaj modeli AI...",
 		"noResults": "Nie znaleziono pasujących modeli",
-		"configureMore": "Skonfiguruj dostawców i klucze w Ustawieniach..."
+		"configureMore": "Skonfiguruj dostawców i klucze w Ustawieniach...",
+		"selected": "Wybrany",
+		"context": "Kontekst",
+		"provider": "Dostawca:",
+		"selectModel": "Wybierz model",
+		"apiProvider": "Dostawca API:",
+		"filterModels": "Filtruj modele",
+		"choose": "Wybierz"
 	},
 	"errorReadingFile": "Błąd odczytu pliku",
 	"noValidImages": "Nie przetworzono żadnych prawidłowych obrazów",
@@ -222,7 +229,9 @@
 		"wantsToGenerateImage": "Roo chce wygenerować obraz",
 		"wantsToGenerateImageOutsideWorkspace": "Roo chce wygenerować obraz poza obszarem roboczym",
 		"wantsToGenerateImageProtected": "Roo chce wygenerować obraz w chronionym miejscu",
-		"didGenerateImage": "Roo wygenerował obraz"
+		"didGenerateImage": "Roo wygenerował obraz",
+		"previewFiles": "Podgląd plików",
+		"readFileAria": "Odczyt pliku"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Roo chce zobaczyć pliki najwyższego poziomu w tym katalogu",
@@ -237,7 +246,9 @@
 		"didViewTopLevelOutsideWorkspace": "Roo zobaczył pliki najwyższego poziomu w tym katalogu (poza obszarem roboczym)",
 		"wantsToViewRecursiveOutsideWorkspace": "Roo chce rekurencyjnie zobaczyć wszystkie pliki w tym katalogu (poza obszarem roboczym)",
 		"didViewRecursiveOutsideWorkspace": "Roo rekurencyjnie zobaczył wszystkie pliki w tym katalogu (poza obszarem roboczym)",
-		"wantsToViewMultipleDirectories": "Roo chce wyświetlić wiele katalogów"
+		"wantsToViewMultipleDirectories": "Roo chce wyświetlić wiele katalogów",
+		"fileListAria": "Lista plików",
+		"folderTreeAria": "Drzewo folderów"
 	},
 	"commandOutput": "Wyjście polecenia",
 	"commandExecution": {
@@ -324,7 +335,7 @@
 		"selectOptionsFirst": "Wybierz co najmniej jedną opcję poniżej, aby włączyć automatyczne zatwierdzanie",
 		"toggleAriaLabel": "Przełącz automatyczne zatwierdzanie",
 		"disabledAriaLabel": "Automatyczne zatwierdzanie wyłączone - najpierw wybierz opcje",
-		"triggerLabelOff": "Zatwierdzaj ręcznie",
+		"triggerLabelOff": "Ręcznie",
 		"triggerLabelOffShort": "Ręcznie",
 		"triggerLabel_zero": "0 automatycznie zatwierdzone",
 		"triggerLabel_one": "1 automatycznie zatwierdzony",
@@ -347,8 +358,11 @@
 			"title": "Kontekst obcięty",
 			"inProgress": "Obcinanie kontekstu...",
 			"messagesRemoved": "{{count}} wiadomość usunięta",
-			"messagesRemoved_other": "{{count}} wiadomości usunięte",
-			"description": "Starsze wiadomości zostały usunięte z konwersacji, aby pozostać w granicach okna kontekstu. To szybsze, ale mniej zachowujące kontekst podejście w porównaniu z kondensacją."
+			"messagesRemoved_other": "{{count}} wiadomości usuniętych",
+			"description": "Starsze wiadomości zostały usunięte z konwersacji, aby pozostać w granicach okna kontekstu. To szybsze, ale mniej zachowujące kontekst podejście w porównaniu z kondensacją.",
+			"messagesRemoved_one": "{{count}} wiadomość usunięta",
+			"messagesRemoved_few": "{{count}} wiadomości usunięte",
+			"messagesRemoved_many": "{{count}} wiadomości usuniętych"
 		}
 	},
 	"skill": {
@@ -417,7 +431,8 @@
 		"wantsToSearchWithPath": "Roo chce przeszukać bazę kodu w poszukiwaniu <code>{{query}}</code> w <code>{{path}}</code>",
 		"didSearch_one": "Znaleziono 1 wynik",
 		"didSearch_other": "Znaleziono {{count}} wyników",
-		"resultTooltip": "Wynik podobieństwa: {{score}} (kliknij, aby otworzyć plik)"
+		"resultTooltip": "Wynik podobieństwa: {{score}} (kliknij, aby otworzyć plik)",
+		"displayError": "Nie udało się wyświetlić wyników wyszukiwania."
 	},
 	"read-batch": {
 		"approve": {
@@ -546,5 +561,103 @@
 	"compactionError": {
 		"title": "Nie udało się skrócić kontekstu",
 		"dismiss": "Zamknij"
+	},
+	"guardrail": {
+		"evaluating": "Ocena reguł bezpieczeństwa...",
+		"warning": "Ostrzeżenie reguł bezpieczeństwa",
+		"passed": "Reguły bezpieczeństwa spełnione",
+		"blocked": "Zablokowano przez reguły bezpieczeństwa"
+	},
+	"analyzer": {
+		"analyzing": "Analiza wyniku polecenia...",
+		"safe": "Nie wykryto problemów w wyniku"
+	},
+	"mentions": {
+		"addFile": "Dodaj plik do kontekstu",
+		"selectCommand": "Wybierz polecenie"
+	},
+	"reasoningEffort": {
+		"title": "Poziom rozumowania",
+		"off": "Wyłączone",
+		"minimal": "Minimalny",
+		"low": "Niski",
+		"medium": "Średni",
+		"high": "Wysoki",
+		"xhigh": "Maksymalny"
+	},
+	"nativeChat": {
+		"title": "Czat AI",
+		"newChat": "Nowa rozmowa",
+		"emptyPrompt": "O czym porozmawiamy?",
+		"regenerate": "Wygeneruj ponownie",
+		"reasoning": "Tok rozumowania",
+		"cancel": "Anuluj",
+		"total": "Razem:",
+		"conversationModel": "Model rozmowy",
+		"separateContext": "Osobny kontekst"
+	},
+	"agentActivity": {
+		"details": "Szczegóły pracy",
+		"rateLimitWait": "Czekam na dostępność modelu",
+		"retryDelayed": "Czekam na ponowienie zapytania",
+		"working": "Pracuję nad zadaniem",
+		"terminal": "Pracuję w terminalu",
+		"mcpTools": "Korzystam z narzędzi projektu",
+		"condenseContext": "Porządkuję kontekst rozmowy",
+		"editingFiles": "Wprowadzam zmiany w projekcie",
+		"readingFiles": "Przeglądam pliki projektu"
+	},
+	"projectContext": {
+		"loadError": "Nie udało się wczytać plików. Otwórz projekt i spróbuj ponownie.",
+		"addFilesContextAria": "Dodaj pliki i kontekst",
+		"addContext": "Dodaj kontekst",
+		"filesInContext": "Pliki w kontekście",
+		"selectedCount": "{{count}} wybrane",
+		"selectFilesForAgent": "Wybierz pliki dla agenta",
+		"searchContextAria": "Szukaj plików do kontekstu",
+		"searchPlaceholder": "Szukaj po nazwie lub ścieżce…",
+		"openProjectFirst": "Najpierw otwórz folder projektu.",
+		"loadingFiles": "Wczytuję pliki…",
+		"noMatchingFiles": "Brak plików pasujących do wyszukiwania.",
+		"noFilesYet": "W tym projekcie nie ma jeszcze plików.",
+		"rootFolder": "Folder główny",
+		"addImage": "Dodaj obraz…",
+		"done": "Gotowe",
+		"removeFileAria": "Usuń {{file}} z kontekstu"
+	},
+	"webOperations": {
+		"searchWebAria": "Wyszukiwanie w internecie",
+		"fetchUrlAria": "Odczyt strony",
+		"searchWebTitle": "Wyszukiwanie w internecie",
+		"fetchUrlTitle": "Odczyt strony"
+	},
+	"errors": {
+		"apiResponseFailedTitle": "Nie udało się uzyskać odpowiedzi",
+		"apiResponseFailedMessage": "Połączenie z modelem nie powiodło się. Możesz ponowić próbę; szczegóły błędu są dostępne poniżej.",
+		"workIssueTitle": "Problem podczas pracy",
+		"fileNotFoundAtLocation": "Nie udało się odnaleźć pliku pod wskazaną ścieżką.",
+		"operationFailedDetailsBelow": "Nie udało się wykonać operacji. Szczegóły są dostępne poniżej."
+	},
+	"commandSafety": {
+		"actionNeedsChangeTitle": "Działanie wymaga zmiany",
+		"decisionRequiredTitle": "Potrzebna jest Twoja decyzja",
+		"evalModelNotConfigured": "Model oceniający nie jest skonfigurowany lub nie ma klucza API. Potwierdź operację albo skonfiguruj ocenę bezpieczeństwa.",
+		"evalTemporarilyUnavailable": "Ocena bezpieczeństwa jest chwilowo niedostępna. Agent ponowi próbę; możesz też podjąć decyzję ręcznie.",
+		"evalInfraFailed": "Nie udało się ocenić bezpieczeństwa tej operacji. Wymagane jest ręczne potwierdzenie.",
+		"evalRejected": "Ocena bezpieczeństwa odrzuciła tę operację. Sprawdź szczegóły przed dalszą pracą.",
+		"evalManualRequired": "Ta operacja wymaga ręcznego potwierdzenia. Sprawdź zakres działania przed zatwierdzeniem.",
+		"safetySettingsAction": "Ustawienia bezpieczeństwa"
+	},
+	"composerHint": "Enter — wyślij · Shift+Enter — nowy wiersz",
+	"emptyProject": {
+		"description": "Wybierz folder projektu. Agent będzie pracować na jego plikach, a rozmowy znajdziesz w panelu po lewej.",
+		"openButton": "Otwórz projekt"
+	},
+	"taskPlan": {
+		"title": "Plan pracy",
+		"progress": "{{completed}} z {{total}} kroków"
+	},
+	"warningRow": {
+		"technicalDetails": "Szczegóły techniczne"
 	}
 }

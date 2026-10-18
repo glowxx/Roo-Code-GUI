@@ -53,7 +53,7 @@
 	},
 	"exportMode": {
 		"title": "मोड निर्यात करें",
-		"description": "इस मोड को सभी नियमों के साथ एक YAML फ़ाइल में निर्यात करें ताकि दूसरों के साथ आसानी से साझा किया जा सके।",
+		"description": "Export this mode with rules from the .roo/rules-{{slug}}/ folder combined into a shareable YAML file. The original files remain unchanged.",
 		"export": "मोड निर्यात करें",
 		"exporting": "निर्यात हो रहा है..."
 	},
