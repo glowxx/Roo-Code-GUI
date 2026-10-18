@@ -371,7 +371,7 @@ export const ChatRowContent = ({
 					isCommandExecuting || isEvaluating ? (
 						<ProgressIndicator />
 					) : (
-						<TerminalSquare className="size-4" aria-label="Terminal" />
+						<TerminalSquare className="size-4" aria-label={t("chat:tools.terminal", "Terminal")} />
 					),
 					<span style={{ color: normalColor, fontWeight: 500 }}>
 						{isCommandExecuting
@@ -540,7 +540,7 @@ export const ChatRowContent = ({
 				]
 			case "followup":
 				return [
-					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label="Pytanie" />,
+					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label={t("chat:tools.question", "Pytanie")} />,
 					<span style={{ color: normalColor, fontWeight: 500 }}>{t("chat:questions.hasQuestion")}</span>,
 				]
 			default:
@@ -618,7 +618,7 @@ export const ChatRowContent = ({
 					return (
 						<>
 							<div style={headerStyle}>
-								<FileDiff className="w-4 shrink-0" aria-label="Zmiany w plikach" />
+								<FileDiff className="w-4 shrink-0" aria-label={t("chat:tools.fileChanges", "Zmiany w plikach")} />
 								<span style={{ fontWeight: 500 }}>
 									{t("chat:fileOperations.wantsToApplyBatchChanges")}
 								</span>
@@ -1184,7 +1184,9 @@ export const ChatRowContent = ({
 					<div style={headerStyle}>
 						<Globe className="w-4 shrink-0 text-sky-400" aria-label={t("chat:webOperations.searchWebAria", "Search the web")} />
 						<span style={{ fontWeight: 500 }}>
-							{message.type === "ask" ? "Wants to search the web" : "Searched the web"}
+							{message.type === "ask"
+								? t("chat:webSearch.wantsToSearch", { defaultValue: "Wants to search the web" })
+								: t("chat:webSearch.didSearch", { defaultValue: "Searched the web" })}
 						</span>
 						<span className="text-xs ml-1" style={{ color: "var(--vscode-descriptionForeground)" }}>
 							"{tool.query}"
@@ -1196,7 +1198,9 @@ export const ChatRowContent = ({
 					<div style={headerStyle}>
 						<Globe className="w-4 shrink-0 text-sky-400" aria-label={t("chat:webOperations.fetchUrlAria", "Fetch web page")} />
 						<span style={{ fontWeight: 500 }}>
-							{message.type === "ask" ? "Wants to fetch URL" : "Fetched URL"}
+							{message.type === "ask"
+								? t("chat:fetchUrl.wantsToFetch", { defaultValue: "Wants to fetch URL" })
+								: t("chat:fetchUrl.didFetch", { defaultValue: "Fetched URL" })}
 						</span>
 						<span
 							className="text-xs ml-1 truncate max-w-[300px]"
@@ -1747,7 +1751,7 @@ export const ChatRowContent = ({
 
 							return (
 								<div style={headerStyle}>
-									<FileCode2 className="w-4 shrink-0" aria-label="Wynik polecenia" />
+									<FileCode2 className="w-4 shrink-0" aria-label={t("chat:tools.commandOutput", "Wynik polecenia")} />
 									<span style={{ fontWeight: 500 }}>{t("chat:readCommandOutput.title")}</span>
 									{infoText && (
 										<span

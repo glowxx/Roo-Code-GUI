@@ -50,17 +50,19 @@ export const ReasoningEffortButton: React.FC<ReasoningEffortButtonProps> = ({
 			const lower = level.toLowerCase()
 			switch (lower) {
 				case "off":
-					return t("chat:effort.off")
+				case "none":
+					return t("chat:reasoningEffort.none", { defaultValue: t("chat:effort.off", "None") })
 				case "minimal":
-					return t("chat:effort.minimal")
+					return t("chat:reasoningEffort.minimal", { defaultValue: t("chat:effort.minimal", "Minimal") })
 				case "low":
-					return t("chat:effort.low")
+					return t("chat:reasoningEffort.low", { defaultValue: t("chat:effort.low", "Low") })
 				case "medium":
-					return t("chat:effort.medium")
+					return t("chat:reasoningEffort.medium", { defaultValue: t("chat:effort.medium", "Medium") })
 				case "high":
-					return t("chat:effort.high")
+					return t("chat:reasoningEffort.high", { defaultValue: t("chat:effort.high", "High") })
 				case "xhigh":
-					return t("chat:effort.xhigh")
+				case "max":
+					return t("chat:reasoningEffort.max", { defaultValue: t("chat:effort.xhigh", "Max") })
 				default:
 					return level
 			}

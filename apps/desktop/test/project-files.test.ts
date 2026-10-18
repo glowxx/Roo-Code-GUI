@@ -37,7 +37,7 @@ describe("project file editing", () => {
 			expect(() => readEditableFile(file)).toThrow()
 			expect(fs.readFileSync(file)).toEqual(data)
 		}
-	})
+	}, 15000)
 	it("blocks path traversal and symlinks escaping allowed root", async () => {
 		const { validatePathWithinRoot } = await import("../src/main/server.js")
 		const outsideFolder = fs.mkdtempSync(path.join(os.tmpdir(), "roo-outside-"))

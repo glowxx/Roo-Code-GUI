@@ -211,7 +211,9 @@
 		"wantsToGenerateImage": "Roo vol generar una imatge",
 		"wantsToGenerateImageOutsideWorkspace": "Roo vol generar una imatge fora de l'espai de treball",
 		"wantsToGenerateImageProtected": "Roo vol generar una imatge en una ubicació protegida",
-		"didGenerateImage": "Roo ha generat una imatge"
+		"didGenerateImage": "Roo ha generat una imatge",
+		"previewFiles": "Preview files",
+		"readFileAria": "Read file"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Roo vol veure els fitxers de nivell superior en aquest directori",
@@ -226,7 +228,9 @@
 		"didViewTopLevelOutsideWorkspace": "Roo ha vist els fitxers de nivell superior en aquest directori (fora de l'espai de treball)",
 		"wantsToViewRecursiveOutsideWorkspace": "Roo vol veure recursivament tots els fitxers en aquest directori (fora de l'espai de treball)",
 		"didViewRecursiveOutsideWorkspace": "Roo ha vist recursivament tots els fitxers en aquest directori (fora de l'espai de treball)",
-		"wantsToViewMultipleDirectories": "Roo vol veure diversos directoris"
+		"wantsToViewMultipleDirectories": "Roo vol veure diversos directoris",
+		"fileListAria": "File list",
+		"folderTreeAria": "Folder tree"
 	},
 	"commandOutput": "Sortida de la comanda",
 	"commandExecution": {
@@ -404,7 +408,8 @@
 		"wantsToSearchWithPath": "Roo vol cercar a la base de codi <code>{{query}}</code> a <code>{{path}}</code>",
 		"didSearch_one": "S'ha trobat 1 resultat",
 		"didSearch_other": "S'han trobat {{count}} resultats",
-		"resultTooltip": "Puntuació de similitud: {{score}} (fes clic per obrir el fitxer)"
+		"resultTooltip": "Puntuació de similitud: {{score}} (fes clic per obrir el fitxer)",
+		"displayError": "Failed to display search results."
 	},
 	"read-batch": {
 		"approve": {
@@ -586,5 +591,69 @@
 		"total": "Total:",
 		"conversationModel": "Conversation model",
 		"separateContext": "Separate context"
+	},
+	"agentActivity": {
+		"details": "Work details",
+		"rateLimitWait": "Waiting for model availability",
+		"retryDelayed": "Waiting to retry request",
+		"working": "Working on task",
+		"terminal": "Working in terminal",
+		"mcpTools": "Using project tools",
+		"condenseContext": "Organizing conversation context",
+		"editingFiles": "Applying changes to project",
+		"readingFiles": "Browsing project files"
+	},
+	"projectContext": {
+		"loadError": "Could not load files. Open project and try again.",
+		"addFilesContextAria": "Add files and context",
+		"addContext": "Add context",
+		"filesInContext": "Files in context",
+		"selectedCount": "{{count}} selected",
+		"selectFilesForAgent": "Select files for agent",
+		"searchContextAria": "Search files for context",
+		"searchPlaceholder": "Search by name or path…",
+		"openProjectFirst": "Open a project folder first.",
+		"loadingFiles": "Loading files…",
+		"noMatchingFiles": "No files matching your search.",
+		"noFilesYet": "No files in this project yet.",
+		"rootFolder": "Root folder",
+		"addImage": "Add image…",
+		"done": "Done",
+		"removeFileAria": "Remove {{file}} from context"
+	},
+	"webOperations": {
+		"searchWebAria": "Search the web",
+		"fetchUrlAria": "Fetch web page",
+		"searchWebTitle": "Web search",
+		"fetchUrlTitle": "Fetch page"
+	},
+	"errors": {
+		"apiResponseFailedTitle": "Failed to get response",
+		"apiResponseFailedMessage": "Connection to model failed. You can retry; error details are available below.",
+		"workIssueTitle": "Issue encountered during execution",
+		"fileNotFoundAtLocation": "Could not find file at specified path.",
+		"operationFailedDetailsBelow": "Failed to complete operation. Details are available below."
+	},
+	"commandSafety": {
+		"actionNeedsChangeTitle": "Action requires changes",
+		"decisionRequiredTitle": "Your decision is required",
+		"evalModelNotConfigured": "Safety evaluation model is not configured or lacks an API key. Confirm operation or configure safety settings.",
+		"evalTemporarilyUnavailable": "Safety evaluation is temporarily unavailable. Agent will retry; you may also decide manually.",
+		"evalInfraFailed": "Failed to evaluate safety for this operation. Manual confirmation required.",
+		"evalRejected": "Safety evaluation rejected this operation. Check details before proceeding.",
+		"evalManualRequired": "This operation requires manual confirmation. Review scope before approving.",
+		"safetySettingsAction": "Safety settings"
+	},
+	"composerHint": "Enter — send · Shift+Enter — new line",
+	"emptyProject": {
+		"description": "Select a project folder. The agent will work with its files, and conversations will be saved in the sidebar.",
+		"openButton": "Open project"
+	},
+	"taskPlan": {
+		"title": "Work plan",
+		"progress": "{{completed}} of {{total}} steps"
+	},
+	"warningRow": {
+		"technicalDetails": "Technical details"
 	}
 }

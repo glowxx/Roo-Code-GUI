@@ -211,7 +211,9 @@
 		"wantsToGenerateImage": "Roo एक छवि बनाना चाहता है",
 		"wantsToGenerateImageOutsideWorkspace": "Roo कार्यक्षेत्र के बाहर एक छवि बनाना चाहता है",
 		"wantsToGenerateImageProtected": "Roo एक संरक्षित स्थान पर छवि बनाना चाहता है",
-		"didGenerateImage": "Roo ने एक छवि बनाई"
+		"didGenerateImage": "Roo ने एक छवि बनाई",
+		"previewFiles": "Preview files",
+		"readFileAria": "Read file"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Roo इस निर्देशिका में शीर्ष स्तर की फ़ाइलें देखना चाहता है",
@@ -226,7 +228,9 @@
 		"didViewTopLevelOutsideWorkspace": "Roo ने इस निर्देशिका (कार्यक्षेत्र के बाहर) में शीर्ष स्तर की फ़ाइलें देखीं",
 		"wantsToViewRecursiveOutsideWorkspace": "Roo इस निर्देशिका (कार्यक्षेत्र के बाहर) में सभी फ़ाइलों को पुनरावर्ती रूप से देखना चाहता है",
 		"didViewRecursiveOutsideWorkspace": "Roo ने इस निर्देशिका (कार्यक्षेत्र के बाहर) में सभी फ़ाइलों को पुनरावर्ती रूप से देखा",
-		"wantsToViewMultipleDirectories": "Roo कई डायरेक्ट्रीज़ देखना चाहता है"
+		"wantsToViewMultipleDirectories": "Roo कई डायरेक्ट्रीज़ देखना चाहता है",
+		"fileListAria": "File list",
+		"folderTreeAria": "Folder tree"
 	},
 	"commandOutput": "कमांड आउटपुट",
 	"commandExecution": {
@@ -404,7 +408,8 @@
 		"wantsToSearchWithPath": "Roo <code>{{path}}</code> में कोडबेस में <code>{{query}}</code> खोजना चाहता है",
 		"didSearch_one": "1 परिणाम मिला",
 		"didSearch_other": "{{count}} परिणाम मिले",
-		"resultTooltip": "समानता स्कोर: {{score}} (फ़ाइल खोलने के लिए क्लिक करें)"
+		"resultTooltip": "समानता स्कोर: {{score}} (फ़ाइल खोलने के लिए क्लिक करें)",
+		"displayError": "Failed to display search results."
 	},
 	"read-batch": {
 		"approve": {
@@ -586,5 +591,69 @@
 		"total": "Total:",
 		"conversationModel": "Conversation model",
 		"separateContext": "Separate context"
+	},
+	"agentActivity": {
+		"details": "Work details",
+		"rateLimitWait": "Waiting for model availability",
+		"retryDelayed": "Waiting to retry request",
+		"working": "Working on task",
+		"terminal": "Working in terminal",
+		"mcpTools": "Using project tools",
+		"condenseContext": "Organizing conversation context",
+		"editingFiles": "Applying changes to project",
+		"readingFiles": "Browsing project files"
+	},
+	"projectContext": {
+		"loadError": "Could not load files. Open project and try again.",
+		"addFilesContextAria": "Add files and context",
+		"addContext": "Add context",
+		"filesInContext": "Files in context",
+		"selectedCount": "{{count}} selected",
+		"selectFilesForAgent": "Select files for agent",
+		"searchContextAria": "Search files for context",
+		"searchPlaceholder": "Search by name or path…",
+		"openProjectFirst": "Open a project folder first.",
+		"loadingFiles": "Loading files…",
+		"noMatchingFiles": "No files matching your search.",
+		"noFilesYet": "No files in this project yet.",
+		"rootFolder": "Root folder",
+		"addImage": "Add image…",
+		"done": "Done",
+		"removeFileAria": "Remove {{file}} from context"
+	},
+	"webOperations": {
+		"searchWebAria": "Search the web",
+		"fetchUrlAria": "Fetch web page",
+		"searchWebTitle": "Web search",
+		"fetchUrlTitle": "Fetch page"
+	},
+	"errors": {
+		"apiResponseFailedTitle": "Failed to get response",
+		"apiResponseFailedMessage": "Connection to model failed. You can retry; error details are available below.",
+		"workIssueTitle": "Issue encountered during execution",
+		"fileNotFoundAtLocation": "Could not find file at specified path.",
+		"operationFailedDetailsBelow": "Failed to complete operation. Details are available below."
+	},
+	"commandSafety": {
+		"actionNeedsChangeTitle": "Action requires changes",
+		"decisionRequiredTitle": "Your decision is required",
+		"evalModelNotConfigured": "Safety evaluation model is not configured or lacks an API key. Confirm operation or configure safety settings.",
+		"evalTemporarilyUnavailable": "Safety evaluation is temporarily unavailable. Agent will retry; you may also decide manually.",
+		"evalInfraFailed": "Failed to evaluate safety for this operation. Manual confirmation required.",
+		"evalRejected": "Safety evaluation rejected this operation. Check details before proceeding.",
+		"evalManualRequired": "This operation requires manual confirmation. Review scope before approving.",
+		"safetySettingsAction": "Safety settings"
+	},
+	"composerHint": "Enter — send · Shift+Enter — new line",
+	"emptyProject": {
+		"description": "Select a project folder. The agent will work with its files, and conversations will be saved in the sidebar.",
+		"openButton": "Open project"
+	},
+	"taskPlan": {
+		"title": "Work plan",
+		"progress": "{{completed}} of {{total}} steps"
+	},
+	"warningRow": {
+		"technicalDetails": "Technical details"
 	}
 }

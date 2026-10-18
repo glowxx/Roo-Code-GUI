@@ -169,7 +169,7 @@ export type CustomSupportPrompts = z.infer<typeof customSupportPromptsSchema>
 export const DEFAULT_MODES: readonly ModeConfig[] = [
 	{
 		slug: "code",
-		name: "Główny",
+		name: "Code",
 		roleDefinition:
 			"You are Roo, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices. You have full capability to inspect files, execute terminal commands, edit code, and solve development tasks efficiently.",
 		whenToUse:

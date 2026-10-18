@@ -18,12 +18,13 @@
 		"start": "node dist/cli.js --electron",
 		"web": "node dist/cli.js --web",
 		"dev": "node dist/cli.js --web --dev",
-		"package:win": "node build.mjs && electron-builder --win --x64",
-		"package:win:builder": "electron-builder --win --x64",
+		"package:win": "node package-installer.mjs",
+		"package:win:builder": "node package-installer.mjs --skip-build",
+		"package:win:verify": "node package-installer.mjs --verify-only",
 		"package:win:artifact": "electron-builder --win --x64",
 		"package:dir": "node build.mjs && electron-builder --win --dir",
 		"package:dir:builder": "electron-builder --win --dir",
-		"build:installer": "node build.mjs && electron-builder --win --x64",
+		"build:installer": "node package-installer.mjs",
 		"clean": "rimraf dist release .turbo"
 	},
 	"dependencies": {
@@ -51,7 +52,6 @@
 		"appId": "com.roocode.desktop",
 		"productName": "Roo Code",
 		"copyright": "Copyright © 2026 Roo Code",
-		"artifactName": "Roo-Code-PL-Setup-${version}-${arch}.${ext}",
 		"directories": {
 			"output": "release"
 		},
@@ -85,9 +85,6 @@
 				}
 			],
 			"icon": "assets/icon.ico"
-		},
-		"portable": {
-			"artifactName": "Roo-Code-PL-Portable-${version}-${arch}.${ext}"
 		},
 		"nsis": {
 			"oneClick": false,

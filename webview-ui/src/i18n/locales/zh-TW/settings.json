@@ -290,7 +290,25 @@
 		"toggleAriaLabel": "切換自動核准狀態",
 		"disabledAriaLabel": "自動核准已停用 - 請先選取下方選項",
 		"selectOptionsFirst": "請先選取下方至少一個選項以啟用自動核准",
-		"requiresSafetyModel": "Requires safety verification model to be configured in Settings"
+		"requiresSafetyModel": "Requires safety verification model to be configured in Settings",
+		"modes": {
+			"manual": "Manual",
+			"auto": "Automatic"
+		},
+		"autonomousWorkTitle": "Autonomous Agent Work",
+		"autonomousWorkDesc": "In autonomous mode, the agent performs safe operations without asking. Actions that could delete data or affect the system are evaluated by an independent safety evaluation model.",
+		"safetyRulesTitle": "Constant safety rules",
+		"alwaysActive": "Always active",
+		"safetyRulesDesc": "System files and sensitive data remain protected. Commands that could harm the system and untrusted code are subject to additional checks. Separate evaluation model: The agent cannot approve its own actions. When the independent model is unavailable, times out, or is the same model as the agent, your manual confirmation is required.",
+		"safetyModelTitle": "Safety evaluation model",
+		"safetyModelDesc": "Independent AI model verifying action safety",
+		"viewDecisionLog": "View decision log",
+		"provider": "Provider",
+		"modelId": "Model ID",
+		"modelPlaceholder": "Select or enter evaluation model…",
+		"separateApiKey": "Separate API key (optional)",
+		"apiKeyPlaceholder": "Leave empty to use primary provider key",
+		"modelNotConfiguredWarning": "No safety evaluation model configured. Actions requiring AI evaluation will await your manual confirmation."
 	},
 	"providers": {
 		"providerDocumentation": "{{provider}} 說明文件",
@@ -1111,6 +1129,55 @@
 		"maxResults": {
 			"label": "Max Results",
 			"description": "Number of search results to return (1-20)."
+		}
+	},
+	"decisionLog": {
+		"badgeAllowed": "APPROVED",
+		"badgeReplan": "REPLAN",
+		"badgeBlocked": "BLOCKED",
+		"badgeManual": "USER DECISION",
+		"title": "Agent decision history",
+		"refresh": "Refresh",
+		"description": "Decisions of the independent safety model regarding agent actions.",
+		"searchPlaceholder": "Search actions, reasons, or models…",
+		"filterAll": "All",
+		"filterApproved": "Approved",
+		"filterReplan": "Replan",
+		"filterBlocked": "Blocked",
+		"filterManual": "Manual",
+		"emptyTitle": "No decisions recorded yet.",
+		"emptyDesc": "Approvals and replan guidance will appear here.",
+		"reasonLabel": "Reason: ",
+		"guidanceLabel": "Guidance for agent: "
+	},
+	"theme": {
+		"title": "Theme & colors",
+		"description": "Choose the appearance for the entire application. Preview is immediate; confirm your selection with the 'Save' button.",
+		"swatch": {
+			"background": "Background",
+			"surface": "Surface",
+			"accent": "Accent"
+		},
+		"defaultBadge": "Default",
+		"linearDark": {
+			"name": "Graphite",
+			"description": "Neutral graphite with gentle contrast"
+		},
+		"oledBlack": {
+			"name": "OLED Black",
+			"description": "Deep black with high contrast"
+		},
+		"midnightNavy": {
+			"name": "Midnight Navy",
+			"description": "Dark surfaces with navy tones"
+		},
+		"cyberpunk": {
+			"name": "Cyberpunk",
+			"description": "Dark background with cyan accents"
+		},
+		"cleanLight": {
+			"name": "Clean Light",
+			"description": "Bright surfaces with subtle grays"
 		}
 	}
 }

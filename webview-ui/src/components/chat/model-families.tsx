@@ -16,7 +16,7 @@ export const modelFamilies = {
 	kimi: { name: "Kimi", company: "Moonshot AI", Icon: null, monogram: "K" },
 	minimax: { name: "MiniMax", company: "MiniMax", Icon: null, monogram: "m" },
 	cohere: { name: "Command", company: "Cohere", Icon: null, monogram: "C" },
-	other: { name: "Inne modele", company: "", Icon: Cpu, monogram: "" },
+	other: { name: "Other Models", company: "", Icon: Cpu, monogram: "" },
 } as const
 
 export type ModelFamily = keyof typeof modelFamilies

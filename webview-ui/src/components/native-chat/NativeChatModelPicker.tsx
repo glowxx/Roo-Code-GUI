@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { Check, ChevronDown, Cpu, Sparkles, Sliders } from "lucide-react"
 import type { ChatModelPreference, ProviderName } from "@roo-code/types"
 import { Popover, PopoverContent, PopoverTrigger } from "@src/components/ui/popover"
+import { useAppTranslation } from "@/i18n/TranslationContext"
 
 interface ModelOption {
 	id: string
@@ -166,11 +167,31 @@ interface NativeChatModelPickerProps {
 }
 
 export const NativeChatModelPicker: React.FC<NativeChatModelPickerProps> = ({ value, onChange, disabled = false }) => {
+	const { t } = useAppTranslation()
 	const [isOpen, setIsOpen] = useState(false)
 
 	const currentProvider: ProviderName = (value?.apiProvider as ProviderName) || "xkiro"
 	const currentModelId = value?.modelId || "openai/gpt-5.6-terra"
 	const currentEffort = value?.reasoningEffort || "medium"
+
+	const getNativeEffortLabel = (effort: string) => {
+		switch (effort.toLowerCase()) {
+			case "none":
+				return t("chat:nativeChat.effortNone", { defaultValue: t("chat:reasoningEffort.none", "Brak") })
+			case "minimal":
+				return t("chat:nativeChat.effortMinimal", { defaultValue: t("chat:reasoningEffort.minimal", "Minimalny") })
+			case "low":
+				return t("chat:nativeChat.effortLow", { defaultValue: t("chat:reasoningEffort.low", "Niski") })
+			case "medium":
+				return t("chat:nativeChat.effortMedium", { defaultValue: t("chat:reasoningEffort.medium", "Średni") })
+			case "high":
+				return t("chat:nativeChat.effortHigh", { defaultValue: t("chat:reasoningEffort.high", "Wysoki") })
+			case "xhigh":
+				return t("chat:nativeChat.effortMax", { defaultValue: t("chat:reasoningEffort.max", "Bardzo wysoki") })
+			default:
+				return effort
+		}
+	}
 
 	// Find active model info
 	const providerModels = CHAT_MODELS[currentProvider] || []
@@ -206,21 +227,12 @@ export const NativeChatModelPicker: React.FC<NativeChatModelPickerProps> = ({ va
 					type="button"
 					disabled={disabled}
 					className="agent-toolbar-control flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md bg-[var(--vscode-badge-background,rgba(255,255,255,0.06))] hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.1))] text-[var(--vscode-editor-foreground)] border border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.08))] transition-colors cursor-pointer select-none max-w-[220px]"
-					title={`Dostawca: ${currentProvider} | Model: ${activeModel.name}`}>
+					title={`${t("chat:nativeChat.provider", "Dostawca:")} ${currentProvider} | ${t("chat:nativeChat.model", "Model:")} ${activeModel.name}`}>
 					<Cpu className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
 					<span className="truncate font-medium">{activeModel.name}</span>
 					{activeModel.supportsReasoning && currentEffort && currentEffort !== "none" && (
 						<span className="text-[10px] px-1 py-0.2 rounded bg-[var(--bg-hover)] text-[var(--text-secondary)] capitalize shrink-0">
-							{(
-								{
-									none: "Brak",
-									minimal: "Minimalny",
-									low: "Niski",
-									medium: "Średni",
-									high: "Wysoki",
-									xhigh: "Bardzo wysoki",
-								} as Record<string, string>
-							)[currentEffort] || currentEffort}
+							{getNativeEffortLabel(currentEffort)}
 						</span>
 					)}
 					<ChevronDown className="w-3 h-3 text-[var(--vscode-descriptionForeground)] shrink-0 ml-0.5" />
@@ -229,12 +241,14 @@ export const NativeChatModelPicker: React.FC<NativeChatModelPickerProps> = ({ va
 
 			<PopoverContent
 				align="start"
-				className="w-72 p-2 bg-[var(--vscode-editorWidget-background,#1e1e1e)] border border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.1))] rounded-lg shadow-xl text-[var(--vscode-editor-foreground)] z-50">
-				<div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.06))]">
+				className="w-72 p-2 bg-[var(--bg-surface-elevated)] border border-[var(--border-light)] rounded-lg shadow-xl text-[var(--text-primary)] z-50">
+				<div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-[var(--border-subtle)]">
 					<span className="text-[11px] font-medium text-[var(--vscode-descriptionForeground)]">
-						Model rozmowy
+						{t("chat:nativeChat.chatModel", "Model rozmowy")}
 					</span>
-					<span className="text-[10px] text-[var(--text-muted)] font-medium">Osobny kontekst</span>
+					<span className="text-[10px] text-[var(--text-muted)] font-medium">
+						{t("chat:nativeChat.separateContext", "Osobny kontekst")}
+					</span>
 				</div>
 
 				<div className="max-h-60 overflow-y-auto py-1 space-y-3">
@@ -253,8 +267,8 @@ export const NativeChatModelPicker: React.FC<NativeChatModelPickerProps> = ({ va
 											onClick={() => handleSelectModel(model)}
 											className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left text-xs transition-colors cursor-pointer ${
 												isSelected
-													? "bg-[var(--vscode-list-activeSelectionBackground,#094771)] text-[var(--vscode-list-activeSelectionForeground,#ffffff)]"
-													: "hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.05))]"
+													? "bg-[var(--bg-active)] text-[var(--text-primary)] font-medium"
+													: "hover:bg-[var(--bg-hover)]"
 											}`}>
 											<div className="truncate pr-2">
 												<div className="font-medium truncate">{model.name}</div>
@@ -275,23 +289,23 @@ export const NativeChatModelPicker: React.FC<NativeChatModelPickerProps> = ({ va
 
 				{/* Poziom rozumowania Selector */}
 				{activeModel.supportsReasoning && (
-					<div className="mt-2 pt-2 border-t border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.06))] px-2">
+					<div className="mt-2 pt-2 border-t border-[var(--border-subtle)] px-2">
 						<div className="flex items-center gap-1 text-[11px] font-medium text-[var(--vscode-descriptionForeground)] mb-1.5">
 							<Sliders className="w-3 h-3 text-[var(--text-secondary)]" />
-							<span>Poziom rozumowania</span>
+							<span>{t("chat:nativeChat.reasoningLevel", "Poziom rozumowania")}</span>
 						</div>
 						<div className="grid grid-cols-4 gap-1">
 							{(["none", "low", "medium", "high"] as const).map((eff) => (
 								<button
-									key={{ none: "Brak", low: "Niski", medium: "Średni", high: "Wysoki" }[eff]}
+									key={eff}
 									type="button"
 									onClick={() => handleSelectEffort(eff)}
 									className={`text-[10.5px] py-1 rounded font-medium capitalize text-center transition-colors cursor-pointer ${
 										currentEffort === eff
 											? "bg-[var(--text-primary)] text-[var(--bg-canvas)] font-semibold"
-											: "bg-[var(--vscode-badge-background,rgba(255,255,255,0.05))] hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.1))] text-[var(--vscode-editor-foreground)]"
+											: "bg-[var(--bg-hover)] hover:bg-[var(--bg-active)] text-[var(--text-primary)]"
 									}`}>
-									{{ none: "Brak", low: "Niski", medium: "Średni", high: "Wysoki" }[eff]}
+									{getNativeEffortLabel(eff)}
 								</button>
 							))}
 						</div>

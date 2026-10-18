@@ -17,6 +17,7 @@ import type { ChatMessage } from "@roo-code/types"
 import { openSettings } from "@src/utils/settingsNavigation"
 import MarkdownBlock from "@src/components/common/MarkdownBlock"
 import Thumbnails from "@src/components/common/Thumbnails"
+import { useAppTranslation } from "@/i18n/TranslationContext"
 
 interface NativeChatMessageRowProps {
 	message: ChatMessage
@@ -31,6 +32,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 	onRegenerate,
 	onEditAndResend,
 }) => {
+	const { t } = useAppTranslation()
 	const [copied, setCopied] = useState(false)
 	const [isReasoningExpanded, setIsReasoningExpanded] = useState(false)
 	const [isWebSearchExpanded, setIsWebSearchExpanded] = useState(false)
@@ -59,13 +61,13 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 	return (
 		<div
 			className={`group relative py-4 px-4 sm:px-6 transition-colors ${
-				isUser ? "bg-transparent" : "bg-[var(--vscode-editor-background,rgba(255,255,255,0.015))]"
+				isUser ? "bg-transparent" : "bg-[var(--bg-canvas)]"
 			}`}>
 			<div className="max-w-3xl mx-auto flex gap-3">
 				{/* Avatar */}
 				<div className="shrink-0 mt-0.5">
 					{isUser ? (
-						<div className="w-7 h-7 rounded-full bg-[var(--vscode-badge-background,rgba(255,255,255,0.1))] flex items-center justify-center text-[var(--vscode-editor-foreground)]">
+						<div className="w-7 h-7 rounded-full bg-[var(--bg-surface-elevated)] flex items-center justify-center text-[var(--text-primary)]">
 							<User className="w-4 h-4 opacity-80" />
 						</div>
 					) : (
@@ -81,7 +83,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 					<div className="flex items-center justify-between gap-2 mb-1.5 select-none">
 						<div className="flex items-center gap-2">
 							<span className="text-xs font-semibold text-[var(--vscode-editor-foreground)]">
-								{isUser ? "Ty" : "Roo AI"}
+								{isUser ? t("chat:nativeChat.you", "Ty") : t("chat:nativeChat.rooAi", "Roo AI")}
 							</span>
 							<span className="text-[11px] text-[var(--vscode-descriptionForeground)] opacity-70">
 								{formatTimestamp(message.timestamp)}
@@ -95,7 +97,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 									type="button"
 									onClick={() => setIsEditing(true)}
 									className="p-1 rounded text-[var(--vscode-descriptionForeground)] hover:text-[var(--vscode-editor-foreground)] hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.08))] transition-colors cursor-pointer"
-									title="Edytuj wiadomość & resend">
+									title={t("chat:nativeChat.editAndResend", "Edytuj wiadomość & resend")}>
 									<Edit2 className="w-3.5 h-3.5" />
 								</button>
 							)}
@@ -103,7 +105,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 								type="button"
 								onClick={handleCopy}
 								className="p-1 rounded text-[var(--vscode-descriptionForeground)] hover:text-[var(--vscode-editor-foreground)] hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.08))] transition-colors cursor-pointer"
-								title="Kopiuj wiadomość">
+								title={t("chat:nativeChat.copyMessage", "Kopiuj wiadomość")}>
 								{copied ? (
 									<Check className="w-3.5 h-3.5 text-emerald-400" />
 								) : (
@@ -115,7 +117,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 									type="button"
 									onClick={() => onRegenerate(message.id)}
 									className="p-1 rounded text-[var(--vscode-descriptionForeground)] hover:text-[var(--vscode-editor-foreground)] hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.08))] transition-colors cursor-pointer"
-									title="Wygeneruj ponownie">
+									title={t("chat:nativeChat.regenerate", "Wygeneruj ponownie")}>
 									<RotateCw className="w-3.5 h-3.5" />
 								</button>
 							)}
@@ -139,10 +141,10 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 								<div className="flex items-center gap-2 truncate">
 									<Globe className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
 									<span className="truncate">
-										Wyszukiwanie: &ldquo;{message.webSearch.query}&rdquo;
+										{t("chat:nativeChat.searching", "Wyszukiwanie:")} &ldquo;{message.webSearch.query}&rdquo;
 									</span>
 									<span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[var(--accent-subtle)] text-[var(--text-secondary)]">
-										{message.webSearch.results.length} źródeł
+										{t("chat:nativeChat.sourcesCount", { count: message.webSearch.results.length, defaultValue: `${message.webSearch.results.length} źródeł` })}
 									</span>
 								</div>
 								{isWebSearchExpanded ? (
@@ -185,9 +187,9 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 								className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/10 transition-colors cursor-pointer select-none">
 								<div className="flex items-center gap-2">
 									<Brain className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
-									<span>Tok rozumowania</span>
+									<span>{t("chat:nativeChat.reasoningProcess", "Tok rozumowania")}</span>
 									<span className="text-[10px] text-[var(--text-secondary)]">
-										({message.reasoning.split(/\s+/).length} słów)
+										({t("chat:nativeChat.wordsCount", { count: message.reasoning.split(/\s+/).length, defaultValue: `${message.reasoning.split(/\s+/).length} słów` })})
 									</span>
 								</div>
 								{isReasoningExpanded ? (
@@ -211,7 +213,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 							<textarea
 								value={editText}
 								onChange={(e) => setEditText(e.target.value)}
-								className="w-full p-2.5 rounded-lg border border-[var(--vscode-focusBorder,#58a6ff)] bg-[var(--vscode-input-background)] text-xs text-[var(--vscode-input-foreground)] outline-none resize-none font-sans"
+								className="w-full p-2.5 rounded-lg border border-[var(--border-focus)] bg-[var(--bg-surface)] text-xs text-[var(--text-primary)] outline-none resize-none font-sans"
 								rows={4}
 							/>
 							<div className="flex items-center justify-end gap-2">
@@ -221,14 +223,14 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 										setIsEditing(false)
 										setEditText(message.content)
 									}}
-									className="px-2.5 py-1 text-xs rounded border border-[var(--vscode-button-secondaryBorder,transparent)] bg-[var(--vscode-button-secondaryBackground,#3a3d41)] text-[var(--vscode-button-secondaryForeground,#ffffff)] hover:bg-[var(--vscode-button-secondaryHoverBackground,#45494e)] cursor-pointer">
-									Anuluj
+									className="px-2.5 py-1 text-xs rounded border border-[var(--border-light)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] hover:bg-[var(--bg-active)] cursor-pointer">
+									{t("chat:nativeChat.cancel", "Anuluj")}
 								</button>
 								<button
 									type="button"
 									onClick={handleSaveEdit}
-									className="px-2.5 py-1 text-xs rounded font-medium bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#ffffff)] hover:bg-[var(--vscode-button-hoverBackground,#1177bb)] cursor-pointer">
-									Zapisz i wyślij ponownie
+									className="px-2.5 py-1 text-xs rounded font-medium bg-[var(--text-primary)] text-[var(--bg-canvas)] hover:opacity-90 cursor-pointer">
+									{t("chat:nativeChat.saveAndResend", "Zapisz i wyślij ponownie")}
 								</button>
 							</div>
 						</div>
@@ -244,7 +246,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 										<span>{message.status}</span>
 									</div>
 								) : (
-									<span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse rounded-sm" />
+									<span className="inline-block w-2 h-4 bg-[var(--accent)] animate-pulse rounded-sm" />
 								)
 							) : null}
 						</div>
@@ -268,7 +270,7 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 											openSettings({ section: "providers", source: "native_chat_error" })
 										}
 										className="px-2.5 py-1 text-xs rounded font-medium bg-[var(--vscode-button-secondaryBackground,#3a3d41)] text-[var(--vscode-button-secondaryForeground,#ffffff)] hover:bg-[var(--vscode-button-secondaryHoverBackground,#45494e)] transition-colors cursor-pointer">
-										Otwórz ustawienia dostawcy
+										{t("chat:nativeChat.openProviderSettings", "Otwórz ustawienia dostawcy")}
 									</button>
 								</div>
 							)}
@@ -278,11 +280,11 @@ export const NativeChatMessageRow: React.FC<NativeChatMessageRowProps> = ({
 					{/* Footer Meta: Token Usage */}
 					{!isUser && message.tokenUsage && (
 						<div className="mt-2.5 pt-2 border-t border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.04))] flex items-center gap-3 text-[10.5px] text-[var(--vscode-descriptionForeground)] opacity-60 select-none">
-							<span>Wejście: {message.tokenUsage.promptTokens || 0}</span>
+							<span>{t("chat:nativeChat.inputTokens", "Wejście:")} {message.tokenUsage.promptTokens || 0}</span>
 							<span>•</span>
-							<span>Wyjście: {message.tokenUsage.completionTokens || 0}</span>
+							<span>{t("chat:nativeChat.outputTokens", "Wyjście:")} {message.tokenUsage.completionTokens || 0}</span>
 							<span>•</span>
-							<span>Razem: {message.tokenUsage.totalTokens || 0}</span>
+							<span>{t("chat:nativeChat.totalTokens", "Razem:")} {message.tokenUsage.totalTokens || 0}</span>
 						</div>
 					)}
 				</div>

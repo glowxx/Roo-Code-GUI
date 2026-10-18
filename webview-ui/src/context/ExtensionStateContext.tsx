@@ -31,6 +31,7 @@ import { experimentDefault } from "@roo/experiments"
 
 import { vscode } from "@src/utils/vscode"
 import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
+import i18next from "@src/i18n/setup"
 
 export interface ExtensionStateContextType extends ExtensionState {
 	isLoading?: boolean
@@ -218,7 +219,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		ttsSpeed: 1.0,
 		enableCheckpoints: true,
 		checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Default to 15 seconds
-		language: "pl", // Default language code
+		language: "en", // Default language code
 		writeDelayMs: 1000,
 		terminalShellIntegrationTimeout: 4000,
 		mcpEnabled: true,
@@ -435,6 +436,28 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 				case "theme": {
 					if (message.text) {
 						setSyntaxTheme(convertTextMateToHljs(JSON.parse(message.text)))
+					}
+					break
+				}
+				case "themeChange" as any: {
+					const theme = (message as any).theme
+					if (theme) {
+						document.documentElement.setAttribute("data-theme", theme)
+						const isLight = theme === "clean-light"
+						document.body.classList.toggle("vscode-light", isLight)
+						document.body.classList.toggle("vscode-dark", !isLight)
+						setState((prev) => ({ ...prev, theme }))
+					}
+					break
+				}
+				case "languageChange" as any: {
+					const language = (message as any).language
+					if (language) {
+						setState((prev) => ({ ...prev, language }))
+						i18next.changeLanguage(language)
+						if (typeof document !== "undefined") {
+							document.documentElement.lang = language
+						}
 					}
 					break
 				}

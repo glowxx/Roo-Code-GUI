@@ -155,25 +155,25 @@
 		--vscode-editorHoverWidget-background: #252526;
 		--vscode-editorHoverWidget-foreground: #cccccc;
 		--vscode-editorHoverWidget-border: #454545;
-		--background: var(--vscode-editor-background, #090a0f);
-		--foreground: var(--vscode-editor-foreground, #f2f4f7);
-		--card: var(--vscode-sideBarSectionHeader-background, #12141c);
-		--card-foreground: var(--vscode-editor-foreground, #f2f4f7);
-		--popover: var(--vscode-menu-background, #12141c);
-		--popover-foreground: var(--vscode-menu-foreground, #f2f4f7);
-		--primary: var(--vscode-button-background, #2563eb);
-		--primary-foreground: var(--vscode-button-foreground, #ffffff);
-		--secondary: var(--vscode-button-secondaryBackground, #181b26);
-		--secondary-foreground: var(--vscode-button-secondaryForeground, #f2f4f7);
-		--muted: var(--vscode-disabledForeground, rgba(255, 255, 255, 0.4));
-		--muted-foreground: var(--vscode-descriptionForeground, #98a2b3);
-		--accent: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.06));
-		--accent-foreground: var(--vscode-list-hoverForeground, #ffffff);
-		--destructive: var(--vscode-errorForeground, #f04438);
-		--destructive-foreground: var(--vscode-editor-background, #090a0f);
-		--border: var(--vscode-input-border, rgba(255, 255, 255, 0.06)); /* --border gets theme value or subtle border fallback */
-		--input: var(--vscode-input-background, #12141c);
-		--ring: var(--vscode-focusBorder, #3b82f6);
+		--background: var(--vscode-editor-background, var(--bg-canvas, #202123));
+		--foreground: var(--vscode-editor-foreground, var(--text-primary, #edeef0));
+		--card: var(--vscode-sideBarSectionHeader-background, var(--bg-surface, #28292c));
+		--card-foreground: var(--vscode-editor-foreground, var(--text-primary, #edeef0));
+		--popover: var(--vscode-menu-background, var(--bg-surface-elevated, #303135));
+		--popover-foreground: var(--vscode-menu-foreground, var(--text-primary, #edeef0));
+		--primary: var(--vscode-button-background, var(--text-primary, #edeef0));
+		--primary-foreground: var(--vscode-button-foreground, var(--bg-canvas, #202123));
+		--secondary: var(--vscode-button-secondaryBackground, var(--bg-surface-elevated, #303135));
+		--secondary-foreground: var(--vscode-button-secondaryForeground, var(--text-primary, #edeef0));
+		--muted: var(--vscode-disabledForeground, var(--text-muted, rgba(255, 255, 255, 0.4)));
+		--muted-foreground: var(--vscode-descriptionForeground, var(--text-secondary, #b2b3b9));
+		--accent: var(--vscode-list-hoverBackground, var(--bg-hover, rgba(255, 255, 255, 0.06)));
+		--accent-foreground: var(--vscode-list-hoverForeground, var(--text-primary, #ffffff));
+		--destructive: var(--vscode-errorForeground, var(--danger, #f19a98));
+		--destructive-foreground: var(--vscode-editor-background, var(--bg-canvas, #202123));
+		--border: var(--vscode-input-border, var(--border-light, rgba(255, 255, 255, 0.12))); /* --border gets theme value or subtle border fallback */
+		--input: var(--vscode-input-background, var(--bg-surface, #28292c));
+		--ring: var(--vscode-focusBorder, var(--border-focus, #8aaef0));
 		--chart-1: var(--vscode-charts-red, #f04438);
 		--chart-2: var(--vscode-charts-blue, #3b82f6);
 		--chart-3: var(--vscode-charts-yellow, #f79009);
@@ -261,6 +261,8 @@ html {
 body {
 	margin: 0;
 	line-height: 1.25;
+	background-color: var(--background, var(--bg-canvas, #202123));
+	color: var(--foreground, var(--text-primary, #edeef0));
 }
 
 /**

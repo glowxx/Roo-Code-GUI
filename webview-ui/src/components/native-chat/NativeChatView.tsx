@@ -10,6 +10,7 @@ import type {
 	ExtensionMessage,
 } from "@roo-code/types"
 import { vscode } from "@src/utils/vscode"
+import { useAppTranslation } from "@/i18n/TranslationContext"
 import { NativeChatEmptyState } from "./NativeChatEmptyState"
 import { NativeChatMessageRow } from "./NativeChatMessageRow"
 import { NativeChatComposer } from "./NativeChatComposer"
@@ -20,6 +21,7 @@ interface NativeChatViewProps {
 }
 
 export const NativeChatView: React.FC<NativeChatViewProps> = ({ isHidden = false, onSwitchToAgent }) => {
+	const { t } = useAppTranslation()
 	const [session, setSession] = useState<ChatSession | null>(null)
 	const [sessionsList, setSessionsList] = useState<ChatSessionSummary[]>([])
 	const [preferences, setPreferences] = useState<ChatPreferences | null>(null)
@@ -254,18 +256,18 @@ export const NativeChatView: React.FC<NativeChatViewProps> = ({ isHidden = false
 
 	return (
 		<div
-			className={`native-chat-view flex flex-col h-full w-full bg-[var(--vscode-editor-background)] text-[var(--vscode-editor-foreground)] overflow-hidden ${
+			className={`native-chat-view flex flex-col h-full w-full bg-[var(--bg-canvas)] text-[var(--text-primary)] overflow-hidden ${
 				isHidden ? "hidden" : ""
 			}`}>
 			{/* Top Bar / Header */}
-			<div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.06))] bg-[var(--vscode-editor-background)] shrink-0 select-none">
+			<div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)] bg-[var(--bg-canvas)] shrink-0 select-none">
 				<div className="flex items-center gap-2 truncate">
 					<div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--bg-hover)] border border-[var(--border-light)] text-[var(--text-secondary)] text-xs font-semibold tracking-tight shrink-0">
 						<Sparkles className="w-3 h-3" />
-						<span>Czat AI</span>
+						<span>{t("chat:nativeChat.aiChatBadge", "Czat AI")}</span>
 					</div>
-					<span className="text-xs font-medium text-[var(--vscode-editor-foreground)] truncate">
-						{session?.title || "Nowa rozmowa"}
+					<span className="text-xs font-medium text-[var(--text-primary)] truncate">
+						{session?.title || t("chat:nativeChat.newChat", "Nowa rozmowa")}
 					</span>
 				</div>
 
@@ -273,10 +275,10 @@ export const NativeChatView: React.FC<NativeChatViewProps> = ({ isHidden = false
 					<button
 						type="button"
 						onClick={handleCreateNewChat}
-						className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md font-medium text-[var(--vscode-editor-foreground)] hover:bg-[var(--vscode-list-hoverBackground,rgba(255,255,255,0.08))] transition-colors cursor-pointer"
-						title="Rozpocznij nową rozmowę">
+						className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+						title={t("chat:nativeChat.startNewChat", "Rozpocznij nową rozmowę")}>
 						<MessageSquarePlus className="w-3.5 h-3.5" />
-						<span>Nowa rozmowa</span>
+						<span>{t("chat:nativeChat.newChat", "Nowa rozmowa")}</span>
 					</button>
 				</div>
 			</div>
@@ -309,15 +311,15 @@ export const NativeChatView: React.FC<NativeChatViewProps> = ({ isHidden = false
 					<button
 						type="button"
 						onClick={() => virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "smooth" })}
-						className="absolute bottom-4 right-6 p-2 rounded-full bg-[var(--vscode-editorWidget-background,#252526)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] text-[var(--vscode-editor-foreground)] border border-[var(--vscode-editorWidget-border,rgba(255,255,255,0.15))] shadow-xl transition-all cursor-pointer z-20"
-						title="Przejdź do najnowszej wiadomości">
+						className="absolute bottom-4 right-6 p-2 rounded-full bg-[var(--bg-surface-elevated)] hover:bg-[var(--bg-active)] text-[var(--text-primary)] border border-[var(--border-light)] shadow-xl transition-all cursor-pointer z-20"
+						title={t("chat:nativeChat.scrollToBottom", "Przejdź do najnowszej wiadomości")}>
 						<ArrowDown className="w-4 h-4" />
 					</button>
 				)}
 			</div>
 
 			{/* Auto-growing Composer Fixed to Bottom */}
-			<div className="shrink-0 bg-[var(--vscode-editor-background)]">
+			<div className="shrink-0 bg-[var(--bg-canvas)]">
 				<NativeChatComposer
 					sessionId={session?.id}
 					initialText={session?.draft?.text || ""}

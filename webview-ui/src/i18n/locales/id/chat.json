@@ -256,7 +256,9 @@
 		"didSearchReplace": "Roo melakukan pencarian dan penggantian pada file ini",
 		"wantsToInsert": "Roo ingin menyisipkan konten ke file ini",
 		"wantsToInsertWithLineNumber": "Roo ingin menyisipkan konten ke file ini di baris {{lineNumber}}",
-		"wantsToInsertAtEnd": "Roo ingin menambahkan konten ke akhir file ini"
+		"wantsToInsertAtEnd": "Roo ingin menambahkan konten ke akhir file ini",
+		"previewFiles": "Preview files",
+		"readFileAria": "Read file"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Roo ingin melihat file tingkat atas di direktori ini",
@@ -271,14 +273,17 @@
 		"didViewTopLevelOutsideWorkspace": "Roo melihat file tingkat atas di direktori ini (di luar workspace)",
 		"wantsToViewRecursiveOutsideWorkspace": "Roo ingin melihat semua file secara rekursif di direktori ini (di luar workspace)",
 		"didViewRecursiveOutsideWorkspace": "Roo melihat semua file secara rekursif di direktori ini (di luar workspace)",
-		"wantsToViewMultipleDirectories": "Roo ingin melihat beberapa direktori"
+		"wantsToViewMultipleDirectories": "Roo ingin melihat beberapa direktori",
+		"fileListAria": "File list",
+		"folderTreeAria": "Folder tree"
 	},
 	"codebaseSearch": {
 		"wantsToSearch": "Roo ingin mencari codebase untuk <code>{{query}}</code>",
 		"wantsToSearchWithPath": "Roo ingin mencari codebase untuk <code>{{query}}</code> di <code>{{path}}</code>",
 		"didSearch_one": "Ditemukan 1 hasil",
 		"didSearch_other": "Ditemukan {{count}} hasil",
-		"resultTooltip": "Skor kemiripan: {{score}} (klik untuk membuka file)"
+		"resultTooltip": "Skor kemiripan: {{score}} (klik untuk membuka file)",
+		"displayError": "Failed to display search results."
 	},
 	"commandOutput": "Keluaran Perintah",
 	"commandExecution": {
@@ -592,5 +597,69 @@
 		"total": "Total:",
 		"conversationModel": "Conversation model",
 		"separateContext": "Separate context"
+	},
+	"agentActivity": {
+		"details": "Work details",
+		"rateLimitWait": "Waiting for model availability",
+		"retryDelayed": "Waiting to retry request",
+		"working": "Working on task",
+		"terminal": "Working in terminal",
+		"mcpTools": "Using project tools",
+		"condenseContext": "Organizing conversation context",
+		"editingFiles": "Applying changes to project",
+		"readingFiles": "Browsing project files"
+	},
+	"projectContext": {
+		"loadError": "Could not load files. Open project and try again.",
+		"addFilesContextAria": "Add files and context",
+		"addContext": "Add context",
+		"filesInContext": "Files in context",
+		"selectedCount": "{{count}} selected",
+		"selectFilesForAgent": "Select files for agent",
+		"searchContextAria": "Search files for context",
+		"searchPlaceholder": "Search by name or path…",
+		"openProjectFirst": "Open a project folder first.",
+		"loadingFiles": "Loading files…",
+		"noMatchingFiles": "No files matching your search.",
+		"noFilesYet": "No files in this project yet.",
+		"rootFolder": "Root folder",
+		"addImage": "Add image…",
+		"done": "Done",
+		"removeFileAria": "Remove {{file}} from context"
+	},
+	"webOperations": {
+		"searchWebAria": "Search the web",
+		"fetchUrlAria": "Fetch web page",
+		"searchWebTitle": "Web search",
+		"fetchUrlTitle": "Fetch page"
+	},
+	"errors": {
+		"apiResponseFailedTitle": "Failed to get response",
+		"apiResponseFailedMessage": "Connection to model failed. You can retry; error details are available below.",
+		"workIssueTitle": "Issue encountered during execution",
+		"fileNotFoundAtLocation": "Could not find file at specified path.",
+		"operationFailedDetailsBelow": "Failed to complete operation. Details are available below."
+	},
+	"commandSafety": {
+		"actionNeedsChangeTitle": "Action requires changes",
+		"decisionRequiredTitle": "Your decision is required",
+		"evalModelNotConfigured": "Safety evaluation model is not configured or lacks an API key. Confirm operation or configure safety settings.",
+		"evalTemporarilyUnavailable": "Safety evaluation is temporarily unavailable. Agent will retry; you may also decide manually.",
+		"evalInfraFailed": "Failed to evaluate safety for this operation. Manual confirmation required.",
+		"evalRejected": "Safety evaluation rejected this operation. Check details before proceeding.",
+		"evalManualRequired": "This operation requires manual confirmation. Review scope before approving.",
+		"safetySettingsAction": "Safety settings"
+	},
+	"composerHint": "Enter — send · Shift+Enter — new line",
+	"emptyProject": {
+		"description": "Select a project folder. The agent will work with its files, and conversations will be saved in the sidebar.",
+		"openButton": "Open project"
+	},
+	"taskPlan": {
+		"title": "Work plan",
+		"progress": "{{completed}} of {{total}} steps"
+	},
+	"warningRow": {
+		"technicalDetails": "Technical details"
 	}
 }

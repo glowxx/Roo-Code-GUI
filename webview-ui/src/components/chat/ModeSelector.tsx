@@ -213,6 +213,14 @@ export const ModeSelector = ({
 	// Combine instruction text for tooltip.
 	const instructionText = `${t("chat:modeSelector.description")} ${modeShortcutText}`
 
+	const getLocalizedModeName = (m?: { slug?: string; name?: string }) => {
+		if (!m) return ""
+		if (m.slug === "code" || m.slug === defaultModeSlug) {
+			return cleanModeName(t("prompts:defaultModes.code.name", { defaultValue: m.name || "Code" }))
+		}
+		return cleanModeName(m.name || "")
+	}
+
 	return (
 		<Popover open={open} onOpenChange={onOpenChange} data-testid="mode-selector-root">
 			<StandardTooltip content={title}>
@@ -222,7 +230,7 @@ export const ModeSelector = ({
 					className={cn("agent-toolbar-control shrink-0", triggerClassName)}>
 					<span className="flex items-center gap-1.5 truncate">
 						<ModeIcon icon={selectedMode?.icon} slug={selectedMode?.slug} className="size-3.5 opacity-80" />
-						<span className="truncate">{cleanModeName(selectedMode?.name || "")}</span>
+						<span className="truncate">{getLocalizedModeName(selectedMode)}</span>
 					</span>
 				</PopoverTrigger>
 			</StandardTooltip>
@@ -236,7 +244,7 @@ export const ModeSelector = ({
 					{showSearch ? (
 						<div className="relative p-2 border-b border-vscode-dropdown-border">
 							<input
-								aria-label="Szukaj trybów"
+								aria-label={t("chat:modeSelector.searchPlaceholder", "Search modes")}
 								ref={searchInputRef}
 								value={searchValue}
 								onChange={(e) => setSearchValue(e.target.value)}
@@ -289,7 +297,7 @@ export const ModeSelector = ({
 													<ModeIcon icon={mode.icon} slug={mode.slug} className="size-4" />
 												</div>
 												<div className="flex-1 min-w-0">
-													<div className="font-bold truncate">{cleanModeName(mode.name)}</div>
+													<div className="font-bold truncate">{getLocalizedModeName(mode)}</div>
 													{mode.description && (
 														<div className="text-xs text-vscode-descriptionForeground truncate">
 															{mode.description}

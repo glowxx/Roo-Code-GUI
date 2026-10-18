@@ -81,6 +81,7 @@
 	const engineConnectionBadge = document.getElementById("engine-connection-badge")
 	const engineConnectionText = document.getElementById("engine-connection-text")
 	const tabLabelChat = document.getElementById("tab-label-chat")
+	const tabLabelNativeChat = document.getElementById("tab-label-native-chat")
 	const tabLabelDiffs = document.getElementById("tab-label-diffs")
 	const tabLabelTerminal = document.getElementById("tab-label-terminal")
 	const tabLabelFiles = document.getElementById("tab-label-files")
@@ -411,6 +412,7 @@
 
 			// Navigation tabs
 			tabAgent: "Agent",
+			tabNativeChat: "Czat",
 			tabDiffs: "Zmiany",
 			tabTerminal: "Terminal",
 			tabFiles: "Pliki",
@@ -620,7 +622,6 @@
 
 		// 2. Tab labels
 		if (tabLabelChat) tabLabelChat.textContent = tDesktop("tabAgent")
-		const tabLabelNativeChat = document.getElementById("tab-label-native-chat")
 		if (tabLabelNativeChat) tabLabelNativeChat.textContent = tDesktop("tabNativeChat")
 		if (tabLabelDiffs) tabLabelDiffs.textContent = tDesktop("tabDiffs")
 		if (tabLabelTerminal) tabLabelTerminal.textContent = tDesktop("tabTerminal")
@@ -3063,6 +3064,9 @@
 					}, "*")
 				}
 				if (isFromMainWebview && data.type === "webviewDidLaunch") {
+					const theme = localStorage.getItem("roo-theme") || "linear-dark"
+					webviewFrame.contentWindow?.postMessage({ type: "themeChange", theme }, "*")
+					webviewFrame.contentWindow?.postMessage({ type: "languageChange", language: currentLanguage }, "*")
 					fetchChatSessions()
 					if (activeTaskId && (!latestExtensionState || !latestExtensionState.currentTaskId)) {
 						switchChat(activeTaskId, sidebarData.currentWorkspace)
@@ -3074,6 +3078,11 @@
 						currentLanguage = newLang
 						localStorage.setItem("roo-language", currentLanguage)
 						applyDesktopTranslations(currentLanguage)
+						if (isFromMainWebview) {
+							settingsWebviewFrame?.contentWindow?.postMessage({ type: "languageChange", language: currentLanguage }, "*")
+						} else if (isFromSettingsWebview) {
+							webviewFrame?.contentWindow?.postMessage({ type: "languageChange", language: currentLanguage }, "*")
+						}
 					}
 				}
 				if (data.type === "state" && data.state) {
@@ -3088,6 +3097,8 @@
 							currentLanguage = newLang
 							localStorage.setItem("roo-language", currentLanguage)
 							applyDesktopTranslations(currentLanguage)
+							webviewFrame?.contentWindow?.postMessage({ type: "languageChange", language: currentLanguage }, "*")
+							settingsWebviewFrame?.contentWindow?.postMessage({ type: "languageChange", language: currentLanguage }, "*")
 						}
 					}
 				}
